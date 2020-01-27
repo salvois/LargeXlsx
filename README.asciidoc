@@ -24,36 +24,26 @@ Example
 
 To create a simple single-sheet Excel document:
 
-[source,C#]
 ----
 using (var stream = new FileStream("Simple.xlsx", FileMode.Create))
 using (var largeXlsxWriter = new LargeXlsxWriter(stream))
 {
-    var whiteFontId = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff");
-    var blueFillId = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
-    var headerStyleId = largeXlsxWriter.Stylesheet.CreateStyle(whiteFontId, blueFillId, LargeXlsxStylesheet.GeneralNumberFormatId, LargeXlsxStylesheet.NoBorderId);
+	var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff");
+	var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
+	var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, LargeXlsxStylesheet.GeneralNumberFormat, LargeXlsxStylesheet.NoBorder);
 
-    largeXlsxWriter.BeginSheet("Sheet1")
-        .BeginRow().WriteInlineStringCell("Col1", headerStyleId).WriteInlineStringCell("Col2", headerStyleId).WriteInlineStringCell("Col3", headerStyleId)
-        .BeginRow().WriteInlineStringCell("Row2").WriteNumericCell(42).WriteNumericCell(-1)
-        .BeginRow().WriteInlineStringCell("Row3").SkipColumns(1).WriteNumericCell(1234)
-        .SkipRows(2)
-        .BeginRow().WriteInlineStringCell("Row6").AddMergedCell(6, 1, 6, 2).SkipColumns(1).WriteNumericCell(3.14159265359);
+	largeXlsxWriter.BeginSheet("Sheet1")
+		.BeginRow().WriteInlineStringCell("Col1", headerStyle).WriteInlineStringCell("Col2", headerStyle).WriteInlineStringCell("Col3", headerStyle)
+		.BeginRow().WriteInlineStringCell("Row2").WriteNumericCell(42).WriteNumericCell(-1)
+		.BeginRow().WriteInlineStringCell("Row3").SkipColumns(1).WriteNumericCell(1234)
+		.SkipRows(2)
+		.BeginRow().WriteInlineStringCell("Row6").AddMergedCell(6, 1, 6, 2).SkipColumns(1).WriteNumericCell(3.14159265359);
 }
 ----
 
-Produces a single-sheet Excel document like:
+Produces an output like:
 
-[%autowidth.spread,options="header"]
-|=======================
-| Col1  |  Col2 | Col3
-| Row2 >|   42 >|   -1
-| Row3  |      >| 1234
-|       |       |
-|       |       |
-2+| Row6       >| 3.1416
-|=======================
-
+image::example.png[Single sheet Excel document with 6 rows and 3 columns]
 
 Known issues
 ------------

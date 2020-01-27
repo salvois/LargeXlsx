@@ -93,17 +93,29 @@ namespace LargeXlsx
             return this;
         }
 
-        public LargeXlsxWriter WriteInlineStringCell(string value, uint styleId = 0)
+        public LargeXlsxWriter WriteInlineStringCell(string value)
+        {
+            return WriteInlineStringCell(value, LargeXlsxStylesheet.DefaultStyle);
+        }
+
+        public LargeXlsxWriter WriteInlineStringCell(string value, LargeXlsxStyle style)
         {
             EnsureSheet();
-            _currentSheet.WriteInlineStringCell(value, styleId);
+            _currentSheet.WriteInlineStringCell(value, style);
             return this;
         }
 
-        public LargeXlsxWriter WriteNumericCell(double value, uint styleId = 0)
+        public LargeXlsxWriter WriteNumericCell(double value)
         {
             EnsureSheet();
-            _currentSheet.WriteNumericCell(value, styleId);
+            _currentSheet.WriteNumericCell(value, LargeXlsxStylesheet.DefaultStyle);
+            return this;
+        }
+
+        public LargeXlsxWriter WriteNumericCell(double value, LargeXlsxStyle style)
+        {
+            EnsureSheet();
+            _currentSheet.WriteNumericCell(value, style);
             return this;
         }
 

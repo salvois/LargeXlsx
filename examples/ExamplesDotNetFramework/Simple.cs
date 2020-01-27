@@ -10,12 +10,12 @@ namespace ExamplesDotNetFramework
             using (var stream = new FileStream($"{nameof(Simple)}.xlsx", FileMode.Create))
             using (var largeXlsxWriter = new LargeXlsxWriter(stream))
             {
-                var whiteFontId = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff");
-                var blueFillId = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
-                var headerStyleId = largeXlsxWriter.Stylesheet.CreateStyle(whiteFontId, blueFillId, LargeXlsxStylesheet.GeneralNumberFormatId, LargeXlsxStylesheet.NoBorderId);
+                var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff");
+                var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
+                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, LargeXlsxStylesheet.GeneralNumberFormat, LargeXlsxStylesheet.NoBorder);
 
                 largeXlsxWriter.BeginSheet("Sheet1")
-                    .BeginRow().WriteInlineStringCell("Col1", headerStyleId).WriteInlineStringCell("Col2", headerStyleId).WriteInlineStringCell("Col3", headerStyleId)
+                    .BeginRow().WriteInlineStringCell("Col1", headerStyle).WriteInlineStringCell("Col2", headerStyle).WriteInlineStringCell("Col3", headerStyle)
                     .BeginRow().WriteInlineStringCell("Row2").WriteNumericCell(42).WriteNumericCell(-1)
                     .BeginRow().WriteInlineStringCell("Row3").SkipColumns(1).WriteNumericCell(1234)
                     .SkipRows(2)

@@ -96,14 +96,14 @@ namespace LargeXlsx
             CurrentColumnNumber += columnCount;
         }
 
-        public void WriteInlineStringCell(string value, uint styleId)
+        public void WriteInlineStringCell(string value, LargeXlsxStyle style)
         {
             EnsureRow();
             CurrentColumnNumber++;
             _worksheetWriter.WriteStartElement(CellElement, new[]
             {
                 new OpenXmlAttribute("r", null, $"{GetColumnName(CurrentColumnNumber)}{CurrentRowNumber}"),
-                new OpenXmlAttribute("s", null, styleId.ToString()),
+                new OpenXmlAttribute("s", null, style.Id.ToString()),
                 InlineStringTypeAttribute
             });
             _worksheetWriter.WriteStartElement(new InlineString());
@@ -112,14 +112,14 @@ namespace LargeXlsx
             _worksheetWriter.WriteEndElement();
         }
 
-        public void WriteNumericCell(double value, uint styleId)
+        public void WriteNumericCell(double value, LargeXlsxStyle style)
         {
             EnsureRow();
             CurrentColumnNumber++;
             _worksheetWriter.WriteStartElement(CellElement, new[]
             {
                 new OpenXmlAttribute("r", null, $"{GetColumnName(CurrentColumnNumber)}{CurrentRowNumber}"),
-                new OpenXmlAttribute("s", null, styleId.ToString()),
+                new OpenXmlAttribute("s", null, style.Id.ToString()),
                 NumberTypeAttribute
             });
             _worksheetWriter.WriteElement(new CellValue(value.ToString(CultureInfo.InvariantCulture)));
