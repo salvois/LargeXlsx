@@ -8,7 +8,7 @@ namespace ExamplesDotNetCore
         public static void Run()
         {
             using (var stream = new FileStream($"{nameof(Simple)}.xlsx", FileMode.Create))
-            using (var largeXlsxWriter = new LargeXlsxWriter(stream))
+            using (var largeXlsxWriter = new LargeXlsxWriter2(stream))
             {
                 var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff");
                 var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
