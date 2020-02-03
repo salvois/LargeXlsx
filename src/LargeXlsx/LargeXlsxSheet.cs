@@ -126,10 +126,11 @@ namespace LargeXlsx
             _worksheetWriter.WriteEndElement();
         }
 
-        public void AddMergedCell(int fromRow, int fromColumn, int toRow, int toColumn)
+        public void AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
         {
+            var toRow = fromRow + rowCount - 1;
             var fromColumnName = GetColumnName(fromColumn);
-            var toColumnName = GetColumnName(toColumn);
+            var toColumnName = GetColumnName(fromColumn + columnCount - 1);
             _mergedCells.Add($"{fromColumnName}{fromRow}:{toColumnName}{toRow}");
         }
 

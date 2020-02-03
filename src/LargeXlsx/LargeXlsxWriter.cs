@@ -41,6 +41,8 @@ namespace LargeXlsx
         private LargeXlsxSheet _currentSheet;
 
         public LargeXlsxStylesheet Stylesheet { get; }
+        public int CurrentRowNumber => _currentSheet.CurrentRowNumber;
+        public int CurrentColumnNumber => _currentSheet.CurrentColumnNumber;
 
         public LargeXlsxWriter(Stream stream)
         {
@@ -119,10 +121,10 @@ namespace LargeXlsx
             return this;
         }
 
-        public LargeXlsxWriter AddMergedCell(int fromRow, int fromColumn, int toRow, int toColumn)
+        public LargeXlsxWriter AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
         {
             EnsureSheet();
-            _currentSheet.AddMergedCell(fromRow, fromColumn, toRow, toColumn);
+            _currentSheet.AddMergedCell(fromRow, fromColumn, rowCount, columnCount);
             return this;
         }
 

@@ -37,7 +37,7 @@ using (var largeXlsxWriter = new LargeXlsxWriter(stream))
 		.BeginRow().WriteInlineStringCell("Row2").WriteNumericCell(42).WriteNumericCell(-1)
 		.BeginRow().WriteInlineStringCell("Row3").SkipColumns(1).WriteNumericCell(1234)
 		.SkipRows(2)
-		.BeginRow().WriteInlineStringCell("Row6").AddMergedCell(6, 1, 6, 2).SkipColumns(1).WriteNumericCell(3.14159265359);
+		.BeginRow().WriteInlineStringCell("Row6").AddMergedCell(6, 1, 1, 1).SkipColumns(1).WriteNumericCell(3.14159265359);
 }
 ----
 

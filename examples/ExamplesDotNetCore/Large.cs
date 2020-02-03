@@ -13,7 +13,7 @@ namespace ExamplesDotNetCore
             using (var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create))
             using (var largeXlsxWriter = new LargeXlsxWriter(stream))
             {
-                var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff");
+                var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
                 var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
                 var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, LargeXlsxStylesheet.GeneralNumberFormat, LargeXlsxStylesheet.NoBorder);
                 var numberStyle = largeXlsxWriter.Stylesheet.CreateStyle(LargeXlsxStylesheet.DefaultFont, LargeXlsxStylesheet.NoFill, LargeXlsxStylesheet.TwoDecimalExcelNumberFormat, LargeXlsxStylesheet.NoBorder);
