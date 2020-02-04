@@ -95,29 +95,64 @@ namespace LargeXlsx
             return this;
         }
 
-        public LargeXlsxWriter WriteInlineStringCell(string value)
+        public LargeXlsxWriter WriteInlineString(string value)
         {
-            return WriteInlineStringCell(value, LargeXlsxStylesheet.DefaultStyle);
+            return WriteInlineString(value, LargeXlsxStylesheet.DefaultStyle);
         }
 
-        public LargeXlsxWriter WriteInlineStringCell(string value, LargeXlsxStyle style)
+        public LargeXlsxWriter WriteInlineString(string value, LargeXlsxStyle style)
         {
             EnsureSheet();
-            _currentSheet.WriteInlineStringCell(value, style);
+            _currentSheet.WriteInlineString(value, style);
             return this;
         }
 
-        public LargeXlsxWriter WriteNumericCell(double value)
+        public LargeXlsxWriter Write(double value)
         {
             EnsureSheet();
-            _currentSheet.WriteNumericCell(value, LargeXlsxStylesheet.DefaultStyle);
+            _currentSheet.Write(value, LargeXlsxStylesheet.DefaultStyle);
             return this;
         }
 
-        public LargeXlsxWriter WriteNumericCell(double value, LargeXlsxStyle style)
+        public LargeXlsxWriter Write(double value, LargeXlsxStyle style)
         {
             EnsureSheet();
-            _currentSheet.WriteNumericCell(value, style);
+            _currentSheet.Write(value, style);
+            return this;
+        }
+
+        public LargeXlsxWriter Write(decimal value)
+        {
+            EnsureSheet();
+            _currentSheet.Write((double)value, LargeXlsxStylesheet.DefaultStyle);
+            return this;
+        }
+
+        public LargeXlsxWriter Write(decimal value, LargeXlsxStyle style)
+        {
+            EnsureSheet();
+            _currentSheet.Write((double)value, style);
+            return this;
+        }
+
+        public LargeXlsxWriter Write(int value)
+        {
+            EnsureSheet();
+            _currentSheet.Write(value, LargeXlsxStylesheet.DefaultStyle);
+            return this;
+        }
+
+        public LargeXlsxWriter Write(int value, LargeXlsxStyle style)
+        {
+            EnsureSheet();
+            _currentSheet.Write(value, style);
+            return this;
+        }
+
+        public LargeXlsxWriter AddMergedCell(int rowCount, int columnCount)
+        {
+            EnsureSheet();
+            _currentSheet.AddMergedCell(_currentSheet.CurrentRowNumber, _currentSheet.CurrentColumnNumber, rowCount, columnCount);
             return this;
         }
 

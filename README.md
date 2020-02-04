@@ -1,7 +1,7 @@
 LargeXlsx - Minimalistic .net library to write large XLSX files
 ===============================================================
 
-This is a minimalistic library, written in C# targeting .net standard 2.0, providing a tiny layer above Microsoft's https://github.com/OfficeDev/Open-XML-SDK[Office Open XML library] to facilitate creation of very large Excel files in XLSX format.
+This is a minimalistic library, written in C# targeting .net standard 2.0, providing a tiny layer above Microsoft's [Office Open XML library](https://github.com/OfficeDev/Open-XML-SDK) to facilitate creation of very large Excel files in XLSX format.
 
 This library provides simple primitives to write data in a streamed manner, so that potentially huge files can be created while consuming a low, constant amount of memory.
 
@@ -24,37 +24,37 @@ Example
 
 To create a simple single-sheet Excel document:
 
-----
+```csharp
 using (var stream = new FileStream("Simple.xlsx", FileMode.Create))
 using (var largeXlsxWriter = new LargeXlsxWriter(stream))
 {
-	var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
-	var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
-	var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, LargeXlsxStylesheet.GeneralNumberFormat, LargeXlsxStylesheet.NoBorder);
+    var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
+    var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
+    var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, LargeXlsxStylesheet.GeneralNumberFormat, LargeXlsxStylesheet.NoBorder);
 
-	largeXlsxWriter.BeginSheet("Sheet1")
-		.BeginRow().WriteInlineStringCell("Col1", headerStyle).WriteInlineStringCell("Col2", headerStyle).WriteInlineStringCell("Col3", headerStyle)
-		.BeginRow().WriteInlineStringCell("Row2").WriteNumericCell(42).WriteNumericCell(-1)
-		.BeginRow().WriteInlineStringCell("Row3").SkipColumns(1).WriteNumericCell(1234)
-		.SkipRows(2)
-		.BeginRow().WriteInlineStringCell("Row6").AddMergedCell(6, 1, 1, 2).SkipColumns(1).WriteNumericCell(3.14159265359);
+    largeXlsxWriter.BeginSheet("Sheet1")
+        .BeginRow().WriteInlineString("Col1", headerStyle).WriteInlineString("Col2", headerStyle).WriteInlineString("Col3", headerStyle)
+        .BeginRow().WriteInlineString("Row2").Write(42).Write(-1)
+        .BeginRow().WriteInlineString("Row3").SkipColumns(1).Write(1234)
+        .SkipRows(2)
+        .BeginRow().WriteInlineString("Row6").AddMergedCell(1, 2).SkipColumns(1).Write(3.14159265359);
 }
-----
+```
 
-Produces an output like:
+The output is like:
 
-image::example.png[Single sheet Excel document with 6 rows and 3 columns]
+![Single sheet Excel document with 6 rows and 3 columns](https://github.com/salvois/LargeXlsx/raw/master/example.png "Single sheet Excel document with 6 rows and 3 columns")
 
 Known issues
 ------------
 
-On .net core there is an https://github.com/dotnet/corefx/issues/24457[issue on System.IO.Packaging] (used by the Open XML SDK to write XLSX's zip packages) that causes memory consumption to be proportional to the amount of data written, instead of being low and constant. Unfortunately, this kind of defeats the purpose of this library when targeting .net core. The issue is not present on .net framework.
+On .net core there is an [issue on System.IO.Packaging](https://github.com/dotnet/corefx/issues/24457) (used by the Open XML SDK to write XLSX's zip packages) that causes memory consumption to be proportional to the amount of data written, instead of being low and constant. Unfortunately, this kind of defeats the purpose of this library when targeting .net core. The issue is not present on .net framework.
 
 
 License
 -------
 
-Permissive, https://opensource.org/licenses/BSD-2-Clause[2-clause BSD style]
+Permissive, [2-clause BSD style](https://opensource.org/licenses/BSD-2-Clause)
 
 LargeXlsx - Minimalistic .net library to write large XLSX files
 

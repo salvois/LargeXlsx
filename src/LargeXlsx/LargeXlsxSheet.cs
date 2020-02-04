@@ -96,7 +96,7 @@ namespace LargeXlsx
             CurrentColumnNumber += columnCount;
         }
 
-        public void WriteInlineStringCell(string value, LargeXlsxStyle style)
+        public void WriteInlineString(string value, LargeXlsxStyle style)
         {
             EnsureRow();
             CurrentColumnNumber++;
@@ -112,7 +112,7 @@ namespace LargeXlsx
             _worksheetWriter.WriteEndElement();
         }
 
-        public void WriteNumericCell(double value, LargeXlsxStyle style)
+        public void Write(double value, LargeXlsxStyle style)
         {
             EnsureRow();
             CurrentColumnNumber++;

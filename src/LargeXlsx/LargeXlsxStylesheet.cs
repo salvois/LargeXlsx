@@ -80,14 +80,14 @@ namespace LargeXlsx
             _nextNumberFormatId = 164;  // ids less than 164 are reserved by Excel for default formats
 
             _nextFontId = 0;
-            CreateFont("Calibri", 11, "000000", false);
+            CreateFont("Calibri", 11, "000000");
 
             _styles = new Dictionary<StyleTuple, LargeXlsxStyle>();
             _nextStyleId = 0;
             CreateStyle(DefaultFont, NoFill, GeneralNumberFormat, NoBorder);
         }
 
-        public LargeXlsxFont CreateFont(string fontName, double fontSize, string hexRgbColor, bool bold)
+        public LargeXlsxFont CreateFont(string fontName, double fontSize, string hexRgbColor, bool bold = false, bool italic = false, bool strike = false)
         {
             var font = new Font
             {
@@ -98,6 +98,8 @@ namespace LargeXlsx
                 FontScheme = new FontScheme { Val = FontSchemeValues.Minor }
             };
             if (bold) font.Bold = new Bold();
+            if (italic) font.Italic = new Italic();
+            if (strike) font.Strike = new Strike();
             _stylesheet.Fonts.AppendChild(font);
             return new LargeXlsxFont(_nextFontId++);
         }

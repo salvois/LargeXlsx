@@ -15,11 +15,11 @@ namespace ExamplesDotNetCore
                 var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, LargeXlsxStylesheet.GeneralNumberFormat, LargeXlsxStylesheet.NoBorder);
 
                 largeXlsxWriter.BeginSheet("Sheet1")
-                    .BeginRow().WriteInlineStringCell("Col1", headerStyle).WriteInlineStringCell("Col2", headerStyle).WriteInlineStringCell("Col3", headerStyle)
-                    .BeginRow().WriteInlineStringCell("Row2").WriteNumericCell(42).WriteNumericCell(-1)
-                    .BeginRow().WriteInlineStringCell("Row3").SkipColumns(1).WriteNumericCell(1234)
+                    .BeginRow().WriteInlineString("Col1", headerStyle).WriteInlineString("Col2", headerStyle).WriteInlineString("Col3", headerStyle)
+                    .BeginRow().WriteInlineString("Row2").Write(42).Write(-1)
+                    .BeginRow().WriteInlineString("Row3").SkipColumns(1).Write(1234)
                     .SkipRows(2)
-                    .BeginRow().WriteInlineStringCell("Row6").AddMergedCell(6, 1, 1, 2).SkipColumns(1).WriteNumericCell(3.14159265359);
+                    .BeginRow().WriteInlineString("Row6").AddMergedCell(1, 2).SkipColumns(1).Write(3.14159265359);
             }
         }
     }
