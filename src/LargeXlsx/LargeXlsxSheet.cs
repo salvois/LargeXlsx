@@ -110,6 +110,9 @@ namespace LargeXlsx
 
         public void Write(string value, LargeXlsxStyle style)
         {
+            if (value == null)
+                Write(style);
+
             EnsureRow();
             CurrentColumnNumber++;
             _worksheetWriter.WriteStartElement(CellElement, new[]
