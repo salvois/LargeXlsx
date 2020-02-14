@@ -111,7 +111,10 @@ namespace LargeXlsx
         public void Write(string value, LargeXlsxStyle style)
         {
             if (value == null)
+            {
                 Write(style);
+                return;
+            }
 
             EnsureRow();
             CurrentColumnNumber++;
