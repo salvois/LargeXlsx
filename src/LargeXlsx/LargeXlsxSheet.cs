@@ -96,7 +96,19 @@ namespace LargeXlsx
             CurrentColumnNumber += columnCount;
         }
 
-        public void WriteInlineString(string value, LargeXlsxStyle style)
+        public void Write(LargeXlsxStyle style)
+        {
+            EnsureRow();
+            CurrentColumnNumber++;
+            _worksheetWriter.WriteStartElement(CellElement, new[]
+            {
+                new OpenXmlAttribute("r", null, $"{GetColumnName(CurrentColumnNumber)}{CurrentRowNumber}"),
+                new OpenXmlAttribute("s", null, style.Id.ToString())
+            });
+            _worksheetWriter.WriteEndElement();
+        }
+
+        public void Write(string value, LargeXlsxStyle style)
         {
             EnsureRow();
             CurrentColumnNumber++;

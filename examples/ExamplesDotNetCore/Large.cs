@@ -21,10 +21,10 @@ namespace ExamplesDotNetCore
                 largeXlsxWriter.BeginSheet("Sheet1", 1, 1);
                 largeXlsxWriter.BeginRow();
                 for (var j = 0; j < 180; j++)
-                    largeXlsxWriter.WriteInlineString($"Column {j}", headerStyle);
+                    largeXlsxWriter.Write($"Column {j}", headerStyle);
                 for (var i = 0; i < 50000; i++)
                 {
-                    largeXlsxWriter.BeginRow().WriteInlineString($"Row {i}");
+                    largeXlsxWriter.BeginRow().Write($"Row {i}");
                     for (var j = 1; j < 180; j++)
                         largeXlsxWriter.Write(i * 1000 + j, numberStyle);
                 }
