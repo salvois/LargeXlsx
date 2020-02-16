@@ -11,14 +11,14 @@ namespace ExamplesDotNetFramework
         {
             var stopwatch = Stopwatch.StartNew();
             using (var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create))
-            using (var largeXlsxWriter = new LargeXlsxWriter(stream))
+            using (var largeXlsxWriter = new XlsxWriter(stream))
             {
                 var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
                 var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
-                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, LargeXlsxStylesheet.GeneralNumberFormat, LargeXlsxStylesheet.NoBorder);
-                var numberStyle = largeXlsxWriter.Stylesheet.CreateStyle(LargeXlsxStylesheet.DefaultFont, LargeXlsxStylesheet.NoFill, LargeXlsxStylesheet.TwoDecimalExcelNumberFormat, LargeXlsxStylesheet.NoBorder);
+                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
+                var numberStyle = largeXlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.TwoDecimal);
 
-                largeXlsxWriter.BeginSheet("Sheet1", 1, 1);
+                largeXlsxWriter.BeginWorksheet("Sheet1", 1, 1);
                 largeXlsxWriter.BeginRow();
                 for (var j = 0; j < 180; j++)
                     largeXlsxWriter.Write($"Column {j}", headerStyle);

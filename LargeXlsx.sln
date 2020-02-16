@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExamplesDotNetCore", "examp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExamplesDotNetFramework", "examples\ExamplesDotNetFramework\ExamplesDotNetFramework.csproj", "{BE1A2AC5-1071-4C16-AC43-BAE507B7A0CD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LargeXlsx.Tests", "tests\LargeXlsx.Tests.csproj", "{504AC08D-4236-4475-A379-E498A499ED44}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LargeXlsx.Tests", "tests\LargeXlsx.Tests\LargeXlsx.Tests.csproj", "{504AC08D-4236-4475-A379-E498A499ED44}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

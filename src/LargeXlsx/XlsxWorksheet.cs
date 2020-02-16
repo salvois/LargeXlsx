@@ -35,7 +35,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace LargeXlsx
 {
-    internal class LargeXlsxSheet : IDisposable
+    internal class XlsxWorksheet : IDisposable
     {
         private static readonly Row RowElement = new Row();
         private static readonly Cell CellElement = new Cell();
@@ -49,11 +49,11 @@ namespace LargeXlsx
         public int CurrentColumnNumber { get; private set; }
         public WorksheetPart WorksheetPart { get; }
 
-        public LargeXlsxSheet(SpreadsheetDocument document, string name, int splitRow, int splitColumn)
+        public XlsxWorksheet(SpreadsheetDocument document, string name, int splitRow, int splitColumn)
         {
             Name = name;
             CurrentRowNumber = 0;
-            CurrentColumnNumber = -1;
+            CurrentColumnNumber = 0;
             _mergedCells = new List<string>();
 
             WorksheetPart = document.WorkbookPart.AddNewPart<WorksheetPart>();
@@ -77,7 +77,7 @@ namespace LargeXlsx
         {
             CloseLastRow();
             CurrentRowNumber++;
-            CurrentColumnNumber = 0;
+            CurrentColumnNumber = 1;
             _worksheetWriter.WriteStartElement(RowElement, new[]
             {
                 new OpenXmlAttribute("r", null, CurrentRowNumber.ToString())
@@ -96,19 +96,19 @@ namespace LargeXlsx
             CurrentColumnNumber += columnCount;
         }
 
-        public void Write(LargeXlsxStyle style)
+        public void Write(XlsxStyle style)
         {
             EnsureRow();
-            CurrentColumnNumber++;
             _worksheetWriter.WriteStartElement(CellElement, new[]
             {
                 new OpenXmlAttribute("r", null, $"{GetColumnName(CurrentColumnNumber)}{CurrentRowNumber}"),
                 new OpenXmlAttribute("s", null, style.Id.ToString())
             });
             _worksheetWriter.WriteEndElement();
+            CurrentColumnNumber++;
         }
 
-        public void Write(string value, LargeXlsxStyle style)
+        public void Write(string value, XlsxStyle style)
         {
             if (value == null)
             {
@@ -117,7 +117,6 @@ namespace LargeXlsx
             }
 
             EnsureRow();
-            CurrentColumnNumber++;
             _worksheetWriter.WriteStartElement(CellElement, new[]
             {
                 new OpenXmlAttribute("r", null, $"{GetColumnName(CurrentColumnNumber)}{CurrentRowNumber}"),
@@ -128,12 +127,12 @@ namespace LargeXlsx
             _worksheetWriter.WriteElement(new Text(value));
             _worksheetWriter.WriteEndElement();
             _worksheetWriter.WriteEndElement();
+            CurrentColumnNumber++;
         }
 
-        public void Write(double value, LargeXlsxStyle style)
+        public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
-            CurrentColumnNumber++;
             _worksheetWriter.WriteStartElement(CellElement, new[]
             {
                 new OpenXmlAttribute("r", null, $"{GetColumnName(CurrentColumnNumber)}{CurrentRowNumber}"),
@@ -142,6 +141,7 @@ namespace LargeXlsx
             });
             _worksheetWriter.WriteElement(new CellValue(value.ToString(CultureInfo.InvariantCulture)));
             _worksheetWriter.WriteEndElement();
+            CurrentColumnNumber++;
         }
 
         public void AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
@@ -154,16 +154,16 @@ namespace LargeXlsx
 
         private void EnsureRow()
         {
-            if (CurrentColumnNumber < 0)
+            if (CurrentColumnNumber == 0)
                 throw new InvalidOperationException($"{nameof(BeginRow)} not called");
         }
 
         private void CloseLastRow()
         {
-            if (CurrentColumnNumber >= 0)
+            if (CurrentColumnNumber > 0)
             {
                 _worksheetWriter.WriteEndElement();
-                CurrentColumnNumber = -1;
+                CurrentColumnNumber = 0;
             }
         }
 

@@ -7,20 +7,20 @@ using OfficeOpenXml.Style;
 namespace LargeXlsx.Tests
 {
     [TestFixture]
-    public class LargeXlsxWriterTest
+    public class XlsxWriterTest
     {
         [Test]
         public void InsertionPoint()
         {
             using (var stream = new MemoryStream())
-            using (var largeXlsxWriter = new LargeXlsxWriter(stream))
+            using (var xlsxWriter = new XlsxWriter(stream))
             {
-                largeXlsxWriter.BeginSheet("Sheet1")
+                xlsxWriter.BeginWorksheet("Sheet1")
                     .BeginRow().Write("A1").Write("B1")
                     .BeginRow().Write("A2");
 
-                largeXlsxWriter.CurrentRowNumber.Should().Be(2);
-                largeXlsxWriter.CurrentColumnNumber.Should().Be(1);
+                xlsxWriter.CurrentRowNumber.Should().Be(2);
+                xlsxWriter.CurrentColumnNumber.Should().Be(2);
             }
         }
 
@@ -28,14 +28,14 @@ namespace LargeXlsx.Tests
         public void InsertionPointAfterSkipColumn()
         {
             using (var stream = new MemoryStream())
-            using (var largeXlsxWriter = new LargeXlsxWriter(stream))
+            using (var xlsxWriter = new XlsxWriter(stream))
             {
-                largeXlsxWriter.BeginSheet("Sheet1")
+                xlsxWriter.BeginWorksheet("Sheet1")
                     .BeginRow().Write("A1").Write("B1")
                     .BeginRow().Write("A2").SkipColumns(2);
 
-                largeXlsxWriter.CurrentRowNumber.Should().Be(2);
-                largeXlsxWriter.CurrentColumnNumber.Should().Be(3);
+                xlsxWriter.CurrentRowNumber.Should().Be(2);
+                xlsxWriter.CurrentColumnNumber.Should().Be(4);
             }
         }
 
@@ -43,14 +43,14 @@ namespace LargeXlsx.Tests
         public void InsertionPointAfterSkipRows()
         {
             using (var stream = new MemoryStream())
-            using (var largeXlsxWriter = new LargeXlsxWriter(stream))
+            using (var xlsxWriter = new XlsxWriter(stream))
             {
-                largeXlsxWriter.BeginSheet("Sheet1")
+                xlsxWriter.BeginWorksheet("Sheet1")
                     .BeginRow().Write("A1").Write("B1")
                     .SkipRows(2);
 
-                largeXlsxWriter.CurrentRowNumber.Should().Be(3);
-                largeXlsxWriter.CurrentColumnNumber.Should().Be(-1);
+                xlsxWriter.CurrentRowNumber.Should().Be(3);
+                xlsxWriter.CurrentColumnNumber.Should().Be(0);
             }
         }
 
@@ -59,19 +59,19 @@ namespace LargeXlsx.Tests
         {
             using (var stream = new MemoryStream())
             {
-                using (var largeXlsxWriter = new LargeXlsxWriter(stream))
+                using (var xlsxWriter = new XlsxWriter(stream))
                 {
-                    var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
-                    var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
-                    var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, LargeXlsxStylesheet.GeneralNumberFormat, LargeXlsxStylesheet.NoBorder);
+                    var whiteFont = xlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
+                    var blueFill = xlsxWriter.Stylesheet.CreateSolidFill("004586");
+                    var headerStyle = xlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
 
-                    largeXlsxWriter.BeginSheet("Sheet1")
+                    xlsxWriter.BeginWorksheet("Sheet1")
                         .BeginRow().Write("Col1", headerStyle).Write("Col2", headerStyle).Write("Col3", headerStyle)
                         .BeginRow().Write(headerStyle).Write("Sub2", headerStyle).Write("Sub3", headerStyle)
                         .BeginRow().Write("Row3").Write(42).Write(-1)
                         .BeginRow().Write("Row4").SkipColumns(1).Write(1234)
                         .SkipRows(2)
-                        .BeginRow().Write("Row7").AddMergedCell(1, 2).SkipColumns(1).Write(3.14159265359);
+                        .BeginRow().AddMergedCell(1, 2).Write("Row7").SkipColumns(1).Write(3.14159265359);
                 }
 
                 using (var package = new ExcelPackage(stream))
