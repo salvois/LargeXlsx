@@ -91,6 +91,7 @@ Call one of the `Write` overloads to write content to the cell at the insertion 
   * **Inline string**: a string of text that is written directly into the cell; this is in contrast with a different functionality of the XLSX file format, which can support a global look-up table of strings, and just the string index into the cell; the latter functionality is not supported because it is inherently incompatible with streamed write. If the string is `null` the method falls back on the "Nothing" case.
   * **Number**: a numeric constant, that will be interpreted as a `double` value; conveniency overloads accepting `int` and `decimal` are provided, but the under the hood the value will be converted to `double` because it is the only numeric type truly supported by the XLSX file format.
 
+This is the list of supported overloads:
 
     XlsxWriter Write()
     XlsxWriter Write(string value)
@@ -150,7 +151,7 @@ For example to create a red, italic, 11-point Calibri font, use: `var redItalicF
 
 A default black, plain, 11-point Calibri font, can be referenced with font ID is `XlsxFont.Default`.
 
-### Fills
+#### Fills
 
 Currently, only fills with a solid background color are supported. To create a new solid fill, call the `CreateSolidFill` method of the `XlsxStylesheet` object. The color is a string of hexadecimal digits in RRGGBB format.
 
@@ -160,7 +161,7 @@ For example to create a yellow fill, use: `var yellowFill = xlsxWriter.Styleshee
 
 A default empty fill can be referenced with the fill ID `XlsxFill.None`.
 
-### Borders
+#### Borders
 
 Currently, a set of top, right, bottom and left cell borders of the same color is supported. To create a new set of borders, call the `CreateBorder` method of the `XlsxStylesheet` object. The color is a string of hexadecimal digits in RRGGBB format. The `BorderStyleValues` enum from the Office Open XML library defines the kind of border of each cell side, such as `None`, `Thin`, `Medium`, `Thick`, `Double`, `Dashed`, `Dotted` and others. Using named arguments is recommended to improve readability.
 
@@ -175,7 +176,7 @@ For example to create a thin black border on the left side only, use: `var leftB
 
 A default empty border set can be referenced with the border ID `XlsxBorder.None`.
 
-### Number formats
+#### Number formats
 
 To create a custom number format, call the `CreateNumberFormat` method of the `XlsxStylesheet` object, specifying a number format string as you would normally do in Excel, such as `"0.0%"` for a percentage with exactly one decimal value.
 
@@ -188,7 +189,7 @@ Excel defines and reserves many number formats, and this library exposes some of
 * `XlsxNumberFormat.General`: the default number format, where Excel automatically chooses the "best" representation based on magnitude and number of decimals.
 * `XlsxNumberFormat.TwoDecimal`: a number format with thousand separators and two decimal numbers, that is the format code `"#,##0.00"`.
 
-### Combining them all to create a style
+#### Combining them all to create a style
 
 To create a new style using the specified combination of font, fill, border and number format, call the `CreateStyle` method of the `XlsxStylesheet` object. The resulting style ID can be used with `Write` to stylize a cell being written.
 
