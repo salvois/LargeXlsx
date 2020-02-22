@@ -1,5 +1,7 @@
 # LargeXlsx - Minimalistic .net library to write large XLSX files
 
+[![NuGet](https://img.shields.io/nuget/v/LargeXlsx.svg)](https://www.nuget.org/packages/LargeXlsx)
+
 This is a minimalistic library, written in C# targeting .net standard 2.0, providing a tiny layer above Microsoft's [Office Open XML library](https://github.com/OfficeDev/Open-XML-SDK) to facilitate creation of very large Excel files in XLSX format.
 
 This library provides simple primitives to write data in a streamed manner, so that potentially huge files can be created while consuming a low, constant amount of memory.
@@ -79,7 +81,7 @@ Call `BeginRow` to advance the insertion point to the beginning of the next line
 
     XlsxWriter BeginRow()
 
-Call `SkipRows` to move the insertion point down by the specified count of rows, that will be left empty and unstylized. If a previous row was being written, it is finalized. Please note that `BeginRow` must be called anyways before starting to write a new row.
+Call `SkipRows` to move the insertion point down by the specified count of rows, that will be left empty and unstyled. If a previous row was being written, it is finalized. Please note that `BeginRow` must be called anyways before starting to write a new row.
 
     XlsxWriter SkipRows(int rowCount)
 
@@ -99,7 +101,7 @@ This is the list of supported overloads:
     XlsxWriter Write(decimal value)
     XlsxWriter Write(int value)
 
-Besides the value to write into the cell, `Write` optionally accepts another parameter representing the ID of the style (see Styling) to use to stylize the cell being written. This cannot be changed after the cell has been written.
+Besides the value to write into the cell, `Write` optionally accepts another parameter representing the ID of the style (see Styling) to use to style the cell being written. This cannot be changed after the cell has been written.
 
     XlsxWriter Write(XlsxStyle style)
     XlsxWriter Write(string value, XlsxStyle style)
@@ -107,7 +109,7 @@ Besides the value to write into the cell, `Write` optionally accepts another par
     XlsxWriter Write(decimal value, XlsxStyle style)
     XlsxWriter Write(int value, XlsxStyle style)
 
-Like rows, cells can be skipped using the `SkipColumns` method, to move the insertion point to the right by the specified count of cells, that will be left empty and unstylized.
+Like rows, cells can be skipped using the `SkipColumns` method, to move the insertion point to the right by the specified count of cells, that will be left empty and unstyled.
 
     XlsxWriter SkipColumns(int columnCount)
 
@@ -147,9 +149,9 @@ To create a new font, call the `CreateFont` method of the `XlsxStylesheet` objec
     XlsxFont CreateFont(string fontName, double fontSize, string hexRgbColor,
                         bool bold = false, bool italic = false, bool strike = false)
 
-For example to create a red, italic, 11-point Calibri font, use: `var redItalicFont = xlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ff0000", italic: true)`.
+For example to create a red, italic, 11-point, Calibri font, use: `var redItalicFont = xlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ff0000", italic: true)`.
 
-A default black, plain, 11-point Calibri font, can be referenced with font ID is `XlsxFont.Default`.
+A default black, plain, 11-point, Calibri font can be referenced with font ID `XlsxFont.Default`.
 
 #### Fills
 
@@ -191,7 +193,7 @@ Excel defines and reserves many number formats, and this library exposes some of
 
 #### Combining them all to create a style
 
-To create a new style using the specified combination of font, fill, border and number format, call the `CreateStyle` method of the `XlsxStylesheet` object. The resulting style ID can be used with `Write` to stylize a cell being written.
+To create a new style using the specified combination of font, fill, border and number format, call the `CreateStyle` method of the `XlsxStylesheet` object. The resulting style ID can be used with `Write` to style a cell being written.
 
     XlsxStyle CreateStyle(XlsxFont font,
                           XlsxFill fill,

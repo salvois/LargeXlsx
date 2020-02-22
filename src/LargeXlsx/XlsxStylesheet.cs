@@ -86,8 +86,7 @@ namespace LargeXlsx
                 FontSize = new FontSize { Val = fontSize },
                 Color = new Color { Rgb = HexBinaryValue.FromString(hexRgbColor) },
                 FontName = new FontName { Val = fontName },
-                FontFamilyNumbering = new FontFamilyNumbering { Val = 2 },
-                FontScheme = new FontScheme { Val = FontSchemeValues.Minor }
+                FontFamilyNumbering = new FontFamilyNumbering { Val = 2 }
             };
             if (bold) font.Bold = new Bold();
             if (italic) font.Italic = new Italic();

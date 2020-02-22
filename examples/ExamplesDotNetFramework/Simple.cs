@@ -10,7 +10,7 @@ namespace ExamplesDotNetFramework
             using (var stream = new FileStream($"{nameof(Simple)}.xlsx", FileMode.Create))
             using (var largeXlsxWriter = new XlsxWriter(stream))
             {
-                var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
+                var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Segoe UI", 9, "ffffff", bold: true);
                 var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
                 var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
 

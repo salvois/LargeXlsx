@@ -61,7 +61,7 @@ namespace LargeXlsx.Tests
             {
                 using (var xlsxWriter = new XlsxWriter(stream))
                 {
-                    var whiteFont = xlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
+                    var whiteFont = xlsxWriter.Stylesheet.CreateFont("Segoe UI", 9, "ffffff", bold: true);
                     var blueFill = xlsxWriter.Stylesheet.CreateSolidFill("004586");
                     var headerStyle = xlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
 
@@ -104,8 +104,8 @@ namespace LargeXlsx.Tests
                     sheet.Cells["A1:C2"].Style.Fill.BackgroundColor.Rgb.Should().Be("004586");
                     sheet.Cells["A1:C2"].Style.Font.Bold.Should().BeTrue();
                     sheet.Cells["A1:C2"].Style.Font.Color.Rgb.Should().Be("ffffff");
-                    sheet.Cells["A1:C2"].Style.Font.Name.Should().Be("Calibri");
-                    sheet.Cells["A1:C2"].Style.Font.Size.Should().Be(11);
+                    sheet.Cells["A1:C2"].Style.Font.Name.Should().Be("Segoe UI");
+                    sheet.Cells["A1:C2"].Style.Font.Size.Should().Be(9);
 
                     sheet.Cells["A3:C7"].Style.Fill.PatternType.Should().Be(ExcelFillStyle.None);
                     sheet.Cells["A3:C7"].Style.Font.Bold.Should().BeFalse();
