@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2019 Salvatore ISAJA. All rights reserved.
+Copyright 2020 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,25 +35,17 @@ namespace LargeXlsx
      * Special thanks to http://polymathprogrammer.com/2009/11/09/how-to-create-stylesheet-in-excel-open-xml/
      * for very valuable insights on how to properly create styles.
      */
-    public class LargeXlsxStylesheet
+    public class XlsxStylesheet
     {
-        public static readonly LargeXlsxFill NoFill = new LargeXlsxFill(0);
-        public static readonly LargeXlsxFill Gray125Fill = new LargeXlsxFill(1);
-        public static readonly LargeXlsxFont DefaultFont = new LargeXlsxFont(0);
-        public static readonly LargeXlsxNumberFormat GeneralNumberFormat = new LargeXlsxNumberFormat(0);
-        public static readonly LargeXlsxNumberFormat TwoDecimalExcelNumberFormat = new LargeXlsxNumberFormat(4); // #,##0.00
-        public static readonly LargeXlsxBorder NoBorder = new LargeXlsxBorder(0);
-        public static readonly LargeXlsxStyle DefaultStyle = new LargeXlsxStyle(0);
-
         private readonly Stylesheet _stylesheet;
-        private readonly Dictionary<StyleTuple, LargeXlsxStyle> _styles;
+        private readonly Dictionary<StyleTuple, XlsxStyle> _styles;
         private uint _nextFontId;
         private uint _nextBorderId;
         private uint _nextFillId;
         private uint _nextNumberFormatId;
         private uint _nextStyleId;
 
-        internal LargeXlsxStylesheet()
+        internal XlsxStylesheet()
         {
             _stylesheet = new Stylesheet
             {
@@ -82,25 +74,28 @@ namespace LargeXlsx
             _nextFontId = 0;
             CreateFont("Calibri", 11, "000000");
 
-            _styles = new Dictionary<StyleTuple, LargeXlsxStyle>();
+            _styles = new Dictionary<StyleTuple, XlsxStyle>();
             _nextStyleId = 0;
-            CreateStyle(DefaultFont, NoFill, GeneralNumberFormat, NoBorder);
+            CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.General);
         }
 
-        public LargeXlsxFont CreateFont(string fontName, double fontSize, string hexRgbColor)
+        public XlsxFont CreateFont(string fontName, double fontSize, string hexRgbColor, bool bold = false, bool italic = false, bool strike = false)
         {
-            _stylesheet.Fonts.AppendChild(new Font
+            var font = new Font
             {
                 FontSize = new FontSize { Val = fontSize },
                 Color = new Color { Rgb = HexBinaryValue.FromString(hexRgbColor) },
                 FontName = new FontName { Val = fontName },
-                FontFamilyNumbering = new FontFamilyNumbering { Val = 2 },
-                FontScheme = new FontScheme { Val = FontSchemeValues.Minor }
-            });
-            return new LargeXlsxFont(_nextFontId++);
+                FontFamilyNumbering = new FontFamilyNumbering { Val = 2 }
+            };
+            if (bold) font.Bold = new Bold();
+            if (italic) font.Italic = new Italic();
+            if (strike) font.Strike = new Strike();
+            _stylesheet.Fonts.AppendChild(font);
+            return new XlsxFont(_nextFontId++);
         }
 
-        public LargeXlsxFill CreateSolidFill(string hexRgbColor)
+        public XlsxFill CreateSolidFill(string hexRgbColor)
         {
             var hexBinaryValue = HexBinaryValue.FromString(hexRgbColor);
             _stylesheet.Fills.AppendChild(new Fill
@@ -112,20 +107,25 @@ namespace LargeXlsx
                     ForegroundColor = new ForegroundColor { Rgb = hexBinaryValue }
                 }
             });
-            return new LargeXlsxFill(_nextFillId++);
+            return new XlsxFill(_nextFillId++);
         }
 
-        public LargeXlsxNumberFormat CreateNumberFormat(string formatCode)
+        public XlsxNumberFormat CreateNumberFormat(string formatCode)
         {
             _stylesheet.NumberingFormats.AppendChild(new NumberingFormat
             {
                 NumberFormatId = _nextNumberFormatId,
                 FormatCode = formatCode
             });
-            return new LargeXlsxNumberFormat(_nextNumberFormatId++);
+            return new XlsxNumberFormat(_nextNumberFormatId++);
         }
 
-        public LargeXlsxBorder CreateBorder(BorderStyleValues top, BorderStyleValues right, BorderStyleValues bottom, BorderStyleValues left, string hexRgbColor)
+        public XlsxBorder CreateBorder(
+            string hexRgbColor,
+            BorderStyleValues top = BorderStyleValues.None,
+            BorderStyleValues right = BorderStyleValues.None,
+            BorderStyleValues bottom = BorderStyleValues.None,
+            BorderStyleValues left = BorderStyleValues.None)
         {
             var hexBinaryValue = HexBinaryValue.FromString(hexRgbColor);
             var border = new Border
@@ -137,10 +137,10 @@ namespace LargeXlsx
                 DiagonalBorder = new DiagonalBorder()
             };
             _stylesheet.Borders.AppendChild(border);
-            return new LargeXlsxBorder(_nextBorderId++);
+            return new XlsxBorder(_nextBorderId++);
         }
 
-        public LargeXlsxStyle CreateStyle(LargeXlsxFont font, LargeXlsxFill fill, LargeXlsxNumberFormat numberFormat, LargeXlsxBorder border)
+        public XlsxStyle CreateStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat)
         {
             var styleTuple = new StyleTuple(font.Id, fill.Id, numberFormat.Id, border.Id);
             if (_styles.TryGetValue(styleTuple, out var styleId))
@@ -157,7 +157,7 @@ namespace LargeXlsx
                 ApplyNumberFormat = true,
                 ApplyBorder = true
             });
-            var newStyle = new LargeXlsxStyle(_nextStyleId++);
+            var newStyle = new XlsxStyle(_nextStyleId++);
             _styles[styleTuple] = newStyle;
             return newStyle;
         }
@@ -192,51 +192,63 @@ namespace LargeXlsx
         }
     }
 
-    public struct LargeXlsxFont
+    public struct XlsxFont
     {
+        public static readonly XlsxFont Default = new XlsxFont(0);
+
         internal uint Id { get; }
 
-        internal LargeXlsxFont(uint id)
+        internal XlsxFont(uint id)
         {
             Id = id;
         }
     }
 
-    public struct LargeXlsxFill
+    public struct XlsxFill
     {
+        public static readonly XlsxFill None = new XlsxFill(0);
+        public static readonly XlsxFill Gray125 = new XlsxFill(1);
+
         internal uint Id { get; }
 
-        internal LargeXlsxFill(uint id)
+        internal XlsxFill(uint id)
         {
             Id = id;
         }
     }
 
-    public struct LargeXlsxBorder
+    public struct XlsxBorder
     {
+        public static readonly XlsxBorder None = new XlsxBorder(0);
+
         internal uint Id { get; }
 
-        internal LargeXlsxBorder(uint id)
+        internal XlsxBorder(uint id)
         {
             Id = id;
         }
     }
 
-    public struct LargeXlsxNumberFormat
+    public struct XlsxNumberFormat
     {
+        public static readonly XlsxNumberFormat General = new XlsxNumberFormat(0);
+        public static readonly XlsxNumberFormat TwoDecimal = new XlsxNumberFormat(4); // #,##0.00
+
         internal uint Id { get; }
 
-        internal LargeXlsxNumberFormat(uint id)
+        internal XlsxNumberFormat(uint id)
         {
             Id = id;
         }
     }
 
-    public struct LargeXlsxStyle
+    public struct XlsxStyle
     {
+        public static readonly XlsxStyle Default = new XlsxStyle(0);
+
         internal uint Id { get; }
 
-        internal LargeXlsxStyle(uint id)
+        internal XlsxStyle(uint id)
         {
             Id = id;
         }

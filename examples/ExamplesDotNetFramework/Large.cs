@@ -11,22 +11,22 @@ namespace ExamplesDotNetFramework
         {
             var stopwatch = Stopwatch.StartNew();
             using (var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create))
-            using (var largeXlsxWriter = new LargeXlsxWriter(stream))
+            using (var largeXlsxWriter = new XlsxWriter(stream))
             {
-                var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff");
+                var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
                 var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
-                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, LargeXlsxStylesheet.GeneralNumberFormat, LargeXlsxStylesheet.NoBorder);
-                var numberStyle = largeXlsxWriter.Stylesheet.CreateStyle(LargeXlsxStylesheet.DefaultFont, LargeXlsxStylesheet.NoFill, LargeXlsxStylesheet.TwoDecimalExcelNumberFormat, LargeXlsxStylesheet.NoBorder);
+                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
+                var numberStyle = largeXlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.TwoDecimal);
 
-                largeXlsxWriter.BeginSheet("Sheet1", 1, 1);
+                largeXlsxWriter.BeginWorksheet("Sheet1", 1, 1);
                 largeXlsxWriter.BeginRow();
                 for (var j = 0; j < 180; j++)
-                    largeXlsxWriter.WriteInlineStringCell($"Column {j}", headerStyle);
+                    largeXlsxWriter.Write($"Column {j}", headerStyle);
                 for (var i = 0; i < 50000; i++)
                 {
-                    largeXlsxWriter.BeginRow().WriteInlineStringCell($"Row {i}");
+                    largeXlsxWriter.BeginRow().Write($"Row {i}");
                     for (var j = 1; j < 180; j++)
-                        largeXlsxWriter.WriteNumericCell(i * 1000 + j, numberStyle);
+                        largeXlsxWriter.Write(i * 1000 + j, numberStyle);
                 }
             }
             stopwatch.Stop();

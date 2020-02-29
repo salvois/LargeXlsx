@@ -7,7 +7,7 @@ using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
-    internal class LargeXlsxSheet2 : IDisposable
+    internal class XlsxSheet2 : IDisposable
     {
         private readonly Stream _stream;
         private readonly StreamWriter _streamWriter;
@@ -17,7 +17,7 @@ namespace LargeXlsx
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
 
-        public LargeXlsxSheet2(ZipWriter zipWriter, string name, int splitRow, int splitColumn)
+        public XlsxSheet2(ZipWriter zipWriter, string name, int splitRow, int splitColumn)
         {
             Name = name;
             CurrentRowNumber = 0;
@@ -63,14 +63,14 @@ namespace LargeXlsx
             CurrentColumnNumber += columnCount;
         }
 
-        public void WriteInlineStringCell(string value, LargeXlsxStyle style)
+        public void WriteInlineStringCell(string value, XlsxStyle style)
         {
             EnsureRow();
             CurrentColumnNumber++;
             _streamWriter.Write("<c r=\"{0}{1}\" s=\"0\" t=\"inlineStr\"><is><t>{2}</t></is></c>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, value);
         }
 
-        public void WriteNumericCell(double value, LargeXlsxStyle style)
+        public void WriteNumericCell(double value, XlsxStyle style)
         {
             EnsureRow();
             CurrentColumnNumber++;

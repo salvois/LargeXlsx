@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>0.0.8</Version>
+    <Authors>Salvo Isaja</Authors>
+    <Company>Salvo Isaja</Company>
+    <Copyright>Copyright 2020  Salvatore Isaja</Copyright>
+    <PackageLicenseUrl>https://opensource.org/licenses/BSD-2-Clause</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/salvois/LargeXlsx</PackageProjectUrl>
+    <Description>Minimalistic .net library to write large Excel files in XLSX format with low memory consumption using streamed write.</Description>
   </PropertyGroup>
 
   <ItemGroup>

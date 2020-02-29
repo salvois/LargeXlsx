@@ -8,18 +8,18 @@ using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
-    public class LargeXlsxWriter2 : IDisposable
+    public class XlsxWriter2 : IDisposable
     {
         private readonly ZipWriter _zipWriter;
-        private readonly List<LargeXlsxSheet2> _largeXlsxSheets;
-        private LargeXlsxSheet2 _currentSheet;
+        private readonly List<XlsxSheet2> _largeXlsxSheets;
+        private XlsxSheet2 _currentSheet;
 
-        public LargeXlsxStylesheet Stylesheet { get; }
+        public XlsxStylesheet Stylesheet { get; }
 
-        public LargeXlsxWriter2(Stream stream)
+        public XlsxWriter2(Stream stream)
         {
-            _largeXlsxSheets = new List<LargeXlsxSheet2>();
-            Stylesheet = new LargeXlsxStylesheet();
+            _largeXlsxSheets = new List<XlsxSheet2>();
+            Stylesheet = new XlsxStylesheet();
 
             _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate));
         }
@@ -76,62 +76,62 @@ namespace LargeXlsx
             _zipWriter.Dispose();
         }
 
-        public LargeXlsxWriter2 BeginSheet(string name, int splitRow = 0, int splitColumn = 0)
+        public XlsxWriter2 BeginSheet(string name, int splitRow = 0, int splitColumn = 0)
         {
             _currentSheet?.Dispose();
-            _currentSheet = new LargeXlsxSheet2(_zipWriter, name, splitRow, splitColumn);
+            _currentSheet = new XlsxSheet2(_zipWriter, name, splitRow, splitColumn);
             _largeXlsxSheets.Add(_currentSheet);
             return this;
         }
 
-        public LargeXlsxWriter2 SkipRows(int rowCount)
+        public XlsxWriter2 SkipRows(int rowCount)
         {
             EnsureSheet();
             _currentSheet.SkipRows(rowCount);
             return this;
         }
 
-        public LargeXlsxWriter2 BeginRow()
+        public XlsxWriter2 BeginRow()
         {
             EnsureSheet();
             _currentSheet.BeginRow();
             return this;
         }
 
-        public LargeXlsxWriter2 SkipColumns(int columnCount)
+        public XlsxWriter2 SkipColumns(int columnCount)
         {
             EnsureSheet();
             _currentSheet.SkipColumns(columnCount);
             return this;
         }
 
-        public LargeXlsxWriter2 WriteInlineStringCell(string value)
+        public XlsxWriter2 WriteInlineStringCell(string value)
         {
-            return WriteInlineStringCell(value, LargeXlsxStylesheet.DefaultStyle);
+            return WriteInlineStringCell(value, XlsxStylesheet2.DefaultStyle);
         }
 
-        public LargeXlsxWriter2 WriteInlineStringCell(string value, LargeXlsxStyle style)
+        public XlsxWriter2 WriteInlineStringCell(string value, XlsxStyle style)
         {
             EnsureSheet();
             _currentSheet.WriteInlineStringCell(value, style);
             return this;
         }
 
-        public LargeXlsxWriter2 WriteNumericCell(double value)
+        public XlsxWriter2 WriteNumericCell(double value)
         {
             EnsureSheet();
-            _currentSheet.WriteNumericCell(value, LargeXlsxStylesheet.DefaultStyle);
+            _currentSheet.WriteNumericCell(value, XlsxStylesheet2.DefaultStyle);
             return this;
         }
 
-        public LargeXlsxWriter2 WriteNumericCell(double value, LargeXlsxStyle style)
+        public XlsxWriter2 WriteNumericCell(double value, XlsxStyle style)
         {
             EnsureSheet();
             _currentSheet.WriteNumericCell(value, style);
             return this;
         }
 
-        public LargeXlsxWriter2 AddMergedCell(int fromRow, int fromColumn, int toRow, int toColumn)
+        public XlsxWriter2 AddMergedCell(int fromRow, int fromColumn, int toRow, int toColumn)
         {
             EnsureSheet();
             _currentSheet.AddMergedCell(fromRow, fromColumn, toRow, toColumn);

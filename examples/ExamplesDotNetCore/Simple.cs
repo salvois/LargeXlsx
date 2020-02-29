@@ -8,18 +8,18 @@ namespace ExamplesDotNetCore
         public static void Run()
         {
             using (var stream = new FileStream($"{nameof(Simple)}.xlsx", FileMode.Create))
-            using (var largeXlsxWriter = new LargeXlsxWriter2(stream))
+            using (var largeXlsxWriter = new XlsxWriter(stream))
             {
-                var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff");
+                var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Segoe UI", 9, "ffffff", bold: true);
                 var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
-                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, LargeXlsxStylesheet.GeneralNumberFormat, LargeXlsxStylesheet.NoBorder);
+                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
 
-                largeXlsxWriter.BeginSheet("Sheet1")
-                    .BeginRow().WriteInlineStringCell("Col1", headerStyle).WriteInlineStringCell("Col2", headerStyle).WriteInlineStringCell("Col3", headerStyle)
-                    .BeginRow().WriteInlineStringCell("Row2").WriteNumericCell(42).WriteNumericCell(-1)
-                    .BeginRow().WriteInlineStringCell("Row3").SkipColumns(1).WriteNumericCell(1234)
+                largeXlsxWriter.BeginWorksheet("Sheet1")
+                    .BeginRow().Write("Col1", headerStyle).Write("Col2", headerStyle).Write("Col3", headerStyle)
+                    .BeginRow().Write("Row2").Write(42).Write(-1)
+                    .BeginRow().Write("Row3").SkipColumns(1).Write(1234)
                     .SkipRows(2)
-                    .BeginRow().WriteInlineStringCell("Row6").AddMergedCell(6, 1, 6, 2).SkipColumns(1).WriteNumericCell(3.14159265359);
+                    .BeginRow().AddMergedCell(1, 2).Write("Row6").SkipColumns(1).Write(3.14159265359);
             }
         }
     }
