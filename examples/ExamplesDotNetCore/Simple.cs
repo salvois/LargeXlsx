@@ -8,11 +8,11 @@ namespace ExamplesDotNetCore
         public static void Run()
         {
             using (var stream = new FileStream($"{nameof(Simple)}.xlsx", FileMode.Create))
-            using (var largeXlsxWriter = new XlsxWriter(stream))
+            using (var largeXlsxWriter = new XlsxWriter2(stream))
             {
                 var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Segoe UI", 9, "ffffff", bold: true);
                 var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
-                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
+                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder2.None, XlsxNumberFormat2.General);
 
                 largeXlsxWriter.BeginWorksheet("Sheet1")
                     .BeginRow().Write("Col1", headerStyle).Write("Col2", headerStyle).Write("Col3", headerStyle)

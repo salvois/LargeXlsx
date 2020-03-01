@@ -1,4 +1,30 @@
-﻿using System;
+﻿/*
+LargeXlsx - Minimalistic .net library to write large XLSX files
+
+Copyright 2020 Salvatore ISAJA. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED THE COPYRIGHT HOLDER ``AS IS'' AND ANY EXPRESS
+OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -11,24 +37,26 @@ namespace LargeXlsx
     public class XlsxWriter2 : IDisposable
     {
         private readonly ZipWriter _zipWriter;
-        private readonly List<XlsxSheet2> _largeXlsxSheets;
-        private XlsxSheet2 _currentSheet;
+        private readonly List<XlsxWorksheet2> _worksheets;
+        private XlsxWorksheet2 _currentWorksheet;
 
-        public XlsxStylesheet Stylesheet { get; }
+        public XlsxStylesheet2 Stylesheet { get; }
+        public int CurrentRowNumber => _currentWorksheet.CurrentRowNumber;
+        public int CurrentColumnNumber => _currentWorksheet.CurrentColumnNumber;
 
         public XlsxWriter2(Stream stream)
         {
-            _largeXlsxSheets = new List<XlsxSheet2>();
-            Stylesheet = new XlsxStylesheet();
+            _worksheets = new List<XlsxWorksheet2>();
+            Stylesheet = new XlsxStylesheet2();
 
             _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate));
         }
 
         public void Dispose()
         {
-            _currentSheet?.Dispose();
+            _currentWorksheet?.Dispose();
 
-            //Stylesheet.Save(_document);
+            Stylesheet.Save(_zipWriter);
 
             using (var stream = _zipWriter.WriteToStream("[Content_Types].xml", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
@@ -41,6 +69,7 @@ namespace LargeXlsx
                                    + "<Override PartName=\"/xl/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\" />"
                                    + "</Types>");
             }
+
             using (var stream = _zipWriter.WriteToStream("_rels/.rels", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
@@ -49,13 +78,14 @@ namespace LargeXlsx
                                    + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"/xl/workbook.xml\" Id=\"R7130d2a4b4db42e0\" />"
                                    + "</Relationships>");
             }
+
             using (var stream = _zipWriter.WriteToStream("xl/workbook.xml", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 var sheetTags = new StringBuilder();
                 var sheetId = 1;
                 // TODO: r:id is hardcoded
-                foreach (var sheet in _largeXlsxSheets)
+                foreach (var sheet in _worksheets)
                     sheetTags.Append($"<sheet name=\"{sheet.Name}\" sheetId=\"{sheetId++}\" r:id=\"Rc3797908a4cd4249\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>");
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
@@ -64,84 +94,132 @@ namespace LargeXlsx
                                    + "</sheets>"
                                    + "</workbook>");
             }
+
             using (var stream = _zipWriter.WriteToStream("xl/_rels/workbook.xml.rels", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
                                    + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"/xl/worksheets/sheet1.xml\" Id=\"Rc3797908a4cd4249\" />"
-                                   //+ "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"/xl/styles.xml\" Id=\"Rb18eccf29de245a8\" />"
+                                   + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"/xl/styles.xml\" Id=\"Rb18eccf29de245a8\" />"
                                    + "</Relationships>");
             }
             _zipWriter.Dispose();
         }
 
-        public XlsxWriter2 BeginSheet(string name, int splitRow = 0, int splitColumn = 0)
+        public XlsxWriter2 BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0)
         {
-            _currentSheet?.Dispose();
-            _currentSheet = new XlsxSheet2(_zipWriter, name, splitRow, splitColumn);
-            _largeXlsxSheets.Add(_currentSheet);
+            _currentWorksheet?.Dispose();
+            _currentWorksheet = new XlsxWorksheet2(_zipWriter, name, splitRow, splitColumn);
+            _worksheets.Add(_currentWorksheet);
             return this;
         }
 
         public XlsxWriter2 SkipRows(int rowCount)
         {
-            EnsureSheet();
-            _currentSheet.SkipRows(rowCount);
+            EnsureWorksheet();
+            _currentWorksheet.SkipRows(rowCount);
             return this;
         }
 
         public XlsxWriter2 BeginRow()
         {
-            EnsureSheet();
-            _currentSheet.BeginRow();
+            EnsureWorksheet();
+            _currentWorksheet.BeginRow();
             return this;
         }
 
         public XlsxWriter2 SkipColumns(int columnCount)
         {
-            EnsureSheet();
-            _currentSheet.SkipColumns(columnCount);
+            EnsureWorksheet();
+            _currentWorksheet.SkipColumns(columnCount);
             return this;
         }
 
-        public XlsxWriter2 WriteInlineStringCell(string value)
+        public XlsxWriter2 Write()
         {
-            return WriteInlineStringCell(value, XlsxStylesheet2.DefaultStyle);
+            return Write(XlsxStyle2.Default);
         }
 
-        public XlsxWriter2 WriteInlineStringCell(string value, XlsxStyle style)
+        public XlsxWriter2 Write(XlsxStyle2 style)
         {
-            EnsureSheet();
-            _currentSheet.WriteInlineStringCell(value, style);
+            EnsureWorksheet();
+            _currentWorksheet.Write(style);
             return this;
         }
 
-        public XlsxWriter2 WriteNumericCell(double value)
+        public XlsxWriter2 Write(string value)
         {
-            EnsureSheet();
-            _currentSheet.WriteNumericCell(value, XlsxStylesheet2.DefaultStyle);
+            return Write(value, XlsxStyle2.Default);
+        }
+
+        public XlsxWriter2 Write(string value, XlsxStyle2 style)
+        {
+            EnsureWorksheet();
+            _currentWorksheet.Write(value, style);
             return this;
         }
 
-        public XlsxWriter2 WriteNumericCell(double value, XlsxStyle style)
+        public XlsxWriter2 Write(double value)
         {
-            EnsureSheet();
-            _currentSheet.WriteNumericCell(value, style);
+            EnsureWorksheet();
+            _currentWorksheet.Write(value, XlsxStyle2.Default);
             return this;
         }
 
-        public XlsxWriter2 AddMergedCell(int fromRow, int fromColumn, int toRow, int toColumn)
+        public XlsxWriter2 Write(double value, XlsxStyle2 style)
         {
-            EnsureSheet();
-            _currentSheet.AddMergedCell(fromRow, fromColumn, toRow, toColumn);
+            EnsureWorksheet();
+            _currentWorksheet.Write(value, style);
             return this;
         }
 
-        private void EnsureSheet()
+        public XlsxWriter2 Write(decimal value)
         {
-            if (_currentSheet == null)
-                throw new InvalidOperationException($"{nameof(BeginSheet)} not called");
+            EnsureWorksheet();
+            _currentWorksheet.Write((double)value, XlsxStyle2.Default);
+            return this;
+        }
+
+        public XlsxWriter2 Write(decimal value, XlsxStyle2 style)
+        {
+            EnsureWorksheet();
+            _currentWorksheet.Write((double)value, style);
+            return this;
+        }
+
+        public XlsxWriter2 Write(int value)
+        {
+            EnsureWorksheet();
+            _currentWorksheet.Write(value, XlsxStyle2.Default);
+            return this;
+        }
+
+        public XlsxWriter2 Write(int value, XlsxStyle2 style)
+        {
+            EnsureWorksheet();
+            _currentWorksheet.Write(value, style);
+            return this;
+        }
+
+        public XlsxWriter2 AddMergedCell(int rowCount, int columnCount)
+        {
+            EnsureWorksheet();
+            _currentWorksheet.AddMergedCell(_currentWorksheet.CurrentRowNumber, _currentWorksheet.CurrentColumnNumber, rowCount, columnCount);
+            return this;
+        }
+
+        public XlsxWriter2 AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
+        {
+            EnsureWorksheet();
+            _currentWorksheet.AddMergedCell(fromRow, fromColumn, rowCount, columnCount);
+            return this;
+        }
+
+        private void EnsureWorksheet()
+        {
+            if (_currentWorksheet == null)
+                throw new InvalidOperationException($"{nameof(BeginWorksheet)} not called");
         }
     }
 }

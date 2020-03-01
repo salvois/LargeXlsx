@@ -1,158 +1,205 @@
-﻿using System.Collections.Generic;
-using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Spreadsheet;
+﻿/*
+LargeXlsx - Minimalistic .net library to write large XLSX files
+
+Copyright 2020 Salvatore ISAJA. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED THE COPYRIGHT HOLDER ``AS IS'' AND ANY EXPRESS
+OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
+    /*
+     * Special thanks to http://polymathprogrammer.com/2009/11/09/how-to-create-stylesheet-in-excel-open-xml/
+     * for very valuable insights on how to properly create styles.
+     */
     public class XlsxStylesheet2
     {
-        public static readonly XlsxFill NoFill = new XlsxFill(0);
-        public static readonly XlsxFill Gray125Fill = new XlsxFill(1);
-        public static readonly XlsxFont DefaultFont = new XlsxFont(0);
-        public static readonly XlsxNumberFormat GeneralNumberFormat = new XlsxNumberFormat(0);
-        public static readonly XlsxNumberFormat TwoDecimalExcelNumberFormat = new XlsxNumberFormat(4); // #,##0.00
-        public static readonly XlsxBorder NoBorder = new XlsxBorder(0);
-        public static readonly XlsxStyle DefaultStyle = new XlsxStyle(0);
-
-        private readonly Stylesheet _stylesheet;
-        private readonly Dictionary<StyleTuple, XlsxStyle> _styles;
-        private uint _nextFontId;
-        private uint _nextBorderId;
-        private uint _nextFillId;
-        private uint _nextNumberFormatId;
-        private uint _nextStyleId;
+        private readonly List<XlsxFont2> _fonts;
+        private readonly List<XlsxFill2> _fills;
+        private readonly List<XlsxBorder2> _borders;
+        private readonly List<XlsxNumberFormat2> _numberFormats;
+        private readonly List<XlsxStyle2> _styles;
+        private readonly Dictionary<StyleTuple, XlsxStyle2> _deduplicatedStyles;
+        private int _nextFontId;
+        private int _nextBorderId;
+        private int _nextFillId;
+        private int _nextNumberFormatId;
+        private int _nextStyleId;
 
         internal XlsxStylesheet2()
         {
-            _stylesheet = new Stylesheet
-            {
-                Fonts = new Fonts(),
-                Borders = new Borders(),
-                Fills = new Fills(),
-                NumberingFormats = new NumberingFormats(),
-                CellFormats = new CellFormats()
-            };
+            _fonts = new List<XlsxFont2>();
+            _fills = new List<XlsxFill2>();
+            _borders = new List<XlsxBorder2>();
+            _numberFormats = new List<XlsxNumberFormat2>();
+            _styles = new List<XlsxStyle2>();
+            _deduplicatedStyles = new Dictionary<StyleTuple, XlsxStyle2>();
 
-            _stylesheet.Fills.AppendChild(new Fill { PatternFill = new PatternFill { PatternType = PatternValues.None } });
-            _stylesheet.Fills.AppendChild(new Fill { PatternFill = new PatternFill { PatternType = PatternValues.Gray125 } });
-            _nextFillId = 2; // ids less than 2 are reserved by Excel for default fills
+            _fonts.Add(XlsxFont2.Default);
+            _fills.Add(XlsxFill2.None);
+            _fills.Add(XlsxFill2.Gray125);
+            _borders.Add(XlsxBorder2.None);
+            _styles.Add(XlsxStyle2.Default);
+            _deduplicatedStyles.Add(new StyleTuple(XlsxStyle2.Default.Font.Id, XlsxStyle2.Default.Fill.Id, XlsxStyle2.Default.NumberFormat.Id, XlsxStyle2.Default.Border.Id),
+                                    XlsxStyle2.Default);
 
-            _stylesheet.Borders.AppendChild(new Border {
-                TopBorder = new TopBorder(),
-                RightBorder = new RightBorder(),
-                BottomBorder = new BottomBorder(),
-                LeftBorder = new LeftBorder(),
-                DiagonalBorder = new DiagonalBorder()
-            });
-            _nextBorderId = 1;
-
-            _nextNumberFormatId = 164;  // ids less than 164 are reserved by Excel for default formats
-
-            _nextFontId = 0;
-            CreateFont("Calibri", 11, "000000");
-
-            _styles = new Dictionary<StyleTuple, XlsxStyle>();
-            _nextStyleId = 0;
-            CreateStyle(DefaultFont, NoFill, GeneralNumberFormat, NoBorder);
+            _nextFillId = XlsxFill2.FirstAvailableId;
+            _nextBorderId = XlsxBorder2.FirstAvailableId;
+            _nextNumberFormatId = XlsxNumberFormat2.FirstAvailableId;
+            _nextFontId = XlsxFont2.FirstAvailableId;
+            _nextStyleId = XlsxStyle2.FirstAvailableId;
         }
 
-        public XlsxFont CreateFont(string fontName, double fontSize, string hexRgbColor)
+        public XlsxFont2 CreateFont(string fontName, double fontSize, string hexRgbColor, bool bold = false, bool italic = false, bool strike = false)
         {
-            _stylesheet.Fonts.AppendChild(new Font
-            {
-                FontSize = new FontSize { Val = fontSize },
-                Color = new Color { Rgb = HexBinaryValue.FromString(hexRgbColor) },
-                FontName = new FontName { Val = fontName },
-                FontFamilyNumbering = new FontFamilyNumbering { Val = 2 },
-                FontScheme = new FontScheme { Val = FontSchemeValues.Minor }
-            });
-            return new XlsxFont(_nextFontId++);
+            var font = new XlsxFont2(_nextFontId++, fontName, fontSize, hexRgbColor, bold, italic, strike);
+            _fonts.Add(font);
+            return font;
         }
 
-        public XlsxFill CreateSolidFill(string hexRgbColor)
+        public XlsxFill2 CreateSolidFill(string hexRgbColor)
         {
-            var hexBinaryValue = HexBinaryValue.FromString(hexRgbColor);
-            _stylesheet.Fills.AppendChild(new Fill
-            {
-                PatternFill = new PatternFill
-                {
-                    PatternType = PatternValues.Solid,
-                    BackgroundColor = new BackgroundColor { Rgb = hexBinaryValue },
-                    ForegroundColor = new ForegroundColor { Rgb = hexBinaryValue }
-                }
-            });
-            return new XlsxFill(_nextFillId++);
+            var fill = new XlsxFill2(_nextFillId++, XlsxFill2.Pattern.Solid, hexRgbColor);
+            _fills.Add(fill);
+            return fill;
         }
 
-        public XlsxNumberFormat CreateNumberFormat(string formatCode)
+        public XlsxNumberFormat2 CreateNumberFormat(string formatCode)
         {
-            _stylesheet.NumberingFormats.AppendChild(new NumberingFormat
-            {
-                NumberFormatId = _nextNumberFormatId,
-                FormatCode = formatCode
-            });
-            return new XlsxNumberFormat(_nextNumberFormatId++);
+            var numberFormat = new XlsxNumberFormat2(_nextNumberFormatId++, formatCode);
+            _numberFormats.Add(numberFormat);
+            return numberFormat;
         }
 
-        public XlsxBorder CreateBorder(BorderStyleValues top, BorderStyleValues right, BorderStyleValues bottom, BorderStyleValues left, string hexRgbColor)
+        public XlsxBorder2 CreateBorder(
+            string hexRgbColor,
+            XlsxBorder2.Style top = XlsxBorder2.Style.None,
+            XlsxBorder2.Style right = XlsxBorder2.Style.None,
+            XlsxBorder2.Style bottom = XlsxBorder2.Style.None,
+            XlsxBorder2.Style left = XlsxBorder2.Style.None)
         {
-            var hexBinaryValue = HexBinaryValue.FromString(hexRgbColor);
-            var border = new Border
-            {
-                TopBorder = new TopBorder { Color = new Color { Rgb = hexBinaryValue }, Style = top },
-                RightBorder = new RightBorder { Color = new Color { Rgb = hexBinaryValue }, Style = right },
-                BottomBorder = new BottomBorder { Color = new Color { Rgb = hexBinaryValue }, Style = bottom },
-                LeftBorder = new LeftBorder { Color = new Color { Rgb = hexBinaryValue }, Style = left },
-                DiagonalBorder = new DiagonalBorder()
-            };
-            _stylesheet.Borders.AppendChild(border);
-            return new XlsxBorder(_nextBorderId++);
+            var border = new XlsxBorder2(_nextBorderId++, hexRgbColor, top, right, bottom, left);
+            _borders.Add(border);
+            return border;
         }
 
-        public XlsxStyle CreateStyle(XlsxFont font, XlsxFill fill, XlsxNumberFormat numberFormat, XlsxBorder border)
+        public XlsxStyle2 CreateStyle(XlsxFont2 font, XlsxFill2 fill, XlsxBorder2 border, XlsxNumberFormat2 numberFormat)
         {
             var styleTuple = new StyleTuple(font.Id, fill.Id, numberFormat.Id, border.Id);
-            if (_styles.TryGetValue(styleTuple, out var styleId))
-                return styleId;
+            if (_deduplicatedStyles.TryGetValue(styleTuple, out var style))
+                return style;
 
-            _stylesheet.CellFormats.AppendChild(new CellFormat
-            {
-                NumberFormatId = numberFormat.Id,
-                FontId = font.Id,
-                FillId = fill.Id,
-                BorderId = border.Id,
-                ApplyFont = true,
-                ApplyFill = true,
-                ApplyNumberFormat = true,
-                ApplyBorder = true
-            });
-            var newStyle = new XlsxStyle(_nextStyleId++);
-            _styles[styleTuple] = newStyle;
+            var newStyle = new XlsxStyle2(_nextStyleId++, font, fill, border, numberFormat);
+            _styles.Add(newStyle);
+            _deduplicatedStyles[styleTuple] = newStyle;
             return newStyle;
         }
 
-        internal void Save(SpreadsheetDocument document)
+        internal void Save(ZipWriter zipWriter)
         {
-            _stylesheet.Fonts.Count = (uint)_stylesheet.Fonts.ChildElements.Count;
-            _stylesheet.Borders.Count = (uint)_stylesheet.Borders.ChildElements.Count;
-            _stylesheet.Fills.Count = (uint)_stylesheet.Fills.ChildElements.Count;
-            _stylesheet.NumberingFormats.Count = (uint)_stylesheet.NumberingFormats.ChildElements.Count;
-            _stylesheet.CellFormats.Count = (uint)_stylesheet.CellFormats.ChildElements.Count;
+            using (var stream = zipWriter.WriteToStream("xl/styles.xml", new ZipWriterEntryOptions()))
+            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+            {
+                streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+                                   + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
 
-            var workbookStylesPart = document.WorkbookPart.AddNewPart<WorkbookStylesPart>();
-            workbookStylesPart.Stylesheet = _stylesheet;
-            _stylesheet.Save();
+                streamWriter.Write("<numFmts count=\"{0}\">", _numberFormats.Count);
+                foreach (var numberFormat in _numberFormats)
+                {
+                    streamWriter.Write("<numFmt numFmtId=\"{0}\" formatCode=\"{1}\"/>", numberFormat.Id, numberFormat.FormatCode);
+                }
+                streamWriter.Write("</numFmts>");
+
+                streamWriter.Write("<fonts count=\"{0}\">", _fonts.Count);
+                foreach (var font in _fonts)
+                {
+                    streamWriter.Write("<font>"
+                                       + "<sz val=\"{0}\"/>"
+                                       + "<color rgb=\"{1}\"/>"
+                                       + "<name val=\"{2}\"/>"
+                                       + "<family val=\"2\"/>"
+                                       + "{3}{4}{5}"
+                                       + "</font>",
+                        font.FontSize, font.HexRgbColor, font.FontName,
+                        font.Bold ? "<b/>" : "", font.Italic ? "<i/>" : "", font.Strike ? "<strike/>" : "");
+                }
+                streamWriter.Write("</fonts>");
+
+                streamWriter.Write("<fills count=\"{0}\">", _fills.Count);
+                foreach (var fill in _fills)
+                {
+                    streamWriter.Write("<fill>"
+                                       + "<patternFill patternType=\"{0}\">"
+                                       + "<fgColor rgb=\"{1}\"/>"
+                                       + "<bgColor rgb=\"{1}\"/>"
+                                       + "</patternFill>"
+                                       + "</fill>",
+                        XlsxFill2.GetPatternAttributeValue(fill.PatternType), fill.HexRgbColor);
+                }
+                streamWriter.Write("</fills>");
+
+                streamWriter.Write("<borders count=\"{0}\">", _borders.Count);
+                foreach (var border in _borders)
+                {
+                    streamWriter.Write("<border>"
+                                       + "<left color=\"{0}\" style=\"{4}\"/>"
+                                       + "<right color=\"{0}\" style=\"{2}\"/>"
+                                       + "<top color=\"{0}\" style=\"{1}\"/>"
+                                       + "<bottom color=\"{0}\" style=\"{3}\"/>"
+                                       + "<diagonal/>"
+                                       + "</border>",
+                        border.HexRgbColor,
+                        XlsxBorder2.GetStyleAttributeValue(border.Top),
+                        XlsxBorder2.GetStyleAttributeValue(border.Right),
+                        XlsxBorder2.GetStyleAttributeValue(border.Bottom),
+                        XlsxBorder2.GetStyleAttributeValue(border.Left));
+                }
+                streamWriter.Write("</borders>");
+
+                streamWriter.Write("<cellXfs count=\"{0}\">", _styles.Count);
+                foreach (var style in _styles)
+                {
+                    streamWriter.Write("<xf numFmtId=\"{0}\" fontId=\"{1}\" fillId=\"{2}\" borderId=\"{3}\""
+                                       + " applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\"/>",
+                        style.NumberFormat.Id, style.Font.Id, style.Fill.Id, style.Border.Id);
+                }
+                streamWriter.Write("</cellXfs>");
+
+                streamWriter.Write("</styleSheet>");
+            }
         }
 
         private struct StyleTuple
         {
-            public uint FontId { get; }
-            public uint FillId { get; }
-            public uint NumberFormatId { get; }
-            public uint BorderId { get; }
+            public int FontId;
+            public int FillId;
+            public int NumberFormatId;
+            public int BorderId;
 
-            public StyleTuple(uint fontId, uint fillId, uint numberFormatId, uint borderId)
+            public StyleTuple(int fontId, int fillId, int numberFormatId, int borderId)
             {
                 FontId = fontId;
                 FillId = fillId;

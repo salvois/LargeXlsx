@@ -1,4 +1,30 @@
-﻿using System;
+﻿/*
+LargeXlsx - Minimalistic .net library to write large XLSX files
+
+Copyright 2020 Salvatore ISAJA. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED THE COPYRIGHT HOLDER ``AS IS'' AND ANY EXPRESS
+OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,7 +33,7 @@ using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
-    internal class XlsxSheet2 : IDisposable
+    internal class XlsxWorksheet2 : IDisposable
     {
         private readonly Stream _stream;
         private readonly StreamWriter _streamWriter;
@@ -17,11 +43,11 @@ namespace LargeXlsx
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
 
-        public XlsxSheet2(ZipWriter zipWriter, string name, int splitRow, int splitColumn)
+        public XlsxWorksheet2(ZipWriter zipWriter, string name, int splitRow, int splitColumn)
         {
             Name = name;
             CurrentRowNumber = 0;
-            CurrentColumnNumber = -1;
+            CurrentColumnNumber = 0;
             _mergedCells = new List<string>();
 
             _stream = zipWriter.WriteToStream("xl/worksheets/sheet1.xml", new ZipWriterEntryOptions());
@@ -47,7 +73,7 @@ namespace LargeXlsx
         {
             CloseLastRow();
             CurrentRowNumber++;
-            CurrentColumnNumber = 0;
+            CurrentColumnNumber = 1;
             _streamWriter.Write("<row r=\"{0}\">", CurrentRowNumber);
         }
 
@@ -63,39 +89,53 @@ namespace LargeXlsx
             CurrentColumnNumber += columnCount;
         }
 
-        public void WriteInlineStringCell(string value, XlsxStyle style)
+        public void Write(XlsxStyle2 style)
         {
             EnsureRow();
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id);
             CurrentColumnNumber++;
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"0\" t=\"inlineStr\"><is><t>{2}</t></is></c>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, value);
         }
 
-        public void WriteNumericCell(double value, XlsxStyle style)
+        public void Write(string value, XlsxStyle2 style)
+        {
+            if (value == null)
+            {
+                Write(style);
+                return;
+            }
+
+            EnsureRow();
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id, value);
+            CurrentColumnNumber++;
+        }
+
+        public void Write(double value, XlsxStyle2 style)
         {
             EnsureRow();
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"n\"><v>{3}</v></c>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id, value);
             CurrentColumnNumber++;
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"0\" t=\"n\"><v>{2}</v></c>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, value);
         }
 
-        public void AddMergedCell(int fromRow, int fromColumn, int toRow, int toColumn)
+        public void AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
         {
+            var toRow = fromRow + rowCount - 1;
             var fromColumnName = GetColumnName(fromColumn);
-            var toColumnName = GetColumnName(toColumn);
+            var toColumnName = GetColumnName(fromColumn + columnCount - 1);
             _mergedCells.Add($"{fromColumnName}{fromRow}:{toColumnName}{toRow}");
         }
 
         private void EnsureRow()
         {
-            if (CurrentColumnNumber < 0)
+            if (CurrentColumnNumber == 0)
                 throw new InvalidOperationException($"{nameof(BeginRow)} not called");
         }
 
         private void CloseLastRow()
         {
-            if (CurrentColumnNumber >= 0)
+            if (CurrentColumnNumber > 0)
             {
                 _streamWriter.Write("</row>");
-                CurrentColumnNumber = -1;
+                CurrentColumnNumber = 0;
             }
         }
 
