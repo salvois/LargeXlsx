@@ -63,12 +63,17 @@ namespace LargeXlsx.Tests
                 {
                     var whiteFont = xlsxWriter.Stylesheet.CreateFont("Segoe UI", 9, "ffffff", bold: true);
                     var blueFill = xlsxWriter.Stylesheet.CreateSolidFill("004586");
+                    var yellowFill = xlsxWriter.Stylesheet.CreateSolidFill("ffff88");
                     var headerStyle = xlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
+                    var highlightStyle = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
 
-                    xlsxWriter.BeginWorksheet("Sheet1")
-                        .BeginRow().Write("Col1", headerStyle).Write("Col2", headerStyle).Write("Col3", headerStyle)
-                        .BeginRow().Write(headerStyle).Write("Sub2", headerStyle).Write("Sub3", headerStyle)
-                        .BeginRow().Write("Row3").Write(42).Write(-1)
+                    xlsxWriter
+                        .BeginWorksheet("Sheet1")
+                        .SetDefaultStyle(headerStyle)
+                        .BeginRow().Write("Col1").Write("Col2").Write("Col3")
+                        .BeginRow().Write().Write("Sub2").Write("Sub3")
+                        .SetDefaultStyle(XlsxStyle.Default)
+                        .BeginRow().Write("Row3").Write(42).Write(-1, highlightStyle)
                         .BeginRow().Write("Row4").SkipColumns(1).Write(1234)
                         .SkipRows(2)
                         .BeginRow().AddMergedCell(1, 2).Write("Row7").SkipColumns(1).Write(3.14159265359);
@@ -100,18 +105,31 @@ namespace LargeXlsx.Tests
 
                     sheet.Cells["A7:B7"].Merge.Should().BeTrue();
 
-                    sheet.Cells["A1:C2"].Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-                    sheet.Cells["A1:C2"].Style.Fill.BackgroundColor.Rgb.Should().Be("004586");
-                    sheet.Cells["A1:C2"].Style.Font.Bold.Should().BeTrue();
-                    sheet.Cells["A1:C2"].Style.Font.Color.Rgb.Should().Be("ffffff");
-                    sheet.Cells["A1:C2"].Style.Font.Name.Should().Be("Segoe UI");
-                    sheet.Cells["A1:C2"].Style.Font.Size.Should().Be(9);
+                    foreach (var cell in new[] { "A1", "B1", "C1", "A2", "B2", "C2" })
+                    {
+                        sheet.Cells[cell].Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
+                        sheet.Cells[cell].Style.Fill.BackgroundColor.Rgb.Should().Be("004586");
+                        sheet.Cells[cell].Style.Font.Bold.Should().BeTrue();
+                        sheet.Cells[cell].Style.Font.Color.Rgb.Should().Be("ffffff");
+                        sheet.Cells[cell].Style.Font.Name.Should().Be("Segoe UI");
+                        sheet.Cells[cell].Style.Font.Size.Should().Be(9);
+                    }
 
-                    sheet.Cells["A3:C7"].Style.Fill.PatternType.Should().Be(ExcelFillStyle.None);
-                    sheet.Cells["A3:C7"].Style.Font.Bold.Should().BeFalse();
-                    sheet.Cells["A3:C7"].Style.Font.Color.Rgb.Should().Be("000000");
-                    sheet.Cells["A3:C7"].Style.Font.Name.Should().Be("Calibri");
-                    sheet.Cells["A3:C7"].Style.Font.Size.Should().Be(11);
+                    sheet.Cells["C3"].Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
+                    sheet.Cells["C3"].Style.Fill.BackgroundColor.Rgb.Should().Be("ffff88");
+                    sheet.Cells["C3"].Style.Font.Bold.Should().BeFalse();
+                    sheet.Cells["C3"].Style.Font.Color.Rgb.Should().Be("000000");
+                    sheet.Cells["C3"].Style.Font.Name.Should().Be("Calibri");
+                    sheet.Cells["C3"].Style.Font.Size.Should().Be(11);
+
+                    foreach (var cell in new[] { "A3", "B3", "A4", "B4", "C4", "A5", "B5", "C5", "A6", "B6", "C6", "A7", "B7", "C7" })
+                    {
+                        sheet.Cells[cell].Style.Fill.PatternType.Should().Be(ExcelFillStyle.None);
+                        sheet.Cells[cell].Style.Font.Bold.Should().BeFalse();
+                        sheet.Cells[cell].Style.Font.Color.Rgb.Should().Be("000000");
+                        sheet.Cells[cell].Style.Font.Name.Should().Be("Calibri");
+                        sheet.Cells[cell].Style.Font.Size.Should().Be(11);
+                    }
                 }
             }
         }

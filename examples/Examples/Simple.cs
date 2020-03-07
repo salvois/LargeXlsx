@@ -12,13 +12,17 @@ namespace Examples
             {
                 var whiteFont = xlsxWriter.Stylesheet.CreateFont("Segoe UI", 9, "ffffff", bold: true);
                 var blueFill = xlsxWriter.Stylesheet.CreateSolidFill("004586");
+                var yellowFill = xlsxWriter.Stylesheet.CreateSolidFill("ffff88");
                 var headerStyle = xlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
+                var highlightStyle = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
 
                 xlsxWriter
                     .BeginWorksheet("Sheet1")
-                    .BeginRow().Write("Col1", headerStyle).Write("Col2", headerStyle).Write("Col3", headerStyle)
-                    .BeginRow().Write(headerStyle).Write("Sub2", headerStyle).Write("Sub3", headerStyle)
-                    .BeginRow().Write("Row3").Write(42).Write(-1)
+                    .SetDefaultStyle(headerStyle)
+                    .BeginRow().Write("Col1").Write("Col2").Write("Col3")
+                    .BeginRow().Write().Write("Sub2").Write("Sub3")
+                    .SetDefaultStyle(XlsxStyle.Default)
+                    .BeginRow().Write("Row3").Write(42).Write(-1, highlightStyle)
                     .BeginRow().Write("Row4").SkipColumns(1).Write(1234)
                     .SkipRows(2)
                     .BeginRow().AddMergedCell(1, 2).Write("Row7").SkipColumns(1).Write(3.14159265359)

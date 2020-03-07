@@ -41,6 +41,7 @@ namespace LargeXlsx
         private XlsxWorksheet _currentWorksheet;
 
         public XlsxStylesheet Stylesheet { get; }
+        public XlsxStyle DefaultStyle { get; private set; }
         public int CurrentRowNumber => _currentWorksheet.CurrentRowNumber;
         public int CurrentColumnNumber => _currentWorksheet.CurrentColumnNumber;
 
@@ -48,6 +49,7 @@ namespace LargeXlsx
         {
             _worksheets = new List<XlsxWorksheet>();
             Stylesheet = new XlsxStylesheet();
+            DefaultStyle = XlsxStyle.Default;
 
             _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate));
         }
@@ -145,7 +147,7 @@ namespace LargeXlsx
 
         public XlsxWriter Write()
         {
-            return Write(XlsxStyle.Default);
+            return Write(DefaultStyle);
         }
 
         public XlsxWriter Write(XlsxStyle style)
@@ -157,7 +159,7 @@ namespace LargeXlsx
 
         public XlsxWriter Write(string value)
         {
-            return Write(value, XlsxStyle.Default);
+            return Write(value, DefaultStyle);
         }
 
         public XlsxWriter Write(string value, XlsxStyle style)
@@ -170,7 +172,7 @@ namespace LargeXlsx
         public XlsxWriter Write(double value)
         {
             EnsureWorksheet();
-            _currentWorksheet.Write(value, XlsxStyle.Default);
+            _currentWorksheet.Write(value, DefaultStyle);
             return this;
         }
 
@@ -184,7 +186,7 @@ namespace LargeXlsx
         public XlsxWriter Write(decimal value)
         {
             EnsureWorksheet();
-            _currentWorksheet.Write((double)value, XlsxStyle.Default);
+            _currentWorksheet.Write((double)value, DefaultStyle);
             return this;
         }
 
@@ -198,7 +200,7 @@ namespace LargeXlsx
         public XlsxWriter Write(int value)
         {
             EnsureWorksheet();
-            _currentWorksheet.Write(value, XlsxStyle.Default);
+            _currentWorksheet.Write(value, DefaultStyle);
             return this;
         }
 
@@ -220,6 +222,12 @@ namespace LargeXlsx
         {
             EnsureWorksheet();
             _currentWorksheet.AddMergedCell(fromRow, fromColumn, rowCount, columnCount);
+            return this;
+        }
+
+        public XlsxWriter SetDefaultStyle(XlsxStyle style)
+        {
+            DefaultStyle = style;
             return this;
         }
 
