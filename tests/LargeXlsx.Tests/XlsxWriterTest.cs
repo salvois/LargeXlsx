@@ -7,13 +7,13 @@ using OfficeOpenXml.Style;
 namespace LargeXlsx.Tests
 {
     [TestFixture]
-    public class XlsxWriter2Test
+    public class XlsxWriterTest
     {
         [Test]
         public void InsertionPoint()
         {
             using (var stream = new MemoryStream())
-            using (var xlsxWriter = new XlsxWriter2(stream))
+            using (var xlsxWriter = new XlsxWriter(stream))
             {
                 xlsxWriter.BeginWorksheet("Sheet1")
                     .BeginRow().Write("A1").Write("B1")
@@ -28,7 +28,7 @@ namespace LargeXlsx.Tests
         public void InsertionPointAfterSkipColumn()
         {
             using (var stream = new MemoryStream())
-            using (var xlsxWriter = new XlsxWriter2(stream))
+            using (var xlsxWriter = new XlsxWriter(stream))
             {
                 xlsxWriter.BeginWorksheet("Sheet1")
                     .BeginRow().Write("A1").Write("B1")
@@ -43,7 +43,7 @@ namespace LargeXlsx.Tests
         public void InsertionPointAfterSkipRows()
         {
             using (var stream = new MemoryStream())
-            using (var xlsxWriter = new XlsxWriter2(stream))
+            using (var xlsxWriter = new XlsxWriter(stream))
             {
                 xlsxWriter.BeginWorksheet("Sheet1")
                     .BeginRow().Write("A1").Write("B1")
@@ -59,11 +59,11 @@ namespace LargeXlsx.Tests
         {
             using (var stream = new MemoryStream())
             {
-                using (var xlsxWriter = new XlsxWriter2(stream))
+                using (var xlsxWriter = new XlsxWriter(stream))
                 {
                     var whiteFont = xlsxWriter.Stylesheet.CreateFont("Segoe UI", 9, "ffffff", bold: true);
                     var blueFill = xlsxWriter.Stylesheet.CreateSolidFill("004586");
-                    var headerStyle = xlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder2.None, XlsxNumberFormat2.General);
+                    var headerStyle = xlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
 
                     xlsxWriter.BeginWorksheet("Sheet1")
                         .BeginRow().Write("Col1", headerStyle).Write("Col2", headerStyle).Write("Col3", headerStyle)
@@ -121,7 +121,7 @@ namespace LargeXlsx.Tests
         {
             using (var stream = new MemoryStream())
             {
-                using (var xlsxWriter = new XlsxWriter2(stream))
+                using (var xlsxWriter = new XlsxWriter(stream))
                 {
                     xlsxWriter
                         .BeginWorksheet("Sheet1")

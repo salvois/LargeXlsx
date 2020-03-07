@@ -1,18 +1,18 @@
 ﻿using System.IO;
 using LargeXlsx;
 
-namespace ExamplesDotNetCore
+namespace Examples
 {
     public static class Simple
     {
         public static void Run()
         {
             using (var stream = new FileStream($"{nameof(Simple)}.xlsx", FileMode.Create, FileAccess.Write))
-            using (var xlsxWriter = new XlsxWriter2(stream))
+            using (var xlsxWriter = new XlsxWriter(stream))
             {
                 var whiteFont = xlsxWriter.Stylesheet.CreateFont("Segoe UI", 9, "ffffff", bold: true);
                 var blueFill = xlsxWriter.Stylesheet.CreateSolidFill("004586");
-                var headerStyle = xlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder2.None, XlsxNumberFormat2.General);
+                var headerStyle = xlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
 
                 xlsxWriter
                     .BeginWorksheet("Sheet1")

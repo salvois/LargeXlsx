@@ -28,7 +28,7 @@ using System;
 
 namespace LargeXlsx
 {
-    public class XlsxBorder2
+    public class XlsxBorder
     {
         public enum Style
         {
@@ -48,7 +48,7 @@ namespace LargeXlsx
             SlantDashDot
         }
 
-        public static readonly XlsxBorder2 None = new XlsxBorder2(0, "000000");
+        public static readonly XlsxBorder None = new XlsxBorder(0, "000000");
         internal const int FirstAvailableId = 1;
 
         public int Id { get; }
@@ -58,7 +58,7 @@ namespace LargeXlsx
         public Style Bottom { get; }
         public Style Left { get; }
 
-        internal XlsxBorder2(int id, string hexRgbColor, Style top = Style.None, Style right = Style.None, Style bottom = Style.None, Style left = Style.None)
+        internal XlsxBorder(int id, string hexRgbColor, Style top = Style.None, Style right = Style.None, Style bottom = Style.None, Style left = Style.None)
         {
             Id = id;
             HexRgbColor = hexRgbColor;

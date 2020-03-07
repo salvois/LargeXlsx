@@ -35,84 +35,84 @@ namespace LargeXlsx
      * Special thanks to http://polymathprogrammer.com/2009/11/09/how-to-create-stylesheet-in-excel-open-xml/
      * for very valuable insights on how to properly create styles.
      */
-    public class XlsxStylesheet2
+    public class XlsxStylesheet
     {
-        private readonly List<XlsxFont2> _fonts;
-        private readonly List<XlsxFill2> _fills;
-        private readonly List<XlsxBorder2> _borders;
-        private readonly List<XlsxNumberFormat2> _numberFormats;
-        private readonly List<XlsxStyle2> _styles;
-        private readonly Dictionary<StyleTuple, XlsxStyle2> _deduplicatedStyles;
+        private readonly List<XlsxFont> _fonts;
+        private readonly List<XlsxFill> _fills;
+        private readonly List<XlsxBorder> _borders;
+        private readonly List<XlsxNumberFormat> _numberFormats;
+        private readonly List<XlsxStyle> _styles;
+        private readonly Dictionary<StyleTuple, XlsxStyle> _deduplicatedStyles;
         private int _nextFontId;
         private int _nextBorderId;
         private int _nextFillId;
         private int _nextNumberFormatId;
         private int _nextStyleId;
 
-        internal XlsxStylesheet2()
+        internal XlsxStylesheet()
         {
-            _fonts = new List<XlsxFont2>();
-            _fills = new List<XlsxFill2>();
-            _borders = new List<XlsxBorder2>();
-            _numberFormats = new List<XlsxNumberFormat2>();
-            _styles = new List<XlsxStyle2>();
-            _deduplicatedStyles = new Dictionary<StyleTuple, XlsxStyle2>();
+            _fonts = new List<XlsxFont>();
+            _fills = new List<XlsxFill>();
+            _borders = new List<XlsxBorder>();
+            _numberFormats = new List<XlsxNumberFormat>();
+            _styles = new List<XlsxStyle>();
+            _deduplicatedStyles = new Dictionary<StyleTuple, XlsxStyle>();
 
-            _fonts.Add(XlsxFont2.Default);
-            _fills.Add(XlsxFill2.None);
-            _fills.Add(XlsxFill2.Gray125);
-            _borders.Add(XlsxBorder2.None);
-            _styles.Add(XlsxStyle2.Default);
-            _deduplicatedStyles.Add(new StyleTuple(XlsxStyle2.Default.Font.Id, XlsxStyle2.Default.Fill.Id, XlsxStyle2.Default.NumberFormat.Id, XlsxStyle2.Default.Border.Id),
-                                    XlsxStyle2.Default);
+            _fonts.Add(XlsxFont.Default);
+            _fills.Add(XlsxFill.None);
+            _fills.Add(XlsxFill.Gray125);
+            _borders.Add(XlsxBorder.None);
+            _styles.Add(XlsxStyle.Default);
+            _deduplicatedStyles.Add(new StyleTuple(XlsxStyle.Default.Font.Id, XlsxStyle.Default.Fill.Id, XlsxStyle.Default.NumberFormat.Id, XlsxStyle.Default.Border.Id),
+                                    XlsxStyle.Default);
 
-            _nextFillId = XlsxFill2.FirstAvailableId;
-            _nextBorderId = XlsxBorder2.FirstAvailableId;
-            _nextNumberFormatId = XlsxNumberFormat2.FirstAvailableId;
-            _nextFontId = XlsxFont2.FirstAvailableId;
-            _nextStyleId = XlsxStyle2.FirstAvailableId;
+            _nextFillId = XlsxFill.FirstAvailableId;
+            _nextBorderId = XlsxBorder.FirstAvailableId;
+            _nextNumberFormatId = XlsxNumberFormat.FirstAvailableId;
+            _nextFontId = XlsxFont.FirstAvailableId;
+            _nextStyleId = XlsxStyle.FirstAvailableId;
         }
 
-        public XlsxFont2 CreateFont(string fontName, double fontSize, string hexRgbColor, bool bold = false, bool italic = false, bool strike = false)
+        public XlsxFont CreateFont(string fontName, double fontSize, string hexRgbColor, bool bold = false, bool italic = false, bool strike = false)
         {
-            var font = new XlsxFont2(_nextFontId++, fontName, fontSize, hexRgbColor, bold, italic, strike);
+            var font = new XlsxFont(_nextFontId++, fontName, fontSize, hexRgbColor, bold, italic, strike);
             _fonts.Add(font);
             return font;
         }
 
-        public XlsxFill2 CreateSolidFill(string hexRgbColor)
+        public XlsxFill CreateSolidFill(string hexRgbColor)
         {
-            var fill = new XlsxFill2(_nextFillId++, XlsxFill2.Pattern.Solid, hexRgbColor);
+            var fill = new XlsxFill(_nextFillId++, XlsxFill.Pattern.Solid, hexRgbColor);
             _fills.Add(fill);
             return fill;
         }
 
-        public XlsxNumberFormat2 CreateNumberFormat(string formatCode)
+        public XlsxNumberFormat CreateNumberFormat(string formatCode)
         {
-            var numberFormat = new XlsxNumberFormat2(_nextNumberFormatId++, formatCode);
+            var numberFormat = new XlsxNumberFormat(_nextNumberFormatId++, formatCode);
             _numberFormats.Add(numberFormat);
             return numberFormat;
         }
 
-        public XlsxBorder2 CreateBorder(
+        public XlsxBorder CreateBorder(
             string hexRgbColor,
-            XlsxBorder2.Style top = XlsxBorder2.Style.None,
-            XlsxBorder2.Style right = XlsxBorder2.Style.None,
-            XlsxBorder2.Style bottom = XlsxBorder2.Style.None,
-            XlsxBorder2.Style left = XlsxBorder2.Style.None)
+            XlsxBorder.Style top = XlsxBorder.Style.None,
+            XlsxBorder.Style right = XlsxBorder.Style.None,
+            XlsxBorder.Style bottom = XlsxBorder.Style.None,
+            XlsxBorder.Style left = XlsxBorder.Style.None)
         {
-            var border = new XlsxBorder2(_nextBorderId++, hexRgbColor, top, right, bottom, left);
+            var border = new XlsxBorder(_nextBorderId++, hexRgbColor, top, right, bottom, left);
             _borders.Add(border);
             return border;
         }
 
-        public XlsxStyle2 CreateStyle(XlsxFont2 font, XlsxFill2 fill, XlsxBorder2 border, XlsxNumberFormat2 numberFormat)
+        public XlsxStyle CreateStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat)
         {
             var styleTuple = new StyleTuple(font.Id, fill.Id, numberFormat.Id, border.Id);
             if (_deduplicatedStyles.TryGetValue(styleTuple, out var style))
                 return style;
 
-            var newStyle = new XlsxStyle2(_nextStyleId++, font, fill, border, numberFormat);
+            var newStyle = new XlsxStyle(_nextStyleId++, font, fill, border, numberFormat);
             _styles.Add(newStyle);
             _deduplicatedStyles[styleTuple] = newStyle;
             return newStyle;
@@ -157,7 +157,7 @@ namespace LargeXlsx
                                        + "<bgColor rgb=\"{1}\"/>"
                                        + "</patternFill>"
                                        + "</fill>",
-                        XlsxFill2.GetPatternAttributeValue(fill.PatternType), fill.HexRgbColor);
+                        XlsxFill.GetPatternAttributeValue(fill.PatternType), fill.HexRgbColor);
                 }
                 streamWriter.Write("</fills>");
 
@@ -172,10 +172,10 @@ namespace LargeXlsx
                                        + "<diagonal/>"
                                        + "</border>",
                         border.HexRgbColor,
-                        XlsxBorder2.GetStyleAttributeValue(border.Top),
-                        XlsxBorder2.GetStyleAttributeValue(border.Right),
-                        XlsxBorder2.GetStyleAttributeValue(border.Bottom),
-                        XlsxBorder2.GetStyleAttributeValue(border.Left));
+                        XlsxBorder.GetStyleAttributeValue(border.Top),
+                        XlsxBorder.GetStyleAttributeValue(border.Right),
+                        XlsxBorder.GetStyleAttributeValue(border.Bottom),
+                        XlsxBorder.GetStyleAttributeValue(border.Left));
                 }
                 streamWriter.Write("</borders>");
 

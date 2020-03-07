@@ -33,7 +33,7 @@ using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
-    internal class XlsxWorksheet2 : IDisposable
+    internal class XlsxWorksheet : IDisposable
     {
         private readonly Stream _stream;
         private readonly StreamWriter _streamWriter;
@@ -44,7 +44,7 @@ namespace LargeXlsx
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
 
-        public XlsxWorksheet2(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn)
+        public XlsxWorksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn)
         {
             Id = id;
             Name = name;
@@ -91,14 +91,14 @@ namespace LargeXlsx
             CurrentColumnNumber += columnCount;
         }
 
-        public void Write(XlsxStyle2 style)
+        public void Write(XlsxStyle style)
         {
             EnsureRow();
             _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id);
             CurrentColumnNumber++;
         }
 
-        public void Write(string value, XlsxStyle2 style)
+        public void Write(string value, XlsxStyle style)
         {
             if (value == null)
             {
@@ -111,7 +111,7 @@ namespace LargeXlsx
             CurrentColumnNumber++;
         }
 
-        public void Write(double value, XlsxStyle2 style)
+        public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
             _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"n\"><v>{3}</v></c>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id, value);

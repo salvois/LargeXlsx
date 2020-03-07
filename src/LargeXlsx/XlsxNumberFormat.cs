@@ -24,43 +24,21 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-using System;
-
 namespace LargeXlsx
 {
-    public class XlsxFill2
+    public class XlsxNumberFormat
     {
-        public enum Pattern
-        {
-            None,
-            Gray125,
-            Solid
-        }
-
-        public static readonly XlsxFill2 None = new XlsxFill2(0, Pattern.None, "ffffff");
-        public static readonly XlsxFill2 Gray125 = new XlsxFill2(1, Pattern.Gray125, "ffffff");
-        internal const int FirstAvailableId = 2; // ids less than 2 are hardcoded by Excel for default fills
+        public static readonly XlsxNumberFormat General = new XlsxNumberFormat(0, "general");
+        public static readonly XlsxNumberFormat TwoDecimal = new XlsxNumberFormat(4, "#,##0.00");
+        internal const int FirstAvailableId = 164; // ids less than 164 are hardcoded by Excel for default formats
 
         public int Id { get; }
-        public Pattern PatternType { get; }
-        public string HexRgbColor { get; }
+        public string FormatCode { get; }
 
-        internal XlsxFill2(int id, Pattern patternType, string hexRgbColor)
+        internal XlsxNumberFormat(int id, string formatCode)
         {
             Id = id;
-            PatternType = patternType;
-            HexRgbColor = hexRgbColor;
-        }
-
-        internal static string GetPatternAttributeValue(Pattern patternType)
-        {
-            switch (patternType)
-            {
-                case Pattern.None: return "none";
-                case Pattern.Gray125: return "gray125";
-                case Pattern.Solid: return "solid";
-                default: throw new ArgumentOutOfRangeException();
-            }
+            FormatCode = formatCode;
         }
     }
 }

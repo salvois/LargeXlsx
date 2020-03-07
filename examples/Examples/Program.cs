@@ -1,4 +1,4 @@
-﻿namespace ExamplesDotNetCore
+﻿namespace Examples
 {
     public static class Program
     {

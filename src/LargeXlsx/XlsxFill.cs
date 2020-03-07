@@ -24,26 +24,43 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+using System;
+
 namespace LargeXlsx
 {
-    public struct XlsxStyle2
+    public class XlsxFill
     {
-        public static readonly XlsxStyle2 Default = new XlsxStyle2(0, XlsxFont2.Default, XlsxFill2.None, XlsxBorder2.None, XlsxNumberFormat2.General);
-        internal const int FirstAvailableId = 1;
+        public enum Pattern
+        {
+            None,
+            Gray125,
+            Solid
+        }
+
+        public static readonly XlsxFill None = new XlsxFill(0, Pattern.None, "ffffff");
+        public static readonly XlsxFill Gray125 = new XlsxFill(1, Pattern.Gray125, "ffffff");
+        internal const int FirstAvailableId = 2; // ids less than 2 are hardcoded by Excel for default fills
 
         public int Id { get; }
-        public XlsxFont2 Font { get; }
-        public XlsxFill2 Fill { get; }
-        public XlsxBorder2 Border { get; }
-        public XlsxNumberFormat2 NumberFormat { get; }
+        public Pattern PatternType { get; }
+        public string HexRgbColor { get; }
 
-        internal XlsxStyle2(int id, XlsxFont2 font, XlsxFill2 fill, XlsxBorder2 border, XlsxNumberFormat2 numberFormat)
+        internal XlsxFill(int id, Pattern patternType, string hexRgbColor)
         {
             Id = id;
-            Font = font;
-            Fill = fill;
-            Border = border;
-            NumberFormat = numberFormat;
+            PatternType = patternType;
+            HexRgbColor = hexRgbColor;
+        }
+
+        internal static string GetPatternAttributeValue(Pattern patternType)
+        {
+            switch (patternType)
+            {
+                case Pattern.None: return "none";
+                case Pattern.Gray125: return "gray125";
+                case Pattern.Solid: return "solid";
+                default: throw new ArgumentOutOfRangeException();
+            }
         }
     }
 }

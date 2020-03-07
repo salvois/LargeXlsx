@@ -26,19 +26,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 namespace LargeXlsx
 {
-    public class XlsxNumberFormat2
+    public struct XlsxStyle
     {
-        public static readonly XlsxNumberFormat2 General = new XlsxNumberFormat2(0, "general");
-        public static readonly XlsxNumberFormat2 TwoDecimal = new XlsxNumberFormat2(4, "#,##0.00");
-        internal const int FirstAvailableId = 164; // ids less than 164 are hardcoded by Excel for default formats
+        public static readonly XlsxStyle Default = new XlsxStyle(0, XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.General);
+        internal const int FirstAvailableId = 1;
 
         public int Id { get; }
-        public string FormatCode { get; }
+        public XlsxFont Font { get; }
+        public XlsxFill Fill { get; }
+        public XlsxBorder Border { get; }
+        public XlsxNumberFormat NumberFormat { get; }
 
-        internal XlsxNumberFormat2(int id, string formatCode)
+        internal XlsxStyle(int id, XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat)
         {
             Id = id;
-            FormatCode = formatCode;
+            Font = font;
+            Fill = fill;
+            Border = border;
+            NumberFormat = numberFormat;
         }
     }
 }

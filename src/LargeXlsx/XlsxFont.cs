@@ -26,9 +26,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 namespace LargeXlsx
 {
-    public class XlsxFont2
+    public class XlsxFont
     {
-        public static readonly XlsxFont2 Default = new XlsxFont2(0, "Calibri", 11, "000000");
+        public static readonly XlsxFont Default = new XlsxFont(0, "Calibri", 11, "000000");
         internal const int FirstAvailableId = 1;
 
         public int Id { get; }
@@ -39,7 +39,7 @@ namespace LargeXlsx
         public bool Italic { get; }
         public bool Strike { get; }
 
-        internal XlsxFont2(int id, string fontName, double fontSize, string hexRgbColor, bool bold = false, bool italic = false, bool strike = false)
+        internal XlsxFont(int id, string fontName, double fontSize, string hexRgbColor, bool bold = false, bool italic = false, bool strike = false)
         {
             Id = id;
             FontName = fontName;

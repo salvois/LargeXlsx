@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using LargeXlsx;
 
-namespace ExamplesDotNetCore
+namespace Examples
 {
     public static class Large
     {
@@ -11,12 +11,12 @@ namespace ExamplesDotNetCore
         {
             var stopwatch = Stopwatch.StartNew();
             using (var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create, FileAccess.Write))
-            using (var largeXlsxWriter = new XlsxWriter2(stream))
+            using (var largeXlsxWriter = new XlsxWriter(stream))
             {
                 var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
                 var blueFill = largeXlsxWriter.Stylesheet.CreateSolidFill("004586");
-                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder2.None, XlsxNumberFormat2.General);
-                var numberStyle = largeXlsxWriter.Stylesheet.CreateStyle(XlsxFont2.Default, XlsxFill2.None, XlsxBorder2.None, XlsxNumberFormat2.TwoDecimal);
+                var headerStyle = largeXlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
+                var numberStyle = largeXlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.TwoDecimal);
 
                 largeXlsxWriter.BeginWorksheet("Sheet1", 1, 1);
                 largeXlsxWriter.BeginRow();
