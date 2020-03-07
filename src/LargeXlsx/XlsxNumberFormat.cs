@@ -29,8 +29,11 @@ namespace LargeXlsx
     public class XlsxNumberFormat
     {
         public static readonly XlsxNumberFormat General = new XlsxNumberFormat(0, "general");
-        public static readonly XlsxNumberFormat TwoDecimal = new XlsxNumberFormat(4, "#,##0.00");
-        internal const int FirstAvailableId = 164; // ids less than 164 are hardcoded by Excel for default formats
+        public static readonly XlsxNumberFormat TwoDecimal = new XlsxNumberFormat(2, "0.00");
+        public static readonly XlsxNumberFormat ThousandTwoDecimal = new XlsxNumberFormat(4, "#,##0.00");
+        public static readonly XlsxNumberFormat Percentage = new XlsxNumberFormat(10, "0.00%");
+        public static readonly XlsxNumberFormat Scientific = new XlsxNumberFormat(11, "0.00E+00");
+        internal const int FirstAvailableId = 165; // ids less than 165 are hardcoded by Excel for default formats
 
         public int Id { get; }
         public string FormatCode { get; }

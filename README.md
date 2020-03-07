@@ -186,7 +186,10 @@ For example to create a custom number format with thousand separator, at least t
 Excel defines and reserves many number formats, and this library exposes some of them as:
 
 * `XlsxNumberFormat.General`: the default number format, where Excel automatically chooses the "best" representation based on magnitude and number of decimals.
-* `XlsxNumberFormat.TwoDecimal`: a number format with thousand separators and two decimal numbers, that is the format code `"#,##0.00"`.
+* `XlsxNumberFormat.TwoDecimal`: two decimal numbers, that is the format code `"0.00"`.
+* `XlsxNumberFormat.ThousandTwoDecimal`: thousand separators and two decimal numbers, that is the format code `"#,##0.00"`.
+* `XlsxNumberFormat.Percentage`: percentage formatting and two decimal numbers, that is the format code `"0.00%"`.
+* `XlsxNumberFormat.Scientific`: scientific notation with two decimals and two-digit exponent, that is the format code `"0.00E+00"`.
 
 #### Combining them all to create a style
 
