@@ -2,9 +2,9 @@
 
 [![NuGet](https://img.shields.io/nuget/v/LargeXlsx.svg)](https://www.nuget.org/packages/LargeXlsx)
 
-This is a minimalistic library, written in C# targeting .net standard 2.0, providing a tiny layer above Microsoft's [Office Open XML library](https://github.com/OfficeDev/Open-XML-SDK) to facilitate creation of very large Excel files in XLSX format.
+This is a minimalistic library, written in C# targeting .net standard 2.0, providing simple primitives to write Excel files in XLSX format in a streamed manner, so that potentially huge files can be created while consuming a low, constant amount of memory.
 
-This library provides simple primitives to write data in a streamed manner, so that potentially huge files can be created while consuming a low, constant amount of memory.
+Starting from version 0.0.9 this library does not rely any more on Microsoft's [Office Open XML library](https://github.com/OfficeDev/Open-XML-SDK), but writes XLSX files directly. This solves a memory consumption problem on .net core (caused by an [issue on System.IO.Packaging](https://github.com/dotnet/corefx/issues/24457) used by the Open XML SDK to write XLSX's zip packages) and provides further performance boost.
 
 
 ## Supported features
@@ -23,7 +23,7 @@ Currently the library supports:
 To create a simple single-sheet Excel document:
 
 ```csharp
-using (var stream = new FileStream("Simple.xlsx", FileMode.Create))
+using (var stream = new FileStream("Simple.xlsx", FileMode.Create, FileAccess.Write))
 using (var xlsxWriter = new XlsxWriter(stream))
 {
     var whiteFont = xlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
@@ -31,7 +31,8 @@ using (var xlsxWriter = new XlsxWriter(stream))
     var headerStyle = xlsxWriter.Stylesheet.CreateStyle(
             whiteFont, blueFilll, XlsxBorder.None, XlsxNumberFormat.General);
 
-    xlsxWriter.BeginWorksheet("Sheet1")
+    xlsxWriter
+        .BeginWorksheet("Sheet1")
         .BeginRow().Write("Col1", headerStyle).Write("Col2", headerStyle).Write("Col3", headerStyle)
         .BeginRow().Write("Row2").Write(42).Write(-1)
         .BeginRow().Write("Row3").SkipColumns(1).Write(1234)
@@ -44,15 +45,12 @@ The output is like:
 
 ![Single sheet Excel document with 6 rows and 3 columns](https://github.com/salvois/LargeXlsx/raw/master/example.png)
 
-## Known issues
-
-On .net core there is an [issue on System.IO.Packaging](https://github.com/dotnet/corefx/issues/24457) (used by the Open XML SDK to write XLSX's zip packages) that causes memory consumption to be proportional to the amount of data written, instead of being low and constant. Unfortunately, this kind of defeats the purpose of this library when targeting .net core. The issue is not present on .net framework.
 
 ## Usage
 
 The `XlsxWriter` class is the entry point for all functionality of the library. It is designed so that most of its methods can be chained to write the Excel file using a fluent syntax.
 Please note that an `XlsxWriter` object **must be disposed** to properly finalize the Excel file. Sandwitching its lifetime in a `using` statement is recommended.
-Pass the constructor a `Stream` to save the Excel file into. Please note that, due to internals of the Office Open XML library, the stream must be opened for both read and write.
+Pass the constructor a writeable `Stream` to save the Excel file into.
 
     XlsxWriter(Stream stream)
 
@@ -91,7 +89,7 @@ Call one of the `Write` overloads to write content to the cell at the insertion 
 
   * **Nothing**: a cell containing no value, that will usually be deserialized as `null`.
   * **Inline string**: a string of text that is written directly into the cell; this is in contrast with a different functionality of the XLSX file format, which can support a global look-up table of strings, and just the string index into the cell; the latter functionality is not supported because it is inherently incompatible with streamed write. If the string is `null` the method falls back on the "Nothing" case.
-  * **Number**: a numeric constant, that will be interpreted as a `double` value; conveniency overloads accepting `int` and `decimal` are provided, but the under the hood the value will be converted to `double` because it is the only numeric type truly supported by the XLSX file format.
+  * **Number**: a numeric constant, that will be interpreted as a `double` value; convenience overloads accepting `int` and `decimal` are provided, but the under the hood the value will be converted to `double` because it is the only numeric type truly supported by the XLSX file format.
 
 This is the list of supported overloads:
 
@@ -101,7 +99,7 @@ This is the list of supported overloads:
     XlsxWriter Write(decimal value)
     XlsxWriter Write(int value)
 
-Besides the value to write into the cell, `Write` optionally accepts another parameter representing the ID of the style (see Styling) to use to style the cell being written. This cannot be changed after the cell has been written.
+Besides the value to write into the cell, `Write` optionally accepts another parameter representing the `XlsxStyle` (see Styling) to use to style the cell being written. This cannot be changed after the cell has been written.
 
     XlsxWriter Write(XlsxStyle style)
     XlsxWriter Write(string value, XlsxStyle style)
@@ -124,23 +122,22 @@ For example, if merging the 2 rows x 3 columns range `A7:C8` using `AddMergedCel
 **Note**: due to the structure of the XLSX file format, the ranges for all merged cells of a worksheet must be accumulated in RAM, because they must be written to the file after the content of the whole worksheet. **Using a large number of merged cells may cause high memory consumption**.
 This also means that you may call `AddMergedCells` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them.
 
-To facilitate merging cells while fluently writing the file, a conveniency overload is provided, using the insertion point as the top-left cell for the merged range, thus requiring you to only specify the height and width of the merged rectangle. This does not advance the insertion point, thus a `Write` should usually follow to write content for the merged rectangle, followed by `SkipColumns` as needed (see the last row of the Example above).
+To facilitate merging cells while fluently writing the file, a convenience overload is provided, using the insertion point as the top-left cell for the merged range, thus requiring you to only specify the height and width of the merged rectangle. This does not advance the insertion point, thus a `Write` should usually follow to write content for the merged rectangle, followed by `SkipColumns` as needed (see the last row of the Example above).
 
     XlsxWriter AddMergedCell(int rowCount, int columnCount)
 
 ### Styling
 
-Styling lets you apply colors or other formatting to cells being written. The XLSX file format uses the concept of **stylesheet** where you list all possible styles used by your content, and each style is identified by a **style ID**, that is an index in the table of styles that makes up the stylesheet, represented as an `XlsxStyle` value.
-When you write a cell using `Write` you can specify the style ID to use for that cell.
+Styling lets you apply colors or other formatting to cells being written. The XLSX file format uses the concept of **stylesheet** where you list all possible styles used by your content. Each style is represented by an `XlsxStyle` object in this library.
+When you write a cell using `Write` you can specify the style to use for that cell.
 
 Each `XlsxWriter` object manages a single `XlsxStylesheet` object, exposed by the `Stylesheet` property, that provides functionality to add styles to the stylesheet.
 
     XlsxStylesheet Stylesheet { get; }
 
-A style is made up of four components: the **font**, including face, size and text color; the **fill**, specifying the background color; the **border** style and color; the **number format** specifying how a number should appear, such as how many decimals or whether to show it as percentage.
-The stylesheet contains a table for each of the four style component types, thus you will also have **font IDs**, **fill IDs**, **border IDs** and **number format IDs**, represented as `XlsxFont`, `XlsxFill`, `XlsxBorder` and `XlsxNumberFormat` values respectively.
+A style is made up of four components: the **font**, including face, size and text color; the **fill**, specifying the background color; the **border** style and color; the **number format** specifying how a number should appear, such as how many decimals or whether to show it as percentage. They are represented by `XlsxFont`, `XlsxFill`, `XlsxBorder` and `XlsxNumberFormat` objects respectively.
 
-**Note:** due to the internals of the XLSX file format, the content of the stylesheet (thus the list of fonts, fills, borders, number formats and the styles combining them) are kept in RAM until the `XlsxWriter` is disposed. **Using a large number of styles may cause high memory consumption**.
+**Note:** due to the internals of the XLSX file format, the content of the stylesheet (thus the list of fonts, fills, borders, number formats and the styles combining them) are kept in RAM until the `XlsxWriter` is disposed. **Using a large number of fonts, fills, borders, number formats or styles may cause high memory consumption**: it is recommended that you create only the minimum amount of font, fill, border and number format object and combine them in styles.
 
 #### Fonts
 
@@ -151,7 +148,7 @@ To create a new font, call the `CreateFont` method of the `XlsxStylesheet` objec
 
 For example to create a red, italic, 11-point, Calibri font, use: `var redItalicFont = xlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ff0000", italic: true)`.
 
-A default black, plain, 11-point, Calibri font can be referenced with font ID `XlsxFont.Default`.
+The built-in `XlsxFont.Default` object provides a default black, plain, 11-point, Calibri font.
 
 #### Fills
 
@@ -161,22 +158,22 @@ Currently, only fills with a solid background color are supported. To create a n
     
 For example to create a yellow fill, use: `var yellowFill = xlsxWriter.Stylesheet.CreateSolidFill("ffff00")`.
 
-A default empty fill can be referenced with the fill ID `XlsxFill.None`.
+The built-in `XlsxFill.None` object provides a default empty fill.
 
 #### Borders
 
-Currently, a set of top, right, bottom and left cell borders of the same color is supported. To create a new set of borders, call the `CreateBorder` method of the `XlsxStylesheet` object. The color is a string of hexadecimal digits in RRGGBB format. The `BorderStyleValues` enum from the Office Open XML library defines the kind of border of each cell side, such as `None`, `Thin`, `Medium`, `Thick`, `Double`, `Dashed`, `Dotted` and others. Using named arguments is recommended to improve readability.
+Currently, a set of top, right, bottom and left cell borders of the same color is supported. To create a new set of borders, call the `CreateBorder` method of the `XlsxStylesheet` object. The color is a string of hexadecimal digits in RRGGBB format. The `XlsxBorder.Style` enum defines the kind of border of each cell side, such as `None`, `Thin`, `Thick`, `Dashed` and others. Using named arguments is recommended to improve readability.
 
     public XlsxBorder CreateBorder(
             string hexRgbColor,
-            BorderStyleValues top = BorderStyleValues.None,
-            BorderStyleValues right = BorderStyleValues.None,
-            BorderStyleValues bottom = BorderStyleValues.None,
-            BorderStyleValues left = BorderStyleValues.None)
+            XlsxBorder.Style top    = XlsxBorder.Style.None,
+            XlsxBorder.Style right  = XlsxBorder.Style.None,
+            XlsxBorder.Style bottom = XlsxBorder.Style.None,
+            XlsxBorder.Style left   = XlsxBorder.Style.None)
                                  
-For example to create a thin black border on the left side only, use: `var leftBorder = xlsxWriter.Stylesheet.CreateBorder("000000", left: BorderStyleValues.Thin)`.
+For example to create a thin black border on the left side only, use: `var leftBorder = xlsxWriter.Stylesheet.CreateBorder("000000", left: XlsxBorder.Style.Thin)`.
 
-A default empty border set can be referenced with the border ID `XlsxBorder.None`.
+The built-in `XlsxBorder.None` object provides a default empty border set.
 
 #### Number formats
 
@@ -186,21 +183,21 @@ To create a custom number format, call the `CreateNumberFormat` method of the `X
     
 For example to create a custom number format with thousand separator, at least two decimal digits and at most six, use: `var customNumberFormat = xlsxWriter.Stylesheet.CreateNumberFormat("#,##0.00####")`.
 
-Excel defines and reserves many number formats, and this library exposes some of their number format IDs as:
+Excel defines and reserves many number formats, and this library exposes some of them as:
 
 * `XlsxNumberFormat.General`: the default number format, where Excel automatically chooses the "best" representation based on magnitude and number of decimals.
 * `XlsxNumberFormat.TwoDecimal`: a number format with thousand separators and two decimal numbers, that is the format code `"#,##0.00"`.
 
 #### Combining them all to create a style
 
-To create a new style using the specified combination of font, fill, border and number format, call the `CreateStyle` method of the `XlsxStylesheet` object. The resulting style ID can be used with `Write` to style a cell being written.
+To create a new style using the specified combination of font, fill, border and number format, call the `CreateStyle` method of the `XlsxStylesheet` object. The resulting `XlsxStyle` can be used with `Write` to style a cell being written.
 
     XlsxStyle CreateStyle(XlsxFont font,
                           XlsxFill fill,
                           XlsxBorder border,
                           XlsxNumberFormat numberFormat)
 
-This library provides the style ID `XlsxStyle.Default` for a deafult style combining `XlsxFont.Default`, `XlsxFill.None`, `XlsxBorder.None` and `XlsxNumberFormat.General`. This is the style ID used whenever `Write` is called without an explicit style ID parameter.
+The built-in `XlsxStyle.Default` object provides a deafult style combining `XlsxFont.Default`, `XlsxFill.None`, `XlsxBorder.None` and `XlsxNumberFormat.General`. This is the style used whenever `Write` is called without an explicit style parameter.
 
 ## Special thanks
 
