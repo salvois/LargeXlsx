@@ -115,5 +115,48 @@ namespace LargeXlsx.Tests
                 }
             }
         }
+
+        [Test]
+        public void MultipleSheets()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter2(stream))
+                {
+                    xlsxWriter
+                        .BeginWorksheet("Sheet1")
+                        .BeginRow().Write("Sheet1.A1").Write("Sheet1.B1").Write("Sheet1.C1")
+                        .BeginRow().AddMergedCell(1, 2).Write("Sheet1.A2").SkipColumns(1).Write("Sheet1.C2")
+                        .BeginWorksheet("Sheet2")
+                        .BeginRow().AddMergedCell(1, 2).Write("Sheet2.A1").SkipColumns(1).Write("Sheet2.C1")
+                        .BeginRow().Write("Sheet2.A2").Write("Sheet2.B2").Write("Sheet2.C2");
+                }
+
+                using (var package = new ExcelPackage(stream))
+                {
+                    package.Workbook.Worksheets.Count.Should().Be(2);
+
+                    var sheet1 = package.Workbook.Worksheets[0];
+                    sheet1.Name.Should().Be("Sheet1");
+                    sheet1.Cells["A1"].Value.Should().Be("Sheet1.A1");
+                    sheet1.Cells["B1"].Value.Should().Be("Sheet1.B1");
+                    sheet1.Cells["C1"].Value.Should().Be("Sheet1.C1");
+                    sheet1.Cells["A2"].Value.Should().Be("Sheet1.A2");
+                    sheet1.Cells["B2"].Value.Should().BeNull();
+                    sheet1.Cells["C2"].Value.Should().Be("Sheet1.C2");
+                    sheet1.Cells["A2:B2"].Merge.Should().BeTrue();
+
+                    var sheet2 = package.Workbook.Worksheets[1];
+                    sheet2.Name.Should().Be("Sheet2");
+                    sheet2.Cells["A1"].Value.Should().Be("Sheet2.A1");
+                    sheet2.Cells["B1"].Value.Should().BeNull();
+                    sheet2.Cells["C1"].Value.Should().Be("Sheet2.C1");
+                    sheet2.Cells["A2"].Value.Should().Be("Sheet2.A2");
+                    sheet2.Cells["B2"].Value.Should().Be("Sheet2.B2");
+                    sheet2.Cells["C2"].Value.Should().Be("Sheet2.C2");
+                    sheet2.Cells["A1:B1"].Merge.Should().BeTrue();
+                }
+            }
+        }
     }
 }

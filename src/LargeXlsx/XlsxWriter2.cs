@@ -55,18 +55,25 @@ namespace LargeXlsx
         public void Dispose()
         {
             _currentWorksheet?.Dispose();
-
             Stylesheet.Save(_zipWriter);
+            Save();
+            _zipWriter.Dispose();
+        }
 
+        private void Save()
+        {
             using (var stream = _zipWriter.WriteToStream("[Content_Types].xml", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
+                var worksheetTags = new StringBuilder();
+                foreach (var worksheet in _worksheets)
+                    worksheetTags.Append($"<Override PartName=\"/xl/worksheets/sheet{worksheet.Id}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>");
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
-                                   + "<Default Extension=\"xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\" />"
-                                   + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\" />"
-                                   + "<Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\" />"
-                                   + "<Override PartName=\"/xl/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\" />"
+                                   + "<Default Extension=\"xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>"
+                                   + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+                                   + worksheetTags
+                                   + "<Override PartName=\"/xl/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/>"
                                    + "</Types>");
             }
 
@@ -75,22 +82,20 @@ namespace LargeXlsx
             {
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
-                                   + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"/xl/workbook.xml\" Id=\"R7130d2a4b4db42e0\" />"
+                                   + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"/xl/workbook.xml\" Id=\"RidWB1\"/>"
                                    + "</Relationships>");
             }
 
             using (var stream = _zipWriter.WriteToStream("xl/workbook.xml", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
-                var sheetTags = new StringBuilder();
-                var sheetId = 1;
-                // TODO: r:id is hardcoded
-                foreach (var sheet in _worksheets)
-                    sheetTags.Append($"<sheet name=\"{sheet.Name}\" sheetId=\"{sheetId++}\" r:id=\"Rc3797908a4cd4249\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>");
+                var worksheetTags = new StringBuilder();
+                foreach (var worksheet in _worksheets)
+                    worksheetTags.Append($"<sheet name=\"{worksheet.Name}\" sheetId=\"{worksheet.Id}\" r:id=\"RidWS{worksheet.Id}\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>");
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
                                    + "<sheets>"
-                                   + sheetTags
+                                   + worksheetTags
                                    + "</sheets>"
                                    + "</workbook>");
             }
@@ -98,19 +103,21 @@ namespace LargeXlsx
             using (var stream = _zipWriter.WriteToStream("xl/_rels/workbook.xml.rels", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
+                var worksheetTags = new StringBuilder();
+                foreach (var worksheet in _worksheets)
+                    worksheetTags.Append($"<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"/xl/worksheets/sheet{worksheet.Id}.xml\" Id=\"RidWS{worksheet.Id}\"/>");
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
-                                   + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"/xl/worksheets/sheet1.xml\" Id=\"Rc3797908a4cd4249\" />"
-                                   + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"/xl/styles.xml\" Id=\"Rb18eccf29de245a8\" />"
+                                   + worksheetTags
+                                   + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"/xl/styles.xml\" Id=\"RidSS1\"/>"
                                    + "</Relationships>");
             }
-            _zipWriter.Dispose();
         }
 
         public XlsxWriter2 BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0)
         {
             _currentWorksheet?.Dispose();
-            _currentWorksheet = new XlsxWorksheet2(_zipWriter, name, splitRow, splitColumn);
+            _currentWorksheet = new XlsxWorksheet2(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn);
             _worksheets.Add(_currentWorksheet);
             return this;
         }

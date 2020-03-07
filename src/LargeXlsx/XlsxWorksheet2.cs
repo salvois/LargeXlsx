@@ -39,18 +39,20 @@ namespace LargeXlsx
         private readonly StreamWriter _streamWriter;
         private readonly List<string> _mergedCells;
 
+        public int Id { get; }
         public string Name { get; }
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
 
-        public XlsxWorksheet2(ZipWriter zipWriter, string name, int splitRow, int splitColumn)
+        public XlsxWorksheet2(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn)
         {
+            Id = id;
             Name = name;
             CurrentRowNumber = 0;
             CurrentColumnNumber = 0;
             _mergedCells = new List<string>();
 
-            _stream = zipWriter.WriteToStream("xl/worksheets/sheet1.xml", new ZipWriterEntryOptions());
+            _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
             _streamWriter.Write("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");

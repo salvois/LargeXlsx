@@ -10,7 +10,7 @@ namespace ExamplesDotNetCore
         public static void Run()
         {
             var stopwatch = Stopwatch.StartNew();
-            using (var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create))
+            using (var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create, FileAccess.Write))
             using (var largeXlsxWriter = new XlsxWriter2(stream))
             {
                 var whiteFont = largeXlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ffffff", bold: true);
