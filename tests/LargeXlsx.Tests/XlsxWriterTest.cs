@@ -1,4 +1,30 @@
-﻿using System.IO;
+﻿/*
+LargeXlsx - Minimalistic .net library to write large XLSX files
+
+Copyright 2020 Salvatore ISAJA. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED THE COPYRIGHT HOLDER ``AS IS'' AND ANY EXPRESS
+OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+using System.IO;
 using FluentAssertions;
 using NUnit.Framework;
 using OfficeOpenXml;
@@ -68,9 +94,9 @@ namespace LargeXlsx.Tests
                     var highlightStyle = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
 
                     xlsxWriter
-                        .BeginWorksheet("Sheet1")
+                        .BeginWorksheet("Sheet&'<1>\"")
                         .SetDefaultStyle(headerStyle)
-                        .BeginRow().Write("Col1").Write("Col2").Write("Col3")
+                        .BeginRow().Write("Col<1>").Write("Col2").Write("Col&3")
                         .BeginRow().Write().Write("Sub2").Write("Sub3")
                         .SetDefaultStyle(XlsxStyle.Default)
                         .BeginRow().Write("Row3").Write(42).Write(-1, highlightStyle)
@@ -83,11 +109,11 @@ namespace LargeXlsx.Tests
                 {
                     package.Workbook.Worksheets.Count.Should().Be(1);
                     var sheet = package.Workbook.Worksheets[0];
-                    sheet.Name.Should().Be("Sheet1");
+                    sheet.Name.Should().Be("Sheet&'<1>\"");
 
-                    sheet.Cells["A1"].Value.Should().Be("Col1");
+                    sheet.Cells["A1"].Value.Should().Be("Col<1>");
                     sheet.Cells["B1"].Value.Should().Be("Col2");
-                    sheet.Cells["C1"].Value.Should().Be("Col3");
+                    sheet.Cells["C1"].Value.Should().Be("Col&3");
                     sheet.Cells["A2"].Value.Should().BeNull();
                     sheet.Cells["B2"].Value.Should().Be("Sub2");
                     sheet.Cells["C2"].Value.Should().Be("Sub3");

@@ -28,7 +28,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
@@ -94,7 +93,7 @@ namespace LargeXlsx
         public void Write(XlsxStyle style)
         {
             EnsureRow();
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id);
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id);
             CurrentColumnNumber++;
         }
 
@@ -107,22 +106,23 @@ namespace LargeXlsx
             }
 
             EnsureRow();
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id, value);
+            var escapedValue = Util.EscapeXmlText(value);
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id, escapedValue);
             CurrentColumnNumber++;
         }
 
         public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"n\"><v>{3}</v></c>", GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id, value);
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"n\"><v>{3}</v></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id, value);
             CurrentColumnNumber++;
         }
 
         public void AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
         {
             var toRow = fromRow + rowCount - 1;
-            var fromColumnName = GetColumnName(fromColumn);
-            var toColumnName = GetColumnName(fromColumn + columnCount - 1);
+            var fromColumnName = Util.GetColumnName(fromColumn);
+            var toColumnName = Util.GetColumnName(fromColumn + columnCount - 1);
             _mergedCells.Add($"{fromColumnName}{fromRow}:{toColumnName}{toRow}");
         }
 
@@ -143,7 +143,7 @@ namespace LargeXlsx
 
         private void FreezePanes(int fromRow, int fromColumn)
         {
-            var topLeftCell = $"{GetColumnName(fromColumn + 1)}{fromRow + 1}";
+            var topLeftCell = $"{Util.GetColumnName(fromColumn + 1)}{fromRow + 1}";
             _streamWriter.Write("<sheetViews>"
                                 + "<sheetView tabSelected=\"1\" workbookViewId=\"0\">"
                                 + "<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>"
@@ -161,24 +161,6 @@ namespace LargeXlsx
             foreach (var mergedCell in _mergedCells)
                 _streamWriter.Write("<mergeCell ref=\"{0}\"/>", mergedCell);
             _streamWriter.Write("</mergeCells>");
-        }
-
-        private static string GetColumnName(int columnIndex)
-        {
-            var columnName = new StringBuilder(3);
-            while (true)
-            {
-                if (columnIndex > 26)
-                {
-                    columnIndex = Math.DivRem(columnIndex - 1, 26, out var rem);
-                    columnName.Insert(0, (char)('A' + rem));
-                }
-                else
-                {
-                    columnName.Insert(0, (char)('A' + columnIndex - 1));
-                    return columnName.ToString();
-                }
-            }
         }
     }
 }

@@ -93,7 +93,7 @@ namespace LargeXlsx
             {
                 var worksheetTags = new StringBuilder();
                 foreach (var worksheet in _worksheets)
-                    worksheetTags.Append($"<sheet name=\"{worksheet.Name}\" sheetId=\"{worksheet.Id}\" r:id=\"RidWS{worksheet.Id}\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>");
+                    worksheetTags.Append($"<sheet name=\"{Util.EscapeXmlAttribute(worksheet.Name)}\" sheetId=\"{worksheet.Id}\" r:id=\"RidWS{worksheet.Id}\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>");
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
                                    + "<sheets>"

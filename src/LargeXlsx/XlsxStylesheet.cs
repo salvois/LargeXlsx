@@ -129,7 +129,7 @@ namespace LargeXlsx
                 streamWriter.Write("<numFmts count=\"{0}\">", _numberFormats.Count);
                 foreach (var numberFormat in _numberFormats)
                 {
-                    streamWriter.Write("<numFmt numFmtId=\"{0}\" formatCode=\"{1}\"/>", numberFormat.Id, numberFormat.FormatCode);
+                    streamWriter.Write("<numFmt numFmtId=\"{0}\" formatCode=\"{1}\"/>", numberFormat.Id, Util.EscapeXmlAttribute(numberFormat.FormatCode));
                 }
                 streamWriter.Write("</numFmts>");
 
@@ -143,7 +143,7 @@ namespace LargeXlsx
                                        + "<family val=\"2\"/>"
                                        + "{3}{4}{5}"
                                        + "</font>",
-                        font.FontSize, font.HexRgbColor, font.FontName,
+                        font.FontSize, font.HexRgbColor, Util.EscapeXmlAttribute(font.FontName),
                         font.Bold ? "<b/>" : "", font.Italic ? "<i/>" : "", font.Strike ? "<strike/>" : "");
                 }
                 streamWriter.Write("</fonts>");

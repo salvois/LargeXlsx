@@ -17,9 +17,9 @@ namespace Examples
                 var highlightStyle = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
 
                 xlsxWriter
-                    .BeginWorksheet("Sheet1")
+                    .BeginWorksheet("Sheet&'<1>\"")
                     .SetDefaultStyle(headerStyle)
-                    .BeginRow().Write("Col1").Write("Col2").Write("Col3")
+                    .BeginRow().Write("Col<1>").Write("Col2").Write("Col&3")
                     .BeginRow().Write().Write("Sub2").Write("Sub3")
                     .SetDefaultStyle(XlsxStyle.Default)
                     .BeginRow().Write("Row3").Write(42).Write(-1, highlightStyle)
