@@ -24,26 +24,26 @@ To create a simple single-sheet Excel document:
 
 ```csharp
 using (var stream = new FileStream("Simple.xlsx", FileMode.Create, FileAccess.Write))
-using (var xlsxWriter = new XlsxWriter(stream))
 {
-	var whiteFont = xlsxWriter.Stylesheet.CreateFont("Segoe UI", 9, "ffffff", bold: true);
-	var blueFill = xlsxWriter.Stylesheet.CreateSolidFill("004586");
-	var yellowFill = xlsxWriter.Stylesheet.CreateSolidFill("ffff88");
-	var headerStyle = xlsxWriter.Stylesheet.CreateStyle(
-	        whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
-	var highlightStyle = xlsxWriter.Stylesheet.CreateStyle(
-	        XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
+    using (var xlsxWriter = new XlsxWriter(stream))
+    {
+        var whiteFont = new XlsxFont("Segoe UI", 9, "ffffff", bold: true);
+        var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, "004586");
+        var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, "ffff88");
+        var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
+        var highlightStyle = new XlsxStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
 
-	xlsxWriter
-		.BeginWorksheet("Sheet1")
-		.SetDefaultStyle(headerStyle)
-		.BeginRow().Write("Col1").Write("Col2").Write("Col3")
-		.BeginRow().Write().Write("Sub2").Write("Sub3")
-		.SetDefaultStyle(XlsxStyle.Default)
-		.BeginRow().Write("Row3").Write(42).Write(-1, highlightStyle)
-		.BeginRow().Write("Row4").SkipColumns(1).Write(1234)
-		.SkipRows(2)
-		.BeginRow().AddMergedCell(1, 2).Write("Row7").SkipColumns(1).Write(3.14159265359);
+        xlsxWriter
+            .BeginWorksheet("Sheet1")
+            .SetDefaultStyle(headerStyle)
+            .BeginRow().Write("Col1").Write("Col2").Write("Col3")
+            .BeginRow().Write().Write("Sub2").Write("Sub3")
+            .SetDefaultStyle(XlsxStyle.Default)
+            .BeginRow().Write("Row3").Write(42).Write(-1, highlightStyle)
+            .BeginRow().Write("Row4").SkipColumns(1).Write(1234)
+            .SkipRows(2)
+            .BeginRow().AddMergedCell(1, 2).Write("Row7").SkipColumns(1).Write(3.14159265359);
+    }
 }
 ```
 
@@ -134,60 +134,71 @@ To facilitate merging cells while fluently writing the file, a convenience overl
 
 ### Styling
 
-Styling lets you apply colors or other formatting to cells being written. The XLSX file format uses the concept of **stylesheet** where you list all possible styles used by your content. Each style is represented by an `XlsxStyle` object in this library.
-When you write a cell using `Write` you can specify the style to use for that cell, or omit it to use the current default style of the `XlsxWriter`.
+Styling lets you apply colors or other formatting to cells being written.
 
-Each `XlsxWriter` object manages a single `XlsxStylesheet` object, exposed by the `Stylesheet` property, that provides functionality to add styles to the stylesheet.
+A style is made up of four components: the **font**, including face, size and text color; the **fill**, specifying the background color; the **border** style and color; the **number format** specifying how a number should appear, such as how many decimals or whether to show it as percentage. In this library they are represented by `XlsxFont`, `XlsxFill`, `XlsxBorder` and `XlsxNumberFormat` objects respectively.
 
-    XlsxStylesheet Stylesheet { get; }
+You can create a new style using the constructor of the `XlsxStyle` class:
 
-A style is made up of four components: the **font**, including face, size and text color; the **fill**, specifying the background color; the **border** style and color; the **number format** specifying how a number should appear, such as how many decimals or whether to show it as percentage. They are represented by `XlsxFont`, `XlsxFill`, `XlsxBorder` and `XlsxNumberFormat` objects respectively.
+    XlsxStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat)
 
-**Note:** due to the internals of the XLSX file format, the content of the stylesheet (thus the list of fonts, fills, borders, number formats and the styles combining them) are kept in RAM until the `XlsxWriter` is disposed. **Using a large number of fonts, fills, borders, number formats or styles may cause high memory consumption**: it is recommended that you create only the minimum amount of font, fill, border and number format objects and combine them as needed into styles.
+The resulting `XlsxStyle` object can be used with the `Write` method of the `XlsxWriter` to style a cell being written, or with `SetDefaultStyle` to change the default style of the `XlsxWriter`.
+
+Under the hood, all styles used with `Write` are collected in a stylesheet, and this library deduplicates them as needed. Note, however, that the stylesheet is kept in RAM until the `XlsxWriter` is disposed. **Using a large number of different styles may cause high memory consumption**.
+
+The built-in `XlsxStyle.Default` object provides a ready-to-use style combining the `XlsxFont.Default` font, the built-in `XlsxFill.None` fill, the built-in `XlsxBorder.None` border and the built-in `XlsxNumberFormat.General` number format (see below).
+
+#### The default style
+
+Whenever you write a cell using `Write` without specifying an explicit style, the default style of the `XlsxWriter` is used. You can set the default style while fluently write the Excel file with the `SetDefaultStyle` method:
+
+    XlsxWriter SetDefaultStyle(XlsxStyle style)
+
+The default style of a new `XlsxWriter` is set to `XlsxStyle.Default`, but you can change it at any time, including setting it back to `XlsxStyle.Default`.
+
 
 #### Fonts
 
-To create a new font, call the `CreateFont` method of the `XlsxStylesheet` object. Using named arguments is recommended to improve readability. The color is a string of hexadecimal digits in RRGGBB format.
+An `XlsxFont` object lets you define the font face, its size in points, the text color and emphasis such as bold, italic and strikeout. Create it via constructor:
 
-    XlsxFont CreateFont(string fontName, double fontSize, string hexRgbColor,
-                        bool bold = false, bool italic = false, bool strike = false)
+    XlsxFont(string fontName, double fontSize, string hexRgbColor,
+             bool bold = false, bool italic = false, bool strike = false)
 
-For example to create a red, italic, 11-point, Calibri font, use: `var redItalicFont = xlsxWriter.Stylesheet.CreateFont("Calibri", 11, "ff0000", italic: true)`.
+Using named arguments is recommended to improve readability. The color is a string of hexadecimal digits in RRGGBB format. For example to create a red, italic, 11-point, Calibri font, use: `var redItalicFont = new XlsxFont("Calibri", 11, "ff0000", italic: true)`.
 
 The built-in `XlsxFont.Default` object provides a default black, plain, 11-point, Calibri font.
 
 #### Fills
 
-Currently, only fills with a solid background color are supported. To create a new solid fill, call the `CreateSolidFill` method of the `XlsxStylesheet` object. The color is a string of hexadecimal digits in RRGGBB format.
+An `XlsxFill` object lets you define the background color of a cell and the pattern to use to fill the background. Create it via the constructor:
 
-    XlsxFill CreateSolidFill(string hexRgbColor)
-    
-For example to create a yellow fill, use: `var yellowFill = xlsxWriter.Stylesheet.CreateSolidFill("ffff00")`.
+    XlsxFill(XlsxFill.Pattern patternType, string hexRgbColor)
+
+Where `XlsxFill.Pattern` may be `None` for a transparent fill, `Solid` for a solid fill or `Gray125` for a dotted pattern (not necessarily gray) with 12.5% coverage; the color is a string of hexadecimal digits in RRGGBB format. For example to create a yellow solid fill, use: `var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, "ffff00")`.
 
 The built-in `XlsxFill.None` object provides a default empty fill.
 
 #### Borders
 
-Currently, a set of top, right, bottom and left cell borders of the same color is supported. To create a new set of borders, call the `CreateBorder` method of the `XlsxStylesheet` object. The color is a string of hexadecimal digits in RRGGBB format. The `XlsxBorder.Style` enum defines the kind of border of each cell side, such as `None`, `Thin`, `Thick`, `Dashed` and others. Using named arguments is recommended to improve readability.
+An `XlsxBorder` object lets you define thickness and colors for the borders of a cell. Currently, this library lets you define thickness independently for the top, right, bottom and left borders, but they must have the same color. Create a new border set via constructor:
 
-    public XlsxBorder CreateBorder(
-            string hexRgbColor,
-            XlsxBorder.Style top    = XlsxBorder.Style.None,
-            XlsxBorder.Style right  = XlsxBorder.Style.None,
-            XlsxBorder.Style bottom = XlsxBorder.Style.None,
-            XlsxBorder.Style left   = XlsxBorder.Style.None)
-                                 
-For example to create a thin black border on the left side only, use: `var leftBorder = xlsxWriter.Stylesheet.CreateBorder("000000", left: XlsxBorder.Style.Thin)`.
+    XlsxBorder(string hexRgbColor,
+               XlsxBorder.Style top    = XlsxBorder.Style.None,
+               XlsxBorder.Style right  = XlsxBorder.Style.None,
+               XlsxBorder.Style bottom = XlsxBorder.Style.None,
+               XlsxBorder.Style left   = XlsxBorder.Style.None)
+
+The color is a string of hexadecimal digits in RRGGBB format. The `XlsxBorder.Style` enum defines the kind of border of each cell side, such as `None`, `Thin`, `Thick`, `Dashed` and others. Using named arguments is recommended to improve readability. For example to create a thin black border on the left side only, use: `var leftBorder = new XlsxBorder("000000", left: XlsxBorder.Style.Thin)`.
 
 The built-in `XlsxBorder.None` object provides a default empty border set.
 
 #### Number formats
 
-To create a custom number format, call the `CreateNumberFormat` method of the `XlsxStylesheet` object, specifying a number format string as you would normally do in Excel, such as `"0.0%"` for a percentage with exactly one decimal value.
+An `XlsxNumberFormat` object lets you define how the content of a cell should appear when it contains a numeric value. Create it via constructor:
 
-    XlsxNumberFormat CreateNumberFormat(string formatCode)
-    
-For example to create a custom number format with thousand separator, at least two decimal digits and at most six, use: `var customNumberFormat = xlsxWriter.Stylesheet.CreateNumberFormat("#,##0.00####")`.
+    XlsxNumberFormat(string formatCode)
+
+The format code has the same format you would normally use in Excel, such as `"0.0%"` for a percentage with exactly one decimal value. For example to create a custom number format with thousand separator, at least two decimal digits and at most six, use: `var customNumberFormat = new XlsxNumberFormat("#,##0.00####")`.
 
 Excel defines and reserves many number formats, and this library exposes some of them as:
 
@@ -196,25 +207,6 @@ Excel defines and reserves many number formats, and this library exposes some of
 * `XlsxNumberFormat.ThousandTwoDecimal`: thousand separators and two decimal numbers, that is the format code `"#,##0.00"`.
 * `XlsxNumberFormat.Percentage`: percentage formatting and two decimal numbers, that is the format code `"0.00%"`.
 * `XlsxNumberFormat.Scientific`: scientific notation with two decimals and two-digit exponent, that is the format code `"0.00E+00"`.
-
-#### Combining them all to create a style
-
-To create a new style using the specified combination of font, fill, border and number format, call the `CreateStyle` method of the `XlsxStylesheet` object. The resulting `XlsxStyle` can be used with `Write` to style a cell being written, or with `SetDefaultStyle` to change the default style of the `XlsxWriter`.
-
-    XlsxStyle CreateStyle(XlsxFont font,
-                          XlsxFill fill,
-                          XlsxBorder border,
-                          XlsxNumberFormat numberFormat)
-
-The built-in `XlsxStyle.Default` object provides a deafult style combining `XlsxFont.Default`, `XlsxFill.None`, `XlsxBorder.None` and `XlsxNumberFormat.General`.
-
-#### The default style
-
-Whenever you write a cell using `Write` without specifying an explicit estyle, the default style of the `XlsxWriter` is used. You can set the default style while fluently write the Excel file with the `SetDefaultStyle` method:
-
-    XlsxWriter SetDefaultStyle(XlsxStyle style)
-
-The default style of new `XlsxWriter` is set to `XlsxStyle.Default`, but you can change it at any time, including setting it back to `XlsxStyle.Default`.
 
 
 ## Special thanks

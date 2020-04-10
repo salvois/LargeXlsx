@@ -25,10 +25,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
+using System.Collections.Generic;
 
 namespace LargeXlsx
 {
-    public class XlsxBorder
+    public class XlsxBorder : IEquatable<XlsxBorder>
     {
         public enum Style
         {
@@ -48,19 +49,16 @@ namespace LargeXlsx
             SlantDashDot
         }
 
-        public static readonly XlsxBorder None = new XlsxBorder(0, "000000");
-        internal const int FirstAvailableId = 1;
+        public static readonly XlsxBorder None = new XlsxBorder("000000");
 
-        public int Id { get; }
         public string HexRgbColor { get; }
         public Style Top { get; }
         public Style Right { get; }
         public Style Bottom { get; }
         public Style Left { get; }
 
-        internal XlsxBorder(int id, string hexRgbColor, Style top = Style.None, Style right = Style.None, Style bottom = Style.None, Style left = Style.None)
+        public XlsxBorder(string hexRgbColor, Style top = Style.None, Style right = Style.None, Style bottom = Style.None, Style left = Style.None)
         {
-            Id = id;
             HexRgbColor = hexRgbColor;
             Top = top;
             Right = right;
@@ -88,6 +86,37 @@ namespace LargeXlsx
                 case Style.SlantDashDot: return "slantDashDot";
                 default: throw new ArgumentOutOfRangeException();
             }
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as XlsxBorder);
+        }
+
+        public bool Equals(XlsxBorder other)
+        {
+            return other != null && HexRgbColor == other.HexRgbColor && Top == other.Top && Right == other.Right && Bottom == other.Bottom && Left == other.Left;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1993506469;
+            hashCode = hashCode * -1521134295 + HexRgbColor.GetHashCode();
+            hashCode = hashCode * -1521134295 + Top.GetHashCode();
+            hashCode = hashCode * -1521134295 + Right.GetHashCode();
+            hashCode = hashCode * -1521134295 + Bottom.GetHashCode();
+            hashCode = hashCode * -1521134295 + Left.GetHashCode();
+            return hashCode;
+        }
+
+        public static bool operator ==(XlsxBorder border1, XlsxBorder border2)
+        {
+            return EqualityComparer<XlsxBorder>.Default.Equals(border1, border2);
+        }
+
+        public static bool operator !=(XlsxBorder border1, XlsxBorder border2)
+        {
+            return !(border1 == border2);
         }
     }
 }

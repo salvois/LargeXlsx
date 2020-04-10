@@ -24,26 +24,56 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+using System;
+using System.Collections.Generic;
+
 namespace LargeXlsx
 {
-    public struct XlsxStyle
+    public class XlsxStyle : IEquatable<XlsxStyle>
     {
-        public static readonly XlsxStyle Default = new XlsxStyle(0, XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.General);
-        internal const int FirstAvailableId = 1;
+        public static readonly XlsxStyle Default = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.General);
 
-        public int Id { get; }
         public XlsxFont Font { get; }
         public XlsxFill Fill { get; }
         public XlsxBorder Border { get; }
         public XlsxNumberFormat NumberFormat { get; }
 
-        internal XlsxStyle(int id, XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat)
+        public XlsxStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat)
         {
-            Id = id;
             Font = font;
             Fill = fill;
             Border = border;
             NumberFormat = numberFormat;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as XlsxStyle);
+        }
+
+        public bool Equals(XlsxStyle other)
+        {
+            return other != null && Font.Equals(other.Font) && Fill.Equals(Fill) && Border.Equals(other.Border) && NumberFormat.Equals(NumberFormat);
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 428549002;
+            hashCode = hashCode * -1521134295 + Font.GetHashCode();
+            hashCode = hashCode * -1521134295 + Fill.GetHashCode();
+            hashCode = hashCode * -1521134295 + Border.GetHashCode();
+            hashCode = hashCode * -1521134295 + NumberFormat.GetHashCode();
+            return hashCode;
+        }
+
+        public static bool operator ==(XlsxStyle style1, XlsxStyle style2)
+        {
+            return EqualityComparer<XlsxStyle>.Default.Equals(style1, style2);
+        }
+
+        public static bool operator !=(XlsxStyle style1, XlsxStyle style2)
+        {
+            return !(style1 == style2);
         }
     }
 }

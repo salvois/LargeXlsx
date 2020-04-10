@@ -37,18 +37,18 @@ namespace LargeXlsx
     public class XlsxWriter : IDisposable
     {
         private readonly ZipWriter _zipWriter;
-        private readonly List<XlsxWorksheet> _worksheets;
-        private XlsxWorksheet _currentWorksheet;
+        private readonly List<Worksheet> _worksheets;
+        private readonly Stylesheet _stylesheet;
+        private Worksheet _currentWorksheet;
 
-        public XlsxStylesheet Stylesheet { get; }
         public XlsxStyle DefaultStyle { get; private set; }
         public int CurrentRowNumber => _currentWorksheet.CurrentRowNumber;
         public int CurrentColumnNumber => _currentWorksheet.CurrentColumnNumber;
 
         public XlsxWriter(Stream stream)
         {
-            _worksheets = new List<XlsxWorksheet>();
-            Stylesheet = new XlsxStylesheet();
+            _worksheets = new List<Worksheet>();
+            _stylesheet = new Stylesheet();
             DefaultStyle = XlsxStyle.Default;
 
             _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate));
@@ -57,7 +57,7 @@ namespace LargeXlsx
         public void Dispose()
         {
             _currentWorksheet?.Dispose();
-            Stylesheet.Save(_zipWriter);
+            _stylesheet.Save(_zipWriter);
             Save();
             _zipWriter.Dispose();
         }
@@ -119,7 +119,7 @@ namespace LargeXlsx
         public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0)
         {
             _currentWorksheet?.Dispose();
-            _currentWorksheet = new XlsxWorksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn);
+            _currentWorksheet = new Worksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn);
             _worksheets.Add(_currentWorksheet);
             return this;
         }
@@ -153,7 +153,8 @@ namespace LargeXlsx
         public XlsxWriter Write(XlsxStyle style)
         {
             EnsureWorksheet();
-            _currentWorksheet.Write(style);
+            var styleId = _stylesheet.ResolveStyleId(style);
+            _currentWorksheet.Write(styleId);
             return this;
         }
 
@@ -165,49 +166,47 @@ namespace LargeXlsx
         public XlsxWriter Write(string value, XlsxStyle style)
         {
             EnsureWorksheet();
-            _currentWorksheet.Write(value, style);
+            var styleId = _stylesheet.ResolveStyleId(style);
+            _currentWorksheet.Write(value, styleId);
             return this;
         }
 
         public XlsxWriter Write(double value)
         {
-            EnsureWorksheet();
-            _currentWorksheet.Write(value, DefaultStyle);
-            return this;
+            return Write(value, DefaultStyle);
         }
 
         public XlsxWriter Write(double value, XlsxStyle style)
         {
             EnsureWorksheet();
-            _currentWorksheet.Write(value, style);
+            var styleId = _stylesheet.ResolveStyleId(style);
+            _currentWorksheet.Write(value, styleId);
             return this;
         }
 
         public XlsxWriter Write(decimal value)
         {
-            EnsureWorksheet();
-            _currentWorksheet.Write((double)value, DefaultStyle);
-            return this;
+            return Write(value, DefaultStyle);
         }
 
         public XlsxWriter Write(decimal value, XlsxStyle style)
         {
             EnsureWorksheet();
-            _currentWorksheet.Write((double)value, style);
+            var styleId = _stylesheet.ResolveStyleId(style);
+            _currentWorksheet.Write((double)value, styleId);
             return this;
         }
 
         public XlsxWriter Write(int value)
         {
-            EnsureWorksheet();
-            _currentWorksheet.Write(value, DefaultStyle);
-            return this;
+            return Write(value, DefaultStyle);
         }
 
         public XlsxWriter Write(int value, XlsxStyle style)
         {
             EnsureWorksheet();
-            _currentWorksheet.Write(value, style);
+            var styleId = _stylesheet.ResolveStyleId(style);
+            _currentWorksheet.Write(value, styleId);
             return this;
         }
 

@@ -25,10 +25,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
+using System.Collections.Generic;
 
 namespace LargeXlsx
 {
-    public class XlsxFill
+    public class XlsxFill : IEquatable<XlsxFill>
     {
         public enum Pattern
         {
@@ -37,17 +38,14 @@ namespace LargeXlsx
             Solid
         }
 
-        public static readonly XlsxFill None = new XlsxFill(0, Pattern.None, "ffffff");
-        public static readonly XlsxFill Gray125 = new XlsxFill(1, Pattern.Gray125, "ffffff");
-        internal const int FirstAvailableId = 2; // ids less than 2 are hardcoded by Excel for default fills
+        public static readonly XlsxFill None = new XlsxFill(Pattern.None, "ffffff");
+        public static readonly XlsxFill Gray125 = new XlsxFill(Pattern.Gray125, "ffffff");
 
-        public int Id { get; }
         public Pattern PatternType { get; }
         public string HexRgbColor { get; }
 
-        internal XlsxFill(int id, Pattern patternType, string hexRgbColor)
+        public XlsxFill(Pattern patternType, string hexRgbColor)
         {
-            Id = id;
             PatternType = patternType;
             HexRgbColor = hexRgbColor;
         }
@@ -61,6 +59,34 @@ namespace LargeXlsx
                 case Pattern.Solid: return "solid";
                 default: throw new ArgumentOutOfRangeException();
             }
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as XlsxFill);
+        }
+
+        public bool Equals(XlsxFill other)
+        {
+            return other != null && PatternType == other.PatternType && HexRgbColor == other.HexRgbColor;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 493172489;
+            hashCode = hashCode * -1521134295 + PatternType.GetHashCode();
+            hashCode = hashCode * -1521134295 + HexRgbColor.GetHashCode();
+            return hashCode;
+        }
+
+        public static bool operator ==(XlsxFill fill1, XlsxFill fill2)
+        {
+            return EqualityComparer<XlsxFill>.Default.Equals(fill1, fill2);
+        }
+
+        public static bool operator !=(XlsxFill fill1, XlsxFill fill2)
+        {
+            return !(fill1 == fill2);
         }
     }
 }

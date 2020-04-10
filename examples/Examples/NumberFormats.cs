@@ -10,16 +10,16 @@ namespace Examples
             using (var stream = new FileStream($"{nameof(NumberFormats)}.xlsx", FileMode.Create, FileAccess.Write))
             using (var xlsxWriter = new XlsxWriter(stream))
             {
-                var customNumberFormat1 = xlsxWriter.Stylesheet.CreateNumberFormat("0.0%");
-                var customNumberFormat2 = xlsxWriter.Stylesheet.CreateNumberFormat("#,##0.00####");
+                var customNumberFormat1 = new XlsxNumberFormat("0.0%");
+                var customNumberFormat2 = new XlsxNumberFormat("#,##0.00####");
 
-                var generalStyle = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.General);
-                var twoDecimalStyle = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.TwoDecimal);
-                var thousandTwoDecimalStyle = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.ThousandTwoDecimal);
-                var percentageStyle = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.Percentage);
-                var scientificStyle = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.Scientific);
-                var customStyle1 = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, customNumberFormat1);
-                var customStyle2 = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, customNumberFormat2);
+                var generalStyle = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.General);
+                var twoDecimalStyle = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.TwoDecimal);
+                var thousandTwoDecimalStyle = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.ThousandTwoDecimal);
+                var percentageStyle = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.Percentage);
+                var scientificStyle = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.Scientific);
+                var customStyle1 = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, customNumberFormat1);
+                var customStyle2 = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, customNumberFormat2);
 
                 xlsxWriter
                     .BeginWorksheet("Sheet1")

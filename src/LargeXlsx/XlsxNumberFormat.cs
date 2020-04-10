@@ -24,24 +24,49 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+using System;
+using System.Collections.Generic;
+
 namespace LargeXlsx
 {
-    public class XlsxNumberFormat
+    public class XlsxNumberFormat : IEquatable<XlsxNumberFormat>
     {
-        public static readonly XlsxNumberFormat General = new XlsxNumberFormat(0, "general");
-        public static readonly XlsxNumberFormat TwoDecimal = new XlsxNumberFormat(2, "0.00");
-        public static readonly XlsxNumberFormat ThousandTwoDecimal = new XlsxNumberFormat(4, "#,##0.00");
-        public static readonly XlsxNumberFormat Percentage = new XlsxNumberFormat(10, "0.00%");
-        public static readonly XlsxNumberFormat Scientific = new XlsxNumberFormat(11, "0.00E+00");
-        internal const int FirstAvailableId = 165; // ids less than 165 are hardcoded by Excel for default formats
+        public static readonly XlsxNumberFormat General = new XlsxNumberFormat("general");
+        public static readonly XlsxNumberFormat TwoDecimal = new XlsxNumberFormat("0.00");
+        public static readonly XlsxNumberFormat ThousandTwoDecimal = new XlsxNumberFormat("#,##0.00");
+        public static readonly XlsxNumberFormat Percentage = new XlsxNumberFormat("0.00%");
+        public static readonly XlsxNumberFormat Scientific = new XlsxNumberFormat("0.00E+00");
 
-        public int Id { get; }
         public string FormatCode { get; }
 
-        internal XlsxNumberFormat(int id, string formatCode)
+        public XlsxNumberFormat(string formatCode)
         {
-            Id = id;
             FormatCode = formatCode;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as XlsxNumberFormat);
+        }
+
+        public bool Equals(XlsxNumberFormat other)
+        {
+            return other != null && FormatCode == other.FormatCode;
+        }
+
+        public override int GetHashCode()
+        {
+            return FormatCode.GetHashCode();
+        }
+
+        public static bool operator ==(XlsxNumberFormat format1, XlsxNumberFormat format2)
+        {
+            return EqualityComparer<XlsxNumberFormat>.Default.Equals(format1, format2);
+        }
+
+        public static bool operator !=(XlsxNumberFormat format1, XlsxNumberFormat format2)
+        {
+            return !(format1 == format2);
         }
     }
 }

@@ -7,6 +7,7 @@
             Simple.Run();
             NumberFormats.Run();
             Large.Run();
+            StyledLarge.Run();
         }
     }
 }

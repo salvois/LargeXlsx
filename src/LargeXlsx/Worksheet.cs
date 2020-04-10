@@ -32,7 +32,7 @@ using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
-    internal class XlsxWorksheet : IDisposable
+    internal class Worksheet : IDisposable
     {
         private readonly Stream _stream;
         private readonly StreamWriter _streamWriter;
@@ -43,7 +43,7 @@ namespace LargeXlsx
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
 
-        public XlsxWorksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn)
+        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn)
         {
             Id = id;
             Name = name;
@@ -90,31 +90,31 @@ namespace LargeXlsx
             CurrentColumnNumber += columnCount;
         }
 
-        public void Write(XlsxStyle style)
+        public void Write(int styleId)
         {
             EnsureRow();
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id);
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId);
             CurrentColumnNumber++;
         }
 
-        public void Write(string value, XlsxStyle style)
+        public void Write(string value, int styleId)
         {
             if (value == null)
             {
-                Write(style);
+                Write(styleId);
                 return;
             }
 
             EnsureRow();
             var escapedValue = Util.EscapeXmlText(value);
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id, escapedValue);
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId, escapedValue);
             CurrentColumnNumber++;
         }
 
-        public void Write(double value, XlsxStyle style)
+        public void Write(double value, int styleId)
         {
             EnsureRow();
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"n\"><v>{3}</v></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, style.Id, value);
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"n\"><v>{3}</v></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId, value);
             CurrentColumnNumber++;
         }
 

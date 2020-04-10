@@ -36,14 +36,14 @@ namespace LargeXlsx.Tests
         public void EscapeXmlText()
         {
             var escapedXmlText = Util.EscapeXmlText("Lorem 'ipsum' & \"dolor\" <sit> amet");
-            escapedXmlText.Should().BeEquivalentTo("Lorem 'ipsum' &amp; \"dolor\" &lt;sit&gt; amet");
+            escapedXmlText.Should().Be("Lorem 'ipsum' &amp; \"dolor\" &lt;sit&gt; amet");
         }
 
         [Test]
         public void EscapeXmlAttribute()
         {
             var escapedXmlText = Util.EscapeXmlAttribute("Lorem 'ipsum' & \"dolor\" <sit> amet");
-            escapedXmlText.Should().BeEquivalentTo("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; &lt;sit&gt; amet");
+            escapedXmlText.Should().Be("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; &lt;sit&gt; amet");
         }
 
         [TestCase(1, "A")]

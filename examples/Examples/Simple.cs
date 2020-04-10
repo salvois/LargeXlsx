@@ -10,11 +10,11 @@ namespace Examples
             using (var stream = new FileStream($"{nameof(Simple)}.xlsx", FileMode.Create, FileAccess.Write))
             using (var xlsxWriter = new XlsxWriter(stream))
             {
-                var whiteFont = xlsxWriter.Stylesheet.CreateFont("Segoe UI", 9, "ffffff", bold: true);
-                var blueFill = xlsxWriter.Stylesheet.CreateSolidFill("004586");
-                var yellowFill = xlsxWriter.Stylesheet.CreateSolidFill("ffff88");
-                var headerStyle = xlsxWriter.Stylesheet.CreateStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
-                var highlightStyle = xlsxWriter.Stylesheet.CreateStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
+                var whiteFont = new XlsxFont("Segoe UI", 9, "ffffff", bold: true);
+                var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, "004586");
+                var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, "ffff88");
+                var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
+                var highlightStyle = new XlsxStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
 
                 xlsxWriter
                     .BeginWorksheet("Sheet&'<1>\"")

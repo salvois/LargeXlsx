@@ -24,14 +24,15 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+using System;
+using System.Collections.Generic;
+
 namespace LargeXlsx
 {
-    public class XlsxFont
+    public class XlsxFont : IEquatable<XlsxFont>
     {
-        public static readonly XlsxFont Default = new XlsxFont(0, "Calibri", 11, "000000");
-        internal const int FirstAvailableId = 1;
+        public static readonly XlsxFont Default = new XlsxFont("Calibri", 11, "000000");
 
-        public int Id { get; }
         public string FontName { get; }
         public double FontSize { get; }
         public string HexRgbColor { get; }
@@ -39,15 +40,48 @@ namespace LargeXlsx
         public bool Italic { get; }
         public bool Strike { get; }
 
-        internal XlsxFont(int id, string fontName, double fontSize, string hexRgbColor, bool bold = false, bool italic = false, bool strike = false)
+        public XlsxFont(string fontName, double fontSize, string hexRgbColor, bool bold = false, bool italic = false, bool strike = false)
         {
-            Id = id;
             FontName = fontName;
             FontSize = fontSize;
             HexRgbColor = hexRgbColor;
             Bold = bold;
             Italic = italic;
             Strike = strike;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as XlsxFont);
+        }
+
+        public bool Equals(XlsxFont other)
+        {
+            return other != null
+                   && FontName == other.FontName && FontSize == other.FontSize && HexRgbColor == other.HexRgbColor
+                   && Bold == other.Bold && Italic == other.Italic && Strike == other.Strike;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1593953530;
+            hashCode = hashCode * -1521134295 + FontName.GetHashCode();
+            hashCode = hashCode * -1521134295 + FontSize.GetHashCode();
+            hashCode = hashCode * -1521134295 + HexRgbColor.GetHashCode();
+            hashCode = hashCode * -1521134295 + Bold.GetHashCode();
+            hashCode = hashCode * -1521134295 + Italic.GetHashCode();
+            hashCode = hashCode * -1521134295 + Strike.GetHashCode();
+            return hashCode;
+        }
+
+        public static bool operator ==(XlsxFont font1, XlsxFont font2)
+        {
+            return EqualityComparer<XlsxFont>.Default.Equals(font1, font2);
+        }
+
+        public static bool operator !=(XlsxFont font1, XlsxFont font2)
+        {
+            return !(font1 == font2);
         }
     }
 }
