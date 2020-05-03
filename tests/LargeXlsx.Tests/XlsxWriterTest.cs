@@ -104,7 +104,7 @@ namespace LargeXlsx.Tests
                         .BeginRow().Write("Row3").Write(42).Write(-1, highlightStyle)
                         .BeginRow().Write("Row4").SkipColumns(1).Write(1234)
                         .SkipRows(2)
-                        .BeginRow().AddMergedCell(1, 2).Write("Row7").SkipColumns(1).Write(3.14159265359);
+                        .BeginRow().Write("Row7", columnSpan: 2).Write(3.14159265359);
                 }
 
                 using (var package = new ExcelPackage(stream))

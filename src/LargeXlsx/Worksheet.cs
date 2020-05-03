@@ -126,6 +126,8 @@ namespace LargeXlsx
 
         public void AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
         {
+            if (rowCount < 1 || columnCount < 1)
+                throw new ArgumentOutOfRangeException();
             var toRow = fromRow + rowCount - 1;
             var fromColumnName = Util.GetColumnName(fromColumn);
             var toColumnName = Util.GetColumnName(fromColumn + columnCount - 1);
