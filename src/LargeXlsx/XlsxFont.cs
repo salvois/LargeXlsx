@@ -26,25 +26,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace LargeXlsx
 {
     public class XlsxFont : IEquatable<XlsxFont>
     {
-        public static readonly XlsxFont Default = new XlsxFont("Calibri", 11, "000000");
+        public static readonly XlsxFont Default = new XlsxFont("Calibri", 11, Color.Black);
 
         public string FontName { get; }
         public double FontSize { get; }
-        public string HexRgbColor { get; }
+        public Color Color { get; }
         public bool Bold { get; }
         public bool Italic { get; }
         public bool Strike { get; }
 
-        public XlsxFont(string fontName, double fontSize, string hexRgbColor, bool bold = false, bool italic = false, bool strike = false)
+        public XlsxFont(string fontName, double fontSize, Color color, bool bold = false, bool italic = false, bool strike = false)
         {
             FontName = fontName;
             FontSize = fontSize;
-            HexRgbColor = hexRgbColor;
+            Color = color;
             Bold = bold;
             Italic = italic;
             Strike = strike;
@@ -58,7 +59,7 @@ namespace LargeXlsx
         public bool Equals(XlsxFont other)
         {
             return other != null
-                   && FontName == other.FontName && FontSize == other.FontSize && HexRgbColor == other.HexRgbColor
+                   && FontName == other.FontName && FontSize == other.FontSize && Color == other.Color
                    && Bold == other.Bold && Italic == other.Italic && Strike == other.Strike;
         }
 
@@ -67,7 +68,7 @@ namespace LargeXlsx
             var hashCode = -1593953530;
             hashCode = hashCode * -1521134295 + FontName.GetHashCode();
             hashCode = hashCode * -1521134295 + FontSize.GetHashCode();
-            hashCode = hashCode * -1521134295 + HexRgbColor.GetHashCode();
+            hashCode = hashCode * -1521134295 + Color.GetHashCode();
             hashCode = hashCode * -1521134295 + Bold.GetHashCode();
             hashCode = hashCode * -1521134295 + Italic.GetHashCode();
             hashCode = hashCode * -1521134295 + Strike.GetHashCode();

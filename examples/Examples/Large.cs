@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using LargeXlsx;
 
@@ -13,8 +14,8 @@ namespace Examples
             using (var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create, FileAccess.Write))
             using (var xlsxWriter = new XlsxWriter(stream))
             {
-                var whiteFont = new XlsxFont("Calibri", 11, "ffffff", bold: true);
-                var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, "004586");
+                var whiteFont = new XlsxFont("Calibri", 11, Color.White, bold: true);
+                var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86));
                 var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
                 var numberStyle = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.ThousandTwoDecimal);
 

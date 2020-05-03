@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Drawing;
+using System.IO;
 using LargeXlsx;
 
 namespace Examples
@@ -10,9 +11,9 @@ namespace Examples
             using (var stream = new FileStream($"{nameof(Simple)}.xlsx", FileMode.Create, FileAccess.Write))
             using (var xlsxWriter = new XlsxWriter(stream))
             {
-                var whiteFont = new XlsxFont("Segoe UI", 9, "ffffff", bold: true);
-                var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, "004586");
-                var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, "ffff88");
+                var whiteFont = new XlsxFont("Segoe UI", 9, Color.White, bold: true);
+                var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86));
+                var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0xff, 0xff, 0x88));
                 var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
                 var highlightStyle = new XlsxStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
 

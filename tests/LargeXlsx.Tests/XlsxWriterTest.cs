@@ -24,6 +24,8 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+using System.Drawing;
 using System.IO;
 using FluentAssertions;
 using NUnit.Framework;
@@ -87,9 +89,9 @@ namespace LargeXlsx.Tests
             {
                 using (var xlsxWriter = new XlsxWriter(stream))
                 {
-                    var whiteFont = new XlsxFont("Segoe UI", 9, "ffffff", bold: true);
-                    var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, "004586");
-                    var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, "ffff88");
+                    var whiteFont = new XlsxFont("Segoe UI", 9, Color.White, bold: true);
+                    var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86));
+                    var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0xff, 0xff, 0x88));
                     var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
                     var highlightStyle = new XlsxStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
 

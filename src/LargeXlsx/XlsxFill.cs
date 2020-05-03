@@ -26,6 +26,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace LargeXlsx
 {
@@ -38,16 +39,16 @@ namespace LargeXlsx
             Solid
         }
 
-        public static readonly XlsxFill None = new XlsxFill(Pattern.None, "ffffff");
-        public static readonly XlsxFill Gray125 = new XlsxFill(Pattern.Gray125, "ffffff");
+        public static readonly XlsxFill None = new XlsxFill(Pattern.None, Color.White);
+        public static readonly XlsxFill Gray125 = new XlsxFill(Pattern.Gray125, Color.White);
 
         public Pattern PatternType { get; }
-        public string HexRgbColor { get; }
+        public Color Color { get; }
 
-        public XlsxFill(Pattern patternType, string hexRgbColor)
+        public XlsxFill(Pattern patternType, Color color)
         {
             PatternType = patternType;
-            HexRgbColor = hexRgbColor;
+            Color = color;
         }
 
         internal static string GetPatternAttributeValue(Pattern patternType)
@@ -68,14 +69,14 @@ namespace LargeXlsx
 
         public bool Equals(XlsxFill other)
         {
-            return other != null && PatternType == other.PatternType && HexRgbColor == other.HexRgbColor;
+            return other != null && PatternType == other.PatternType && Color == other.Color;
         }
 
         public override int GetHashCode()
         {
             var hashCode = 493172489;
             hashCode = hashCode * -1521134295 + PatternType.GetHashCode();
-            hashCode = hashCode * -1521134295 + HexRgbColor.GetHashCode();
+            hashCode = hashCode * -1521134295 + Color.GetHashCode();
             return hashCode;
         }
 

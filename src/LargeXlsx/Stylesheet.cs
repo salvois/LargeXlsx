@@ -25,6 +25,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -129,7 +130,7 @@ namespace LargeXlsx
                                        + "<family val=\"2\"/>"
                                        + "{3}{4}{5}"
                                        + "</font>",
-                        font.Key.FontSize, font.Key.HexRgbColor, Util.EscapeXmlAttribute(font.Key.FontName),
+                        font.Key.FontSize, GetColorString(font.Key.Color), Util.EscapeXmlAttribute(font.Key.FontName),
                         font.Key.Bold ? "<b/>" : "", font.Key.Italic ? "<i/>" : "", font.Key.Strike ? "<strike/>" : "");
                 }
                 streamWriter.Write("</fonts>");
@@ -143,7 +144,7 @@ namespace LargeXlsx
                                        + "<bgColor rgb=\"{1}\"/>"
                                        + "</patternFill>"
                                        + "</fill>",
-                        XlsxFill.GetPatternAttributeValue(fill.Key.PatternType), fill.Key.HexRgbColor);
+                        XlsxFill.GetPatternAttributeValue(fill.Key.PatternType), GetColorString(fill.Key.Color));
                 }
                 streamWriter.Write("</fills>");
 
@@ -177,5 +178,7 @@ namespace LargeXlsx
                 streamWriter.Write("</styleSheet>");
             }
         }
+
+        private static string GetColorString(Color color) => $"{color.R:x2}{color.G:x2}{color.B:x2}";
     }
 }
