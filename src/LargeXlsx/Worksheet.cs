@@ -36,6 +36,7 @@ namespace LargeXlsx
     {
         private readonly Stream _stream;
         private readonly StreamWriter _streamWriter;
+        private readonly Stylesheet _stylesheet;
         private readonly List<string> _mergedCells;
 
         public int Id { get; }
@@ -43,20 +44,22 @@ namespace LargeXlsx
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn)
+        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, Stylesheet stylesheet, IEnumerable<XlsxColumn> columns)
         {
             Id = id;
             Name = name;
             CurrentRowNumber = 0;
             CurrentColumnNumber = 0;
+            _stylesheet = stylesheet;
             _mergedCells = new List<string>();
-
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
             _streamWriter.Write("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
             if (splitRow > 0 && splitColumn > 0)
                 FreezePanes(splitRow, splitColumn);
+            if (columns.Any())
+                WriteColumns(columns);
             _streamWriter.Write("<sheetData>");
         }
 
@@ -90,30 +93,33 @@ namespace LargeXlsx
             CurrentColumnNumber += columnCount;
         }
 
-        public void Write(int styleId)
+        public void Write(XlsxStyle style)
         {
             EnsureRow();
+            var styleId = _stylesheet.ResolveStyleId(style);
             _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId);
             CurrentColumnNumber++;
         }
 
-        public void Write(string value, int styleId)
+        public void Write(string value, XlsxStyle style)
         {
             if (value == null)
             {
-                Write(styleId);
+                Write(style);
                 return;
             }
 
             EnsureRow();
             var escapedValue = Util.EscapeXmlText(value);
+            var styleId = _stylesheet.ResolveStyleId(style);
             _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId, escapedValue);
             CurrentColumnNumber++;
         }
 
-        public void Write(double value, int styleId)
+        public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
+            var styleId = _stylesheet.ResolveStyleId(style);
             _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"n\"><v>{3}</v></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId, value);
             CurrentColumnNumber++;
         }
@@ -151,6 +157,26 @@ namespace LargeXlsx
                                 + "</sheetView>"
                                 + "</sheetViews>",
                 fromColumn, fromRow, topLeftCell);
+        }
+
+        private void WriteColumns(IEnumerable<XlsxColumn> columns)
+        {
+            var columnIndex = 1;
+            _streamWriter.Write("<cols>");
+            foreach (var column in columns)
+            {
+                if (column.Hidden || column.Style != null || column.Width.HasValue)
+                {
+                    _streamWriter.Write("<col min=\"{0}\" max=\"{1}\"", columnIndex, columnIndex + column.Count - 1);
+                    if (column.Width.HasValue) _streamWriter.Write(" width=\"{0}\"", column.Width.Value);
+                    if (column.Hidden) _streamWriter.Write(" hidden=\"1\"");
+                    if (column.Width.HasValue) _streamWriter.Write(" customWidth=\"1\"");
+                    if (column.Style != null) _streamWriter.Write(" style=\"{0}\"", _stylesheet.ResolveStyleId(column.Style));
+                    _streamWriter.Write("/>");
+                }
+                columnIndex += column.Count;
+            }
+            _streamWriter.Write("</cols>");
         }
 
         private void WriteMergedCells()

@@ -27,6 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using SharpCompress.Common;
 using SharpCompress.Writers;
@@ -116,10 +117,10 @@ namespace LargeXlsx
             }
         }
 
-        public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0)
+        public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0, IEnumerable<XlsxColumn> columns = null)
         {
             _currentWorksheet?.Dispose();
-            _currentWorksheet = new Worksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn);
+            _currentWorksheet = new Worksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn, _stylesheet, columns ?? Enumerable.Empty<XlsxColumn>());
             _worksheets.Add(_currentWorksheet);
             return this;
         }
@@ -145,69 +146,35 @@ namespace LargeXlsx
             return this;
         }
 
-        public XlsxWriter Write()
-        {
-            return Write(DefaultStyle);
-        }
-
-        public XlsxWriter Write(XlsxStyle style)
+        public XlsxWriter Write(XlsxStyle style = null)
         {
             EnsureWorksheet();
-            var styleId = _stylesheet.ResolveStyleId(style);
-            _currentWorksheet.Write(styleId);
+            _currentWorksheet.Write(style ?? DefaultStyle);
             return this;
         }
 
-        public XlsxWriter Write(string value)
-        {
-            return Write(value, DefaultStyle);
-        }
-
-        public XlsxWriter Write(string value, XlsxStyle style)
+        public XlsxWriter Write(string value, XlsxStyle style = null)
         {
             EnsureWorksheet();
-            var styleId = _stylesheet.ResolveStyleId(style);
-            _currentWorksheet.Write(value, styleId);
+            _currentWorksheet.Write(value, style ?? DefaultStyle);
             return this;
         }
 
-        public XlsxWriter Write(double value)
-        {
-            return Write(value, DefaultStyle);
-        }
-
-        public XlsxWriter Write(double value, XlsxStyle style)
+        public XlsxWriter Write(double value, XlsxStyle style = null)
         {
             EnsureWorksheet();
-            var styleId = _stylesheet.ResolveStyleId(style);
-            _currentWorksheet.Write(value, styleId);
+            _currentWorksheet.Write(value, style ?? DefaultStyle);
             return this;
         }
 
-        public XlsxWriter Write(decimal value)
+        public XlsxWriter Write(decimal value, XlsxStyle style = null)
         {
-            return Write(value, DefaultStyle);
+            return Write((double)value, style);
         }
 
-        public XlsxWriter Write(decimal value, XlsxStyle style)
+        public XlsxWriter Write(int value, XlsxStyle style = null)
         {
-            EnsureWorksheet();
-            var styleId = _stylesheet.ResolveStyleId(style);
-            _currentWorksheet.Write((double)value, styleId);
-            return this;
-        }
-
-        public XlsxWriter Write(int value)
-        {
-            return Write(value, DefaultStyle);
-        }
-
-        public XlsxWriter Write(int value, XlsxStyle style)
-        {
-            EnsureWorksheet();
-            var styleId = _stylesheet.ResolveStyleId(style);
-            _currentWorksheet.Write(value, styleId);
-            return this;
+            return Write((double)value, style);
         }
 
         public XlsxWriter AddMergedCell(int rowCount, int columnCount)
