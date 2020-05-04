@@ -73,12 +73,16 @@ namespace LargeXlsx
             _stream.Dispose();
         }
 
-        public void BeginRow()
+        public void BeginRow(double? height, bool hidden, XlsxStyle style)
         {
             CloseLastRow();
             CurrentRowNumber++;
             CurrentColumnNumber = 1;
-            _streamWriter.Write("<row r=\"{0}\">", CurrentRowNumber);
+            _streamWriter.Write("<row r=\"{0}\"", CurrentRowNumber);
+            if (height.HasValue) _streamWriter.Write(" ht=\"{0}\" customHeight=\"1\"", height);
+            if (hidden) _streamWriter.Write(" hidden=\"1\"");
+            if (style != null) _streamWriter.Write(" s=\"{0}\" customFormat=\"1\"", _stylesheet.ResolveStyleId(style));
+            _streamWriter.Write(">");
         }
 
         public void SkipRows(int rowCount)

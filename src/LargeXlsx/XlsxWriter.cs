@@ -130,9 +130,9 @@ namespace LargeXlsx
             return DoOnWorksheet(() => _currentWorksheet.SkipRows(rowCount));
         }
 
-        public XlsxWriter BeginRow()
+        public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null)
         {
-            return DoOnWorksheet(() => _currentWorksheet.BeginRow());
+            return DoOnWorksheet(() => _currentWorksheet.BeginRow(height, hidden, style));
         }
 
         public XlsxWriter SkipColumns(int columnCount)

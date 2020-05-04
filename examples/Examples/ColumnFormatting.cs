@@ -31,12 +31,12 @@ using LargeXlsx;
 
 namespace Examples
 {
-    public static class Columns
+    public static class ColumnFormatting
     {
         public static void Run()
         {
             var rnd = new Random();
-            using (var stream = new FileStream($"{nameof(Columns)}.xlsx", FileMode.Create, FileAccess.Write))
+            using (var stream = new FileStream($"{nameof(ColumnFormatting)}.xlsx", FileMode.Create, FileAccess.Write))
             using (var xlsxWriter = new XlsxWriter(stream))
             {
                 var blueStyle = new XlsxStyle(

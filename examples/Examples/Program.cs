@@ -6,7 +6,8 @@
         {
             Simple.Run();
             NumberFormats.Run();
-            Columns.Run();
+            ColumnFormatting.Run();
+            RowFormatting.Run();
             Large.Run();
             StyledLarge.Run();
         }
