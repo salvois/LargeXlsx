@@ -24,6 +24,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+using System;
 using System.Drawing;
 using System.IO;
 using FluentAssertions;
@@ -93,6 +94,7 @@ namespace LargeXlsx.Tests
                     var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0xff, 0xff, 0x88));
                     var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
                     var highlightStyle = new XlsxStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
+                    var dateStyle = new XlsxStyle(XlsxStyle.Default.Font, XlsxStyle.Default.Fill, XlsxStyle.Default.Border, XlsxNumberFormat.ShortDateTime);
 
                     xlsxWriter
                         .BeginWorksheet("Sheet&'<1>\"")
@@ -101,7 +103,7 @@ namespace LargeXlsx.Tests
                         .BeginRow().Write().Write("Sub2").Write("Sub3")
                         .SetDefaultStyle(XlsxStyle.Default)
                         .BeginRow().Write("Row3").Write(42).Write(-1, highlightStyle)
-                        .BeginRow().Write("Row4").SkipColumns(1).Write(1234)
+                        .BeginRow().Write("Row4").SkipColumns(1).Write(new DateTime(2020, 5, 6, 18, 27, 0), dateStyle)
                         .SkipRows(2)
                         .BeginRow().Write("Row7", columnSpan: 2).Write(3.14159265359);
                 }
@@ -123,7 +125,8 @@ namespace LargeXlsx.Tests
                     sheet.Cells["C3"].Value.Should().Be(-1);
                     sheet.Cells["A4"].Value.Should().Be("Row4");
                     sheet.Cells["B4"].Value.Should().BeNull();
-                    sheet.Cells["C4"].Value.Should().Be(1234);
+                    sheet.Cells["C4"].Value.Should().Be(new DateTime(2020, 5, 6, 18, 27, 0));
+                    sheet.Cells["C4"].Style.Numberformat.NumFmtID.Should().Be(22);
                     sheet.Cells["A5"].Value.Should().BeNull();
                     sheet.Cells["A6"].Value.Should().BeNull();
                     sheet.Cells["A7"].Value.Should().Be("Row7");

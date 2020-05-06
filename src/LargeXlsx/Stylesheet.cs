@@ -35,7 +35,9 @@ namespace LargeXlsx
 {
     /*
      * Special thanks to http://polymathprogrammer.com/2009/11/09/how-to-create-stylesheet-in-excel-open-xml/
-     * for very valuable insights on how to properly create styles.
+     * for very valuable insights on how to properly create styles
+     * and to https://github.com/ClosedXML/ClosedXML/wiki/NumberFormatId-Lookup-Table
+     * for built-in number formats.
      */
     internal class Stylesheet
     {
@@ -64,12 +66,17 @@ namespace LargeXlsx
             _numberFormats = new Dictionary<XlsxNumberFormat, int>
             {
                 [XlsxNumberFormat.General] = 0,
+                [XlsxNumberFormat.Integer] = 1,
                 [XlsxNumberFormat.TwoDecimal] = 2,
+                [XlsxNumberFormat.ThousandInteger] = 3,
                 [XlsxNumberFormat.ThousandTwoDecimal] = 4,
-                [XlsxNumberFormat.Percentage] = 10,
-                [XlsxNumberFormat.Scientific] = 11
+                [XlsxNumberFormat.IntegerPercentage] = 9,
+                [XlsxNumberFormat.TwoDecimalPercentage] = 10,
+                [XlsxNumberFormat.Scientific] = 11,
+                [XlsxNumberFormat.ShortDate] = 14,
+                [XlsxNumberFormat.ShortDateTime] = 22
             };
-            _nextNumberFormatId = 165; // ids less than 165 are hardcoded by Excel for default formats
+            _nextNumberFormatId = 164; // ids less than 164 are hardcoded by Excel for default formats
 
             _styles = new Dictionary<XlsxStyle, int> { [XlsxStyle.Default] = 0 };
             _nextStyleId = 1;

@@ -126,7 +126,7 @@ namespace LargeXlsx
         {
             EnsureRow();
             var styleId = _stylesheet.ResolveStyleId(style);
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"n\"><v>{3}</v></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId, value);
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"><v>{3}</v></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId, value);
             CurrentColumnNumber++;
         }
 

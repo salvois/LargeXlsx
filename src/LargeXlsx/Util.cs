@@ -31,6 +31,9 @@ namespace LargeXlsx
 {
     internal static class Util
     {
+        private static readonly DateTime ExcelEpoch = new DateTime(1900, 1, 1);
+        private static readonly DateTime Date19000301 = new DateTime(1900, 3, 1);
+
         public static string EscapeXmlText(string value)
         {
             var sb = new StringBuilder(value.Length);
@@ -78,5 +81,14 @@ namespace LargeXlsx
                 }
             }
         }
+
+        public static double DateToDouble(DateTime date)
+        {
+            var days = date.Subtract(ExcelEpoch).TotalDays + 1;
+            // Excel wrongly assumes that 1900 is a leap year:
+            // https://docs.microsoft.com/en-us/office/troubleshoot/excel/wrongly-assumes-1900-is-leap-year
+            if (date >= Date19000301) days++;
+            return days;
+        } 
     }
 }

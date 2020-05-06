@@ -24,6 +24,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+using System;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -64,6 +65,17 @@ namespace LargeXlsx.Tests
         {
             var name = Util.GetColumnName(index);
             name.Should().Be(expectedName);
+        }
+
+        [TestCase("2020-05-06T18:27:00", 43957.76875)]
+        [TestCase("1900-01-01", 1)]
+        [TestCase("1900-02-28", 59)]
+        [TestCase("1900-03-01", 61)]
+        public static void DateToDouble(string dateString, double expected)
+        {
+            var date = DateTime.Parse(dateString);
+            var serialDate = Util.DateToDouble(date);
+            serialDate.Should().BeApproximately(expected, 0.000001);
         }
     }
 }

@@ -32,11 +32,16 @@ namespace LargeXlsx
     public class XlsxNumberFormat : IEquatable<XlsxNumberFormat>
     {
         public static readonly XlsxNumberFormat General = new XlsxNumberFormat("general");
+        public static readonly XlsxNumberFormat Integer = new XlsxNumberFormat("0");
         public static readonly XlsxNumberFormat TwoDecimal = new XlsxNumberFormat("0.00");
+        public static readonly XlsxNumberFormat ThousandInteger = new XlsxNumberFormat("#,##0");
         public static readonly XlsxNumberFormat ThousandTwoDecimal = new XlsxNumberFormat("#,##0.00");
-        public static readonly XlsxNumberFormat Percentage = new XlsxNumberFormat("0.00%");
+        public static readonly XlsxNumberFormat IntegerPercentage = new XlsxNumberFormat("0%");
+        public static readonly XlsxNumberFormat TwoDecimalPercentage = new XlsxNumberFormat("0.00%");
         public static readonly XlsxNumberFormat Scientific = new XlsxNumberFormat("0.00E+00");
-
+        public static readonly XlsxNumberFormat ShortDate = new XlsxNumberFormat("dd/mm/yyyy");
+        public static readonly XlsxNumberFormat ShortDateTime = new XlsxNumberFormat("dd/mm/yyyy hh:mm");
+        
         public string FormatCode { get; }
 
         public XlsxNumberFormat(string formatCode)

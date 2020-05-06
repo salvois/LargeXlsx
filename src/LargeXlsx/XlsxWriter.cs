@@ -161,14 +161,19 @@ namespace LargeXlsx
                 : AddMergedCell(1, columnSpan).Write(value, style, 1).SkipColumns(columnSpan - 1);
         }
 
-        public XlsxWriter Write(decimal value, XlsxStyle style = null)
+        public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 1)
         {
-            return Write((double)value, style);
+            return Write((double)value, style, columnSpan);
         }
 
-        public XlsxWriter Write(int value, XlsxStyle style = null)
+        public XlsxWriter Write(int value, XlsxStyle style = null, int columnSpan = 1)
         {
-            return Write((double)value, style);
+            return Write((double)value, style, columnSpan);
+        }
+
+        public XlsxWriter Write(DateTime value, XlsxStyle style = null, int columnSpan = 1)
+        {
+            return Write(Util.DateToDouble(value), style, columnSpan);
         }
 
         public XlsxWriter AddMergedCell(int rowCount, int columnCount)
