@@ -203,5 +203,24 @@ namespace LargeXlsx.Tests
                 }
             }
         }
+
+        [Test]
+        public static void AutoFilter()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter
+                        .BeginWorksheet("Sheet 1")
+                        .BeginRow().Write("A1").Write("B1").Write("C1")
+                        .BeginRow().Write("A2").Write("B2").Write("C2")
+                        .BeginRow().Write("A3").Write("B3").Write("C3")
+                        .BeginRow().Write("A4").Write("B4").Write("C4")
+                        .SetAutoFilter(1, 1, xlsxWriter.CurrentRowNumber, 3);
+
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].AutoFilterAddress.Address.Should().Be("A1:C4");
+            }
+        }
     }
 }

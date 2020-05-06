@@ -37,7 +37,8 @@ namespace LargeXlsx
         private readonly Stream _stream;
         private readonly StreamWriter _streamWriter;
         private readonly Stylesheet _stylesheet;
-        private readonly List<string> _mergedCells;
+        private readonly List<string> _mergedCellRefs;
+        private string _autoFilterRef;
 
         public int Id { get; }
         public string Name { get; }
@@ -51,7 +52,7 @@ namespace LargeXlsx
             CurrentRowNumber = 0;
             CurrentColumnNumber = 0;
             _stylesheet = stylesheet;
-            _mergedCells = new List<string>();
+            _mergedCellRefs = new List<string>();
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
@@ -67,6 +68,7 @@ namespace LargeXlsx
         {
             CloseLastRow();
             _streamWriter.Write("</sheetData>");
+            WriteAutoFilter();
             WriteMergedCells();
             _streamWriter.Write("</worksheet>");
             _streamWriter.Dispose();
@@ -135,7 +137,17 @@ namespace LargeXlsx
             var toRow = fromRow + rowCount - 1;
             var fromColumnName = Util.GetColumnName(fromColumn);
             var toColumnName = Util.GetColumnName(fromColumn + columnCount - 1);
-            _mergedCells.Add($"{fromColumnName}{fromRow}:{toColumnName}{toRow}");
+            _mergedCellRefs.Add($"{fromColumnName}{fromRow}:{toColumnName}{toRow}");
+        }
+
+        public void SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount)
+        {
+            if (rowCount < 1 || columnCount < 1)
+                throw new ArgumentOutOfRangeException();
+            var toRow = fromRow + rowCount - 1;
+            var fromColumnName = Util.GetColumnName(fromColumn);
+            var toColumnName = Util.GetColumnName(fromColumn + columnCount - 1);
+            _autoFilterRef = $"{fromColumnName}{fromRow}:{toColumnName}{toRow}";
         }
 
         private void EnsureRow()
@@ -185,12 +197,18 @@ namespace LargeXlsx
             _streamWriter.Write("</cols>");
         }
 
+        private void WriteAutoFilter()
+        {
+            if (_autoFilterRef != null)
+                _streamWriter.Write("<autoFilter ref=\"{0}\"/>", _autoFilterRef);
+        }
+
         private void WriteMergedCells()
         {
-            if (!_mergedCells.Any()) return;
+            if (!_mergedCellRefs.Any()) return;
 
-            _streamWriter.Write("<mergeCells count=\"{0}\">", _mergedCells.Count);
-            foreach (var mergedCell in _mergedCells)
+            _streamWriter.Write("<mergeCells count=\"{0}\">", _mergedCellRefs.Count);
+            foreach (var mergedCell in _mergedCellRefs)
                 _streamWriter.Write("<mergeCell ref=\"{0}\"/>", mergedCell);
             _streamWriter.Write("</mergeCells>");
         }

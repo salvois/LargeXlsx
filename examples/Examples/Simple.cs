@@ -27,6 +27,7 @@ namespace Examples
                     .BeginRow().Write("Row4").SkipColumns(1).Write(1234)
                     .SkipRows(2)
                     .BeginRow().Write("Row7", columnSpan: 2).Write(3.14159265359)
+                    .SetAutoFilter(1, 1, xlsxWriter.CurrentRowNumber, 3)
                     .BeginWorksheet("Sheet2")
                     .BeginRow().Write("Lorem ipsum dolor sit amet,")
                     .BeginRow().Write("consectetur adipiscing elit,")

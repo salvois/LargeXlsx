@@ -181,6 +181,11 @@ namespace LargeXlsx
             return DoOnWorksheet(() => _currentWorksheet.AddMergedCell(fromRow, fromColumn, rowCount, columnCount));
         }
 
+        public XlsxWriter SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount)
+        {
+            return DoOnWorksheet(() => _currentWorksheet.SetAutoFilter(fromRow, fromColumn, rowCount, columnCount));
+        }
+
         public XlsxWriter SetDefaultStyle(XlsxStyle style)
         {
             DefaultStyle = style;
