@@ -66,28 +66,6 @@ namespace LargeXlsx
             Left = left;
         }
 
-        internal static string GetStyleAttributeValue(Style style)
-        {
-            switch (style)
-            {
-                case Style.None: return "none";
-                case Style.Thin: return "thin";
-                case Style.Medium: return "medium";
-                case Style.Dashed: return "dashed";
-                case Style.Dotted: return "dotted";
-                case Style.Thick: return "thick";
-                case Style.Double: return "double";
-                case Style.Hair: return "hair";
-                case Style.MediumDashed: return "mediumDashed";
-                case Style.DashDot: return "dashDot";
-                case Style.MediumDashDot: return "mediumDashDot";
-                case Style.DashDotDot: return "dashDotDot";
-                case Style.MediumDashDotDot: return "mediumDashDotDot";
-                case Style.SlantDashDot: return "slantDashDot";
-                default: throw new ArgumentOutOfRangeException();
-            }
-        }
-
         public override bool Equals(object obj)
         {
             return Equals(obj as XlsxBorder);

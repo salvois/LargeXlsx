@@ -8,6 +8,7 @@
             NumberFormats.Run();
             ColumnFormatting.Run();
             RowFormatting.Run();
+            Alignment.Run();
             Large.Run();
             StyledLarge.Run();
         }

@@ -112,73 +112,118 @@ namespace LargeXlsx
             {
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
-
-                streamWriter.Write("<numFmts count=\"{0}\">", _numberFormats.Count);
-                foreach (var numberFormat in _numberFormats.OrderBy(nf => nf.Value))
-                {
-                    streamWriter.Write("<numFmt numFmtId=\"{0}\" formatCode=\"{1}\"/>", numberFormat.Value, Util.EscapeXmlAttribute(numberFormat.Key.FormatCode));
-                }
-                streamWriter.Write("</numFmts>");
-
-                streamWriter.Write("<fonts count=\"{0}\">", _fonts.Count);
-                foreach (var font in _fonts.OrderBy(f => f.Value))
-                {
-                    streamWriter.Write("<font>"
-                                       + "<sz val=\"{0}\"/>"
-                                       + "<color rgb=\"{1}\"/>"
-                                       + "<name val=\"{2}\"/>"
-                                       + "<family val=\"2\"/>"
-                                       + "{3}{4}{5}"
-                                       + "</font>",
-                        font.Key.FontSize, GetColorString(font.Key.Color), Util.EscapeXmlAttribute(font.Key.FontName),
-                        font.Key.Bold ? "<b/>" : "", font.Key.Italic ? "<i/>" : "", font.Key.Strike ? "<strike/>" : "");
-                }
-                streamWriter.Write("</fonts>");
-
-                streamWriter.Write("<fills count=\"{0}\">", _fills.Count);
-                foreach (var fill in _fills.OrderBy(f => f.Value))
-                {
-                    streamWriter.Write("<fill>"
-                                       + "<patternFill patternType=\"{0}\">"
-                                       + "<fgColor rgb=\"{1}\"/>"
-                                       + "<bgColor rgb=\"{1}\"/>"
-                                       + "</patternFill>"
-                                       + "</fill>",
-                        XlsxFill.GetPatternAttributeValue(fill.Key.PatternType), GetColorString(fill.Key.Color));
-                }
-                streamWriter.Write("</fills>");
-
-                streamWriter.Write("<borders count=\"{0}\">", _borders.Count);
-                foreach (var border in _borders.OrderBy(b => b.Value))
-                {
-                    streamWriter.Write("<border>"
-                                       + "<left color=\"{0}\" style=\"{4}\"/>"
-                                       + "<right color=\"{0}\" style=\"{2}\"/>"
-                                       + "<top color=\"{0}\" style=\"{1}\"/>"
-                                       + "<bottom color=\"{0}\" style=\"{3}\"/>"
-                                       + "<diagonal/>"
-                                       + "</border>",
-                        border.Key.HexRgbColor,
-                        XlsxBorder.GetStyleAttributeValue(border.Key.Top),
-                        XlsxBorder.GetStyleAttributeValue(border.Key.Right),
-                        XlsxBorder.GetStyleAttributeValue(border.Key.Bottom),
-                        XlsxBorder.GetStyleAttributeValue(border.Key.Left));
-                }
-                streamWriter.Write("</borders>");
-
-                streamWriter.Write("<cellXfs count=\"{0}\">", _styles.Count);
-                foreach (var style in _styles.OrderBy(s => s.Value))
-                {
-                    streamWriter.Write("<xf numFmtId=\"{0}\" fontId=\"{1}\" fillId=\"{2}\" borderId=\"{3}\""
-                                       + " applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\"/>",
-                        _numberFormats[style.Key.NumberFormat], _fonts[style.Key.Font], _fills[style.Key.Fill], _borders[style.Key.Border]);
-                }
-                streamWriter.Write("</cellXfs>");
-
+                WriteNumberFormats(streamWriter);
+                WriteFonts(streamWriter);
+                WriteFills(streamWriter);
+                WriteBorders(streamWriter);
+                WriteCellFormats(streamWriter);
                 streamWriter.Write("</styleSheet>");
             }
         }
 
+        private void WriteNumberFormats(StreamWriter streamWriter)
+        {
+            streamWriter.Write("<numFmts count=\"{0}\">", _numberFormats.Count);
+            foreach (var numberFormat in _numberFormats.OrderBy(nf => nf.Value))
+            {
+                streamWriter.Write("<numFmt numFmtId=\"{0}\" formatCode=\"{1}\"/>",
+                    numberFormat.Value, Util.EscapeXmlAttribute(numberFormat.Key.FormatCode));
+            }
+            streamWriter.Write("</numFmts>");
+        }
+
+        private void WriteFonts(StreamWriter streamWriter)
+        {
+            streamWriter.Write("<fonts count=\"{0}\">", _fonts.Count);
+            foreach (var font in _fonts.OrderBy(f => f.Value))
+            {
+                streamWriter.Write("<font>"
+                                   + "<sz val=\"{0}\"/>"
+                                   + "<color rgb=\"{1}\"/>"
+                                   + "<name val=\"{2}\"/>"
+                                   + "<family val=\"2\"/>"
+                                   + "{3}{4}{5}"
+                                   + "</font>",
+                    font.Key.FontSize, GetColorString(font.Key.Color), Util.EscapeXmlAttribute(font.Key.FontName),
+                    font.Key.Bold ? "<b/>" : "", font.Key.Italic ? "<i/>" : "", font.Key.Strike ? "<strike/>" : "");
+            }
+            streamWriter.Write("</fonts>");
+        }
+
+        private void WriteFills(StreamWriter streamWriter)
+        {
+            streamWriter.Write("<fills count=\"{0}\">", _fills.Count);
+            foreach (var fill in _fills.OrderBy(f => f.Value))
+            {
+                streamWriter.Write("<fill>"
+                                   + "<patternFill patternType=\"{0}\">"
+                                   + "<fgColor rgb=\"{1}\"/>"
+                                   + "<bgColor rgb=\"{1}\"/>"
+                                   + "</patternFill>"
+                                   + "</fill>",
+                    EnumToAttributeValue(fill.Key.PatternType), GetColorString(fill.Key.Color));
+            }
+            streamWriter.Write("</fills>");
+        }
+
+        private void WriteBorders(StreamWriter streamWriter)
+        {
+            streamWriter.Write("<borders count=\"{0}\">", _borders.Count);
+            foreach (var border in _borders.OrderBy(b => b.Value))
+            {
+                streamWriter.Write("<border>"
+                                   + "<left color=\"{0}\" style=\"{4}\"/>"
+                                   + "<right color=\"{0}\" style=\"{2}\"/>"
+                                   + "<top color=\"{0}\" style=\"{1}\"/>"
+                                   + "<bottom color=\"{0}\" style=\"{3}\"/>"
+                                   + "<diagonal/>"
+                                   + "</border>",
+                    border.Key.HexRgbColor,
+                    EnumToAttributeValue(border.Key.Top),
+                    EnumToAttributeValue(border.Key.Right),
+                    EnumToAttributeValue(border.Key.Bottom),
+                    EnumToAttributeValue(border.Key.Left));
+            }
+            streamWriter.Write("</borders>");
+        }
+
+        private void WriteCellFormats(StreamWriter streamWriter)
+        {
+            streamWriter.Write("<cellXfs count=\"{0}\">", _styles.Count);
+            foreach (var style in _styles.OrderBy(s => s.Value))
+            {
+                streamWriter.Write("<xf numFmtId=\"{0}\" fontId=\"{1}\" fillId=\"{2}\" borderId=\"{3}\""
+                                   + " applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\"",
+                    _numberFormats[style.Key.NumberFormat], _fonts[style.Key.Font], _fills[style.Key.Fill],
+                    _borders[style.Key.Border]);
+                if (style.Key.Alignment != null)
+                {
+                    streamWriter.Write(" applyAlignment=\"1\"><alignment");
+                    var a = style.Key.Alignment;
+                    if (a.HorizontalType != XlsxAlignment.Horizontal.General) streamWriter.Write(" horizontal=\"{0}\"", EnumToAttributeValue(a.HorizontalType));
+                    if (a.VerticalType != XlsxAlignment.Vertical.Bottom) streamWriter.Write(" vertical=\"{0}\"", EnumToAttributeValue(a.VerticalType));
+                    if (a.Indent != 0) streamWriter.Write(" indent=\"{0}\"", a.Indent);
+                    if (a.JustifyLastLine) streamWriter.Write(" justifyLastLine=\"1\"");
+                    if (a.ReadingOrderType != XlsxAlignment.ReadingOrder.ContextDependent) streamWriter.Write(" readingOrder=\"{0}\"", (int)a.ReadingOrderType);
+                    if (a.ShrinkToFit) streamWriter.Write(" shrinkToFit=\"1\"");
+                    if (a.TextRotation != 0) streamWriter.Write(" textRotation=\"{0}\"", a.TextRotation);
+                    if (a.WrapText) streamWriter.Write(" wrapText=\"1\"");
+                    streamWriter.Write("/></xf>");
+                }
+                else
+                {
+                    streamWriter.Write("/>");
+                }
+            }
+            streamWriter.Write("</cellXfs>");
+        }
+
         private static string GetColorString(Color color) => $"{color.R:x2}{color.G:x2}{color.B:x2}";
+
+        private static string EnumToAttributeValue<T>(T enumValue)
+        {
+            var s = enumValue.ToString();
+            return char.ToLowerInvariant(s[0]) + s.Substring(1);
+        }
     }
 }

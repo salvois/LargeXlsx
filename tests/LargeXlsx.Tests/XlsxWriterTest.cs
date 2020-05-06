@@ -24,7 +24,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 using System.Drawing;
 using System.IO;
 using FluentAssertions;
@@ -35,10 +34,10 @@ using OfficeOpenXml.Style;
 namespace LargeXlsx.Tests
 {
     [TestFixture]
-    public class XlsxWriterTest
+    public static class XlsxWriterTest
     {
         [Test]
-        public void InsertionPoint()
+        public static void InsertionPoint()
         {
             using (var stream = new MemoryStream())
             using (var xlsxWriter = new XlsxWriter(stream))
@@ -53,7 +52,7 @@ namespace LargeXlsx.Tests
         }
 
         [Test]
-        public void InsertionPointAfterSkipColumn()
+        public static void InsertionPointAfterSkipColumn()
         {
             using (var stream = new MemoryStream())
             using (var xlsxWriter = new XlsxWriter(stream))
@@ -68,7 +67,7 @@ namespace LargeXlsx.Tests
         }
 
         [Test]
-        public void InsertionPointAfterSkipRows()
+        public static void InsertionPointAfterSkipRows()
         {
             using (var stream = new MemoryStream())
             using (var xlsxWriter = new XlsxWriter(stream))
@@ -83,7 +82,7 @@ namespace LargeXlsx.Tests
         }
 
         [Test]
-        public void Simple()
+        public static void Simple()
         {
             using (var stream = new MemoryStream())
             {
@@ -163,7 +162,7 @@ namespace LargeXlsx.Tests
         }
 
         [Test]
-        public void MultipleSheets()
+        public static void MultipleSheets()
         {
             using (var stream = new MemoryStream())
             {
@@ -201,81 +200,6 @@ namespace LargeXlsx.Tests
                     sheet2.Cells["B2"].Value.Should().Be("Sheet2.B2");
                     sheet2.Cells["C2"].Value.Should().Be("Sheet2.C2");
                     sheet2.Cells["A1:B1"].Merge.Should().BeTrue();
-                }
-            }
-        }
-
-        [Test]
-        public static void ColumnFormatting()
-        {
-            using (var stream = new MemoryStream())
-            {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                {
-                    var blueStyle = new XlsxStyle(
-                        new XlsxFont(XlsxFont.Default.FontName, XlsxFont.Default.FontSize, Color.White),
-                        new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86)),
-                        XlsxBorder.None,
-                        XlsxNumberFormat.General);
-
-                    xlsxWriter
-                        .BeginWorksheet("Sheet 1", columns: new[]
-                        {
-                            XlsxColumn.Formatted(count: 2, width: 20),
-                            XlsxColumn.Unformatted(3),
-                            XlsxColumn.Formatted(style: blueStyle, width: 9),
-                            XlsxColumn.Formatted(hidden: true, width: 0)
-                        });
-                }
-
-                using (var package = new ExcelPackage(stream))
-                {
-                    package.Workbook.Worksheets.Count.Should().Be(1);
-                    var sheet = package.Workbook.Worksheets[0];
-
-                    sheet.Column(1).Width = 20;
-                    sheet.Column(2).Width = 20;
-                    sheet.Column(6).Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-                    sheet.Column(6).Style.Fill.BackgroundColor.Rgb.Should().Be("004586");
-                    sheet.Column(6).Style.Font.Color.Rgb.Should().Be("ffffff");
-                    sheet.Column(7).Hidden = true;
-                    sheet.Column(7).Width = 0;
-                }
-            }
-        }
-
-        [Test]
-        public void RowFormatting()
-        {
-            using (var stream = new MemoryStream())
-            {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                {
-                    var blueStyle = new XlsxStyle(
-                        new XlsxFont(XlsxFont.Default.FontName, XlsxFont.Default.FontSize, Color.White),
-                        new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86)),
-                        XlsxBorder.None,
-                        XlsxNumberFormat.General);
-
-                    xlsxWriter
-                        .BeginWorksheet("Sheet 1")
-                        .BeginRow().Write("A1").Write("B1").Write("C1")
-                        .BeginRow(hidden: true).Write("A2").Write("B2").Write("C2")
-                        .BeginRow().Write("A3").Write("B3").Write("C3")
-                        .BeginRow(height: 36.5).Write("A4").Write("B4").Write("C4")
-                        .BeginRow(style: blueStyle).Write("A5").SkipColumns(1).Write("C5");
-                }
-
-                using (var package = new ExcelPackage(stream))
-                {
-                    package.Workbook.Worksheets.Count.Should().Be(1);
-                    var sheet = package.Workbook.Worksheets[0];
-
-                    sheet.Row(2).Hidden = true;
-                    sheet.Row(4).Height = 36.5;
-                    sheet.Row(5).Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-                    sheet.Row(5).Style.Fill.BackgroundColor.Rgb.Should().Be("004586");
-                    sheet.Row(5).Style.Font.Color.Rgb.Should().Be("ffffff");
                 }
             }
         }

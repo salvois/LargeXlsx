@@ -51,17 +51,6 @@ namespace LargeXlsx
             Color = color;
         }
 
-        internal static string GetPatternAttributeValue(Pattern patternType)
-        {
-            switch (patternType)
-            {
-                case Pattern.None: return "none";
-                case Pattern.Gray125: return "gray125";
-                case Pattern.Solid: return "solid";
-                default: throw new ArgumentOutOfRangeException();
-            }
-        }
-
         public override bool Equals(object obj)
         {
             return Equals(obj as XlsxFill);

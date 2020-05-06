@@ -30,17 +30,17 @@ using NUnit.Framework;
 namespace LargeXlsx.Tests
 {
     [TestFixture]
-    public class UtilTest
+    public static class UtilTest
     {
         [Test]
-        public void EscapeXmlText()
+        public static void EscapeXmlText()
         {
             var escapedXmlText = Util.EscapeXmlText("Lorem 'ipsum' & \"dolor\" <sit> amet");
             escapedXmlText.Should().Be("Lorem 'ipsum' &amp; \"dolor\" &lt;sit&gt; amet");
         }
 
         [Test]
-        public void EscapeXmlAttribute()
+        public static void EscapeXmlAttribute()
         {
             var escapedXmlText = Util.EscapeXmlAttribute("Lorem 'ipsum' & \"dolor\" <sit> amet");
             escapedXmlText.Should().Be("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; &lt;sit&gt; amet");
@@ -60,7 +60,7 @@ namespace LargeXlsx.Tests
         [TestCase(1378, "AZZ")]
         [TestCase(1379, "BAA")]
         [TestCase(16384, "XFD")]
-        public void GetColumnName(int index, string expectedName)
+        public static void GetColumnName(int index, string expectedName)
         {
             var name = Util.GetColumnName(index);
             name.Should().Be(expectedName);
