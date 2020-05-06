@@ -178,18 +178,21 @@ namespace LargeXlsx
             streamWriter.Write("<borders count=\"{0}\">", _borders.Count);
             foreach (var border in _borders.OrderBy(b => b.Value))
             {
-                streamWriter.Write("<border>"
-                                   + "<left color=\"{0}\" style=\"{4}\"/>"
-                                   + "<right color=\"{0}\" style=\"{2}\"/>"
-                                   + "<top color=\"{0}\" style=\"{1}\"/>"
-                                   + "<bottom color=\"{0}\" style=\"{3}\"/>"
-                                   + "<diagonal/>"
+                streamWriter.Write("<border diagonalDown=\"{6}\" diagonalUp=\"{7}\">"
+                                   + "<left style=\"{4}\"><color rgb=\"{0}\"/></left>"
+                                   + "<right style=\"{2}\"><color rgb=\"{0}\"/></right>"
+                                   + "<top style=\"{1}\"><color rgb=\"{0}\"/></top>"
+                                   + "<bottom style=\"{3}\"><color rgb=\"{0}\"/></bottom>"
+                                   + "<diagonal style=\"{5}\"><color rgb=\"{0}\"/></diagonal>"
                                    + "</border>",
-                    border.Key.HexRgbColor,
+                    GetColorString(border.Key.Color),
                     EnumToAttributeValue(border.Key.Top),
                     EnumToAttributeValue(border.Key.Right),
                     EnumToAttributeValue(border.Key.Bottom),
-                    EnumToAttributeValue(border.Key.Left));
+                    EnumToAttributeValue(border.Key.Left),
+                    EnumToAttributeValue(border.Key.Diagonal),
+                    border.Key.DiagonalDown ? 1 : 0,
+                    border.Key.DiagonalUp ? 1 : 0);
             }
             streamWriter.Write("</borders>");
         }

@@ -26,6 +26,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace LargeXlsx
 {
@@ -49,21 +50,28 @@ namespace LargeXlsx
             SlantDashDot
         }
 
-        public static readonly XlsxBorder None = new XlsxBorder("000000");
+        public static readonly XlsxBorder None = new XlsxBorder(Color.Black);
 
-        public string HexRgbColor { get; }
+        public Color Color { get; }
         public Style Top { get; }
         public Style Right { get; }
         public Style Bottom { get; }
         public Style Left { get; }
+        public Style Diagonal { get; }
+        public bool DiagonalDown { get; }
+        public bool DiagonalUp { get; }
 
-        public XlsxBorder(string hexRgbColor, Style top = Style.None, Style right = Style.None, Style bottom = Style.None, Style left = Style.None)
+        public XlsxBorder(Color color, Style top = Style.None, Style right = Style.None, Style bottom = Style.None, Style left = Style.None,
+            Style diagonal = Style.None, bool diagonalDown = false, bool diagonalUp = false)
         {
-            HexRgbColor = hexRgbColor;
+            Color = color;
             Top = top;
             Right = right;
             Bottom = bottom;
             Left = left;
+            Diagonal = diagonal;
+            DiagonalDown = diagonalDown;
+            DiagonalUp = diagonalUp;
         }
 
         public override bool Equals(object obj)
@@ -73,17 +81,21 @@ namespace LargeXlsx
 
         public bool Equals(XlsxBorder other)
         {
-            return other != null && HexRgbColor == other.HexRgbColor && Top == other.Top && Right == other.Right && Bottom == other.Bottom && Left == other.Left;
+            return other != null && Color == other.Color && Top == other.Top && Right == other.Right && Bottom == other.Bottom && Left == other.Left
+                && Diagonal == other.Diagonal && DiagonalDown == other.DiagonalDown && DiagonalUp == other.DiagonalUp;
         }
 
         public override int GetHashCode()
         {
             var hashCode = -1993506469;
-            hashCode = hashCode * -1521134295 + HexRgbColor.GetHashCode();
+            hashCode = hashCode * -1521134295 + Color.GetHashCode();
             hashCode = hashCode * -1521134295 + Top.GetHashCode();
             hashCode = hashCode * -1521134295 + Right.GetHashCode();
             hashCode = hashCode * -1521134295 + Bottom.GetHashCode();
             hashCode = hashCode * -1521134295 + Left.GetHashCode();
+            hashCode = hashCode * -1521134295 + Diagonal.GetHashCode();
+            hashCode = hashCode * -1521134295 + DiagonalUp.GetHashCode();
+            hashCode = hashCode * -1521134295 + DiagonalDown.GetHashCode();
             return hashCode;
         }
 
