@@ -175,26 +175,33 @@ namespace LargeXlsx
 
         private void WriteBorders(StreamWriter streamWriter)
         {
-            streamWriter.Write("<borders count=\"{0}\">", _borders.Count);
+            streamWriter.Write($"<borders count=\"{_borders.Count}\">");
             foreach (var border in _borders.OrderBy(b => b.Value))
             {
-                streamWriter.Write("<border diagonalDown=\"{6}\" diagonalUp=\"{7}\">"
-                                   + "<left style=\"{4}\"><color rgb=\"{0}\"/></left>"
-                                   + "<right style=\"{2}\"><color rgb=\"{0}\"/></right>"
-                                   + "<top style=\"{1}\"><color rgb=\"{0}\"/></top>"
-                                   + "<bottom style=\"{3}\"><color rgb=\"{0}\"/></bottom>"
-                                   + "<diagonal style=\"{5}\"><color rgb=\"{0}\"/></diagonal>"
-                                   + "</border>",
-                    GetColorString(border.Key.Color),
-                    EnumToAttributeValue(border.Key.Top),
-                    EnumToAttributeValue(border.Key.Right),
-                    EnumToAttributeValue(border.Key.Bottom),
-                    EnumToAttributeValue(border.Key.Left),
-                    EnumToAttributeValue(border.Key.Diagonal),
-                    border.Key.DiagonalDown ? 1 : 0,
-                    border.Key.DiagonalUp ? 1 : 0);
+                streamWriter.Write($"<border diagonalDown=\"{BoolToInt(border.Key.DiagonalDown)}\" diagonalUp=\"{BoolToInt(border.Key.DiagonalUp)}\">");
+                WriteBorderLine(streamWriter, "left", border.Key.Left);
+                WriteBorderLine(streamWriter, "right", border.Key.Right);
+                WriteBorderLine(streamWriter, "top", border.Key.Top);
+                WriteBorderLine(streamWriter, "bottom", border.Key.Bottom);
+                WriteBorderLine(streamWriter, "diagonal", border.Key.Diagonal);
+                streamWriter.Write("</border>");
             }
             streamWriter.Write("</borders>");
+        }
+
+        private static void WriteBorderLine(StreamWriter streamWriter, string elementName, XlsxBorder.Line line)
+        {
+            if (line != null)
+            {
+                streamWriter.Write($"<{elementName} style=\"{EnumToAttributeValue(line.Style)}\">");
+                if (line.Color != Color.Transparent)
+                    streamWriter.Write($"<color rgb=\"{GetColorString(line.Color)}\"/>");
+                streamWriter.Write($"</{elementName}>");
+            }
+            else
+            {
+                streamWriter.Write($"<{elementName}/>");
+            }
         }
 
         private void WriteCellFormats(StreamWriter streamWriter)
@@ -229,6 +236,8 @@ namespace LargeXlsx
         }
 
         private static string GetColorString(Color color) => $"{color.R:x2}{color.G:x2}{color.B:x2}";
+
+        private static int BoolToInt(bool value) => value ? 1 : 0;
 
         private static string EnumToAttributeValue<T>(T enumValue)
         {

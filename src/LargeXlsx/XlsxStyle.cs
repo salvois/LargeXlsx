@@ -48,6 +48,7 @@ namespace LargeXlsx
             Alignment = alignment;
         }
 
+        #region Equality members
         public override bool Equals(object obj)
         {
             return Equals(obj as XlsxStyle);
@@ -79,5 +80,6 @@ namespace LargeXlsx
         {
             return !(style1 == style2);
         }
+        #endregion
     }
 }

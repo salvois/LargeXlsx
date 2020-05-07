@@ -55,7 +55,7 @@ namespace LargeXlsx.Tests
             {
                 using (var xlsxWriter = new XlsxWriter(stream))
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
-                        .Write("Test", XlsxStyle.Default.With(new XlsxBorder(Color.DeepPink, top: borderStyle)));
+                        .Write("Test", XlsxStyle.Default.With(new XlsxBorder(top: new XlsxBorder.Line(Color.DeepPink, borderStyle))));
 
                 using (var package = new ExcelPackage(stream))
                 {
@@ -78,15 +78,15 @@ namespace LargeXlsx.Tests
                 using (var package = new ExcelPackage(stream))
                 {
                     var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
-                    style.Border.Top.Color.Rgb.Should().Be("000000");
+                    style.Border.Top.Color.Rgb.Should().BeNull();
                     style.Border.Top.Style.Should().Be(ExcelBorderStyle.None);
-                    style.Border.Right.Color.Rgb.Should().Be("000000");
+                    style.Border.Right.Color.Rgb.Should().BeNull();
                     style.Border.Right.Style.Should().Be(ExcelBorderStyle.None);
-                    style.Border.Bottom.Color.Rgb.Should().Be("000000");
+                    style.Border.Bottom.Color.Rgb.Should().BeNull();
                     style.Border.Bottom.Style.Should().Be(ExcelBorderStyle.None);
-                    style.Border.Left.Color.Rgb.Should().Be("000000");
+                    style.Border.Left.Color.Rgb.Should().BeNull();
                     style.Border.Left.Style.Should().Be(ExcelBorderStyle.None);
-                    style.Border.Diagonal.Color.Rgb.Should().Be("000000");
+                    style.Border.Diagonal.Color.Rgb.Should().BeNull();
                     style.Border.Diagonal.Style.Should().Be(ExcelBorderStyle.None);
                     style.Border.DiagonalDown.Should().BeFalse();
                     style.Border.DiagonalUp.Should().BeFalse();
