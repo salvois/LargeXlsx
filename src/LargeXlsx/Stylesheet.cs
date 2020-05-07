@@ -41,6 +41,7 @@ namespace LargeXlsx
      */
     internal class Stylesheet
     {
+        private const int FirstCustomNumberFormatId = 164; // ids less than 164 are hardcoded by Excel for default formats
         private readonly Dictionary<XlsxFont, int> _fonts;
         private readonly Dictionary<XlsxFill, int> _fills;
         private readonly Dictionary<XlsxBorder, int> _borders;
@@ -76,7 +77,7 @@ namespace LargeXlsx
                 [XlsxNumberFormat.ShortDate] = 14,
                 [XlsxNumberFormat.ShortDateTime] = 22
             };
-            _nextNumberFormatId = 164; // ids less than 164 are hardcoded by Excel for default formats
+            _nextNumberFormatId = FirstCustomNumberFormatId;
 
             _styles = new Dictionary<XlsxStyle, int> { [XlsxStyle.Default] = 0 };
             _nextStyleId = 1;
@@ -130,8 +131,8 @@ namespace LargeXlsx
 
         private void WriteNumberFormats(StreamWriter streamWriter)
         {
-            streamWriter.Write("<numFmts count=\"{0}\">", _numberFormats.Count);
-            foreach (var numberFormat in _numberFormats.OrderBy(nf => nf.Value))
+            streamWriter.Write("<numFmts count=\"{0}\">", _numberFormats.Count(nf => nf.Value >= FirstCustomNumberFormatId));
+            foreach (var numberFormat in _numberFormats.Where(nf => nf.Value >= FirstCustomNumberFormatId).OrderBy(nf => nf.Value))
             {
                 streamWriter.Write("<numFmt numFmtId=\"{0}\" formatCode=\"{1}\"/>",
                     numberFormat.Value, Util.EscapeXmlAttribute(numberFormat.Key.FormatCode));

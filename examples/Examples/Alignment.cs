@@ -24,7 +24,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-using System.Drawing;
 using System.IO;
 using LargeXlsx;
 
@@ -53,8 +52,5 @@ namespace Examples
                     .BeginRow().Write("Lorem ipsum dolor sit amet, consectetur adipiscing elit", XlsxStyle.Default.With(new XlsxAlignment(shrinkToFit: true)));
             }
         }
-
-        private static XlsxStyle With(this XlsxStyle style, XlsxAlignment alignment) =>
-            new XlsxStyle(style.Font, style.Fill, style.Border, style.NumberFormat, alignment);
     }
 }

@@ -93,8 +93,5 @@ namespace LargeXlsx.Tests
                 }
             }
         }
-
-        private static XlsxStyle With(this XlsxStyle style, XlsxBorder border) =>
-            new XlsxStyle(style.Font, style.Fill, border, style.NumberFormat, style.Alignment);
     }
 }

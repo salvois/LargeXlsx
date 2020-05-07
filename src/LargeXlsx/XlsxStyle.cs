@@ -48,6 +48,12 @@ namespace LargeXlsx
             Alignment = alignment;
         }
 
+        public XlsxStyle With(XlsxFont font) => new XlsxStyle(font, Fill, Border, NumberFormat, Alignment);
+        public XlsxStyle With(XlsxFill fill) => new XlsxStyle(Font, fill, Border, NumberFormat, Alignment);
+        public XlsxStyle With(XlsxBorder border) => new XlsxStyle(Font, Fill, border, NumberFormat, Alignment);
+        public XlsxStyle With(XlsxNumberFormat numberFormat) => new XlsxStyle(Font, Fill, Border, numberFormat, Alignment);
+        public XlsxStyle With(XlsxAlignment alignment) => new XlsxStyle(Font, Fill, Border, NumberFormat, alignment);
+
         #region Equality members
         public override bool Equals(object obj)
         {

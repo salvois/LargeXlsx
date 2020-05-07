@@ -33,7 +33,7 @@ using LargeXlsx;
 
 namespace Examples
 {
-    public static class StyledLarge
+    public static class StyledLargeCreateStyles
     {
         private const int RowCount = 50000;
         private const int ColumnCount = 180;
@@ -43,30 +43,28 @@ namespace Examples
         {
             var rnd = new Random();
             var stopwatch = Stopwatch.StartNew();
-            using (var stream = new FileStream($"{nameof(StyledLarge)}.xlsx", FileMode.Create, FileAccess.Write))
+            using (var stream = new FileStream($"{nameof(StyledLargeCreateStyles)}.xlsx", FileMode.Create, FileAccess.Write))
             using (var xlsxWriter = new XlsxWriter(stream))
             {
+                var colors = Enumerable.Repeat(0, 100).Select(_ => Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256))).ToList();
                 var headerStyle = new XlsxStyle(
                     new XlsxFont("Calibri", 11, Color.White, bold: true),
                     new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86)),
                     XlsxBorder.None,
                     XlsxNumberFormat.General);
-                var cellStyles = Enumerable.Repeat(0, 100)
-                    .Select(_ => XlsxStyle.Default.With(new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256)))))
-                    .ToList();
 
                 xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
                 xlsxWriter.BeginRow();
                 for (var j = 0; j < ColumnCount; j++)
                     xlsxWriter.Write($"Column {j}", headerStyle);
-                var cellStyleIndex = 0;
+                var colorIndex = 0;
                 for (var i = 0; i < RowCount; i++)
                 {
                     xlsxWriter.BeginRow().Write($"Row {i}");
                     for (var j = 1; j < 180; j++)
                     {
-                        xlsxWriter.Write(i * ColumnCount + j, cellStyles[cellStyleIndex]);
-                        cellStyleIndex = (cellStyleIndex + 1) % cellStyles.Count;
+                        xlsxWriter.Write(i * ColumnCount + j, XlsxStyle.Default.With(new XlsxFill(XlsxFill.Pattern.Solid, colors[colorIndex])));
+                        colorIndex = (colorIndex + 1) % colors.Count;
                     }
                 }
             }

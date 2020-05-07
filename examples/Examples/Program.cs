@@ -38,6 +38,7 @@ namespace Examples
             Border.Run();
             Large.Run();
             StyledLarge.Run();
+            StyledLargeCreateStyles.Run();
         }
     }
 }

@@ -68,8 +68,5 @@ namespace Examples
                     .BeginRow().Write(customNumberFormat2.FormatCode).Write(1234.5678, customStyle2).Write(1.2, customStyle2);
             }
         }
-
-        private static XlsxStyle With(this XlsxStyle style, XlsxNumberFormat numberFormat) =>
-            new XlsxStyle(style.Font, style.Fill, style.Border, numberFormat, style.Alignment);
     }
 }

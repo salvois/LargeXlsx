@@ -50,8 +50,5 @@ namespace Examples
                     .BeginRow().SkipColumns(1).Write(leftBorderStyle).SkipColumns(1).Write(allBorderStyle).Write(diagonalBorderStyle);
             }
         }
-
-        private static XlsxStyle With(this XlsxStyle style, XlsxBorder border) =>
-            new XlsxStyle(style.Font, style.Fill, border, style.NumberFormat, style.Alignment);
     }
 }

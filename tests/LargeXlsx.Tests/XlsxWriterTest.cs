@@ -93,8 +93,8 @@ namespace LargeXlsx.Tests
                     var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86));
                     var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0xff, 0xff, 0x88));
                     var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
-                    var highlightStyle = new XlsxStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
-                    var dateStyle = new XlsxStyle(XlsxStyle.Default.Font, XlsxStyle.Default.Fill, XlsxStyle.Default.Border, XlsxNumberFormat.ShortDateTime);
+                    var highlightStyle = XlsxStyle.Default.With(yellowFill);
+                    var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
 
                     xlsxWriter
                         .BeginWorksheet("Sheet&'<1>\"")

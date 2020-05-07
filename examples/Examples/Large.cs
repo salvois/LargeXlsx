@@ -8,6 +8,9 @@ namespace Examples
 {
     public static class Large
     {
+        private const int RowCount = 50000;
+        private const int ColumnCount = 180;
+
         public static void Run()
         {
             var stopwatch = Stopwatch.StartNew();
@@ -21,18 +24,17 @@ namespace Examples
 
                 xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
                 xlsxWriter.BeginRow();
-                for (var j = 0; j < 180; j++)
+                for (var j = 0; j < ColumnCount; j++)
                     xlsxWriter.Write($"Column {j}", headerStyle);
-                for (var i = 0; i < 50000; i++)
+                for (var i = 0; i < RowCount; i++)
                 {
                     xlsxWriter.BeginRow().Write($"Row {i}");
-                    for (var j = 1; j < 180; j++)
+                    for (var j = 1; j < ColumnCount; j++)
                         xlsxWriter.Write(i * 1000 + j, numberStyle);
                 }
             }
             stopwatch.Stop();
-            Console.WriteLine($"Completed in {stopwatch.ElapsedMilliseconds} ms. Press any key...");
-            Console.ReadKey();
+            Console.WriteLine($"{nameof(Large)} completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
         }
     }
 }
