@@ -41,6 +41,7 @@ namespace LargeXlsx
         private readonly List<Worksheet> _worksheets;
         private readonly Stylesheet _stylesheet;
         private Worksheet _currentWorksheet;
+        private bool _hasFormulasWithoutResult;
 
         public XlsxStyle DefaultStyle { get; private set; }
         public int CurrentRowNumber => _currentWorksheet.CurrentRowNumber;
@@ -95,11 +96,13 @@ namespace LargeXlsx
                 var worksheetTags = new StringBuilder();
                 foreach (var worksheet in _worksheets)
                     worksheetTags.Append($"<sheet name=\"{Util.EscapeXmlAttribute(worksheet.Name)}\" sheetId=\"{worksheet.Id}\" r:id=\"RidWS{worksheet.Id}\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>");
+                var calcPrTag = _hasFormulasWithoutResult ? "<calcPr calcCompleted=\"0\" fullCalcOnLoad=\"1\"/>" : "";
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
                                    + "<sheets>"
                                    + worksheetTags
                                    + "</sheets>"
+                                   + calcPrTag
                                    + "</workbook>");
             }
 
@@ -174,6 +177,17 @@ namespace LargeXlsx
         public XlsxWriter Write(DateTime value, XlsxStyle style = null, int columnSpan = 1)
         {
             return Write(Util.DateToDouble(value), style, columnSpan);
+        }
+
+        public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, object result = null)
+        {
+            return columnSpan == 1
+                ? DoOnWorksheet(() =>
+                {
+                    if (result == null) _hasFormulasWithoutResult = true;
+                    _currentWorksheet.WriteFormula(formula, style ?? DefaultStyle, result);
+                })
+                : AddMergedCell(1, columnSpan).WriteFormula(formula, style, 1, result).SkipColumns(columnSpan - 1);
         }
 
         public XlsxWriter AddMergedCell(int rowCount, int columnCount)

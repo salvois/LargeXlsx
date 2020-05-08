@@ -71,7 +71,7 @@ namespace Examples
                 }
             }
             stopwatch.Stop();
-            Console.WriteLine($"{nameof(StyledLargeCreateStyles)} completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+            Console.WriteLine($"{nameof(StyledLarge)} completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
         }
     }
 }

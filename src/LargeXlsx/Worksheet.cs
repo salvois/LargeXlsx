@@ -102,8 +102,7 @@ namespace LargeXlsx
         public void Write(XlsxStyle style)
         {
             EnsureRow();
-            var styleId = _stylesheet.ResolveStyleId(style);
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId);
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style));
             CurrentColumnNumber++;
         }
 
@@ -116,17 +115,26 @@ namespace LargeXlsx
             }
 
             EnsureRow();
-            var escapedValue = Util.EscapeXmlText(value);
-            var styleId = _stylesheet.ResolveStyleId(style);
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId, escapedValue);
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>",
+                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.EscapeXmlText(value));
             CurrentColumnNumber++;
         }
 
         public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
-            var styleId = _stylesheet.ResolveStyleId(style);
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"><v>{3}</v></c>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, styleId, value);
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"><v>{3}</v></c>",
+                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), value);
+            CurrentColumnNumber++;
+        }
+
+        public void WriteFormula(string formula, XlsxStyle style, object result)
+        {
+            EnsureRow();
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"str\"><f>{3}</f>",
+                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.EscapeXmlText(formula));
+            if (result != null) _streamWriter.Write("<v>{0}</v>", Util.EscapeXmlText(result.ToString()));
+            _streamWriter.Write("</c>");
             CurrentColumnNumber++;
         }
 

@@ -174,7 +174,7 @@ namespace LargeXlsx.Tests
                     xlsxWriter
                         .BeginWorksheet("Sheet1")
                         .BeginRow().Write("Sheet1.A1").Write("Sheet1.B1").Write("Sheet1.C1")
-                        .BeginRow().AddMergedCell(1, 2).Write("Sheet1.A2").SkipColumns(1).Write("Sheet1.C2")
+                        .BeginRow().Write("Sheet1.A2", columnSpan: 2).Write("Sheet1.C2")
                         .BeginWorksheet("Sheet2")
                         .BeginRow().AddMergedCell(1, 2).Write("Sheet2.A1").SkipColumns(1).Write("Sheet2.C1")
                         .BeginRow().Write("Sheet2.A2").Write("Sheet2.B2").Write("Sheet2.C2");
