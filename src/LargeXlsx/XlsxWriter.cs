@@ -94,16 +94,23 @@ namespace LargeXlsx
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 var worksheetTags = new StringBuilder();
+                var definedNames = new StringBuilder();
+                var sheetIndex = 0;
                 foreach (var worksheet in _worksheets)
-                    worksheetTags.Append($"<sheet name=\"{Util.EscapeXmlAttribute(worksheet.Name)}\" sheetId=\"{worksheet.Id}\" r:id=\"RidWS{worksheet.Id}\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>");
-                var calcPrTag = _hasFormulasWithoutResult ? "<calcPr calcCompleted=\"0\" fullCalcOnLoad=\"1\"/>" : "";
+                {
+                    worksheetTags.Append($"<sheet name=\"{Util.EscapeXmlAttribute(worksheet.Name)}\" sheetId=\"{worksheet.Id}\" r:id=\"RidWS{worksheet.Id}\"/>");
+                    if (worksheet.AutoFilterAbsoluteRef != null)
+                        definedNames.Append($"<definedName name=\"_xlnm._FilterDatabase\" localSheetId=\"{sheetIndex}\" hidden=\"1\">{Util.EscapeXmlText(worksheet.AutoFilterAbsoluteRef)}</definedName>");
+                    sheetIndex++;
+                }
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-                                   + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
+                                   + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
                                    + "<sheets>"
                                    + worksheetTags
-                                   + "</sheets>"
-                                   + calcPrTag
-                                   + "</workbook>");
+                                   + "</sheets>");
+                if (definedNames.Length > 0) streamWriter.Write("<definedNames>" + definedNames + "</definedNames>");
+                if (_hasFormulasWithoutResult) streamWriter.Write("<calcPr calcCompleted=\"0\" fullCalcOnLoad=\"1\"/>");
+                streamWriter.Write("</workbook>");
             }
 
             using (var stream = _zipWriter.WriteToStream("xl/_rels/workbook.xml.rels", new ZipWriterEntryOptions()))

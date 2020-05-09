@@ -31,6 +31,7 @@ namespace Examples
         public static void Main(string[] args)
         {
             Simple.Run();
+            MultipleSheet.Run();
             NumberFormats.Run();
             ColumnFormatting.Run();
             RowFormatting.Run();

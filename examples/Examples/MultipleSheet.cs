@@ -59,7 +59,8 @@ namespace Examples
                     .BeginWorksheet("Sheet2")
                     .BeginRow().Write("Lorem ipsum dolor sit amet,")
                     .BeginRow().Write("consectetur adipiscing elit,")
-                    .BeginRow().Write("sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+                    .BeginRow().Write("sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
+                    .SetAutoFilter(1, 1, xlsxWriter.CurrentRowNumber, 1);
             }
         }
     }

@@ -1,4 +1,4 @@
-# LargeXlsx - Minimalistic .net library to write large XLSX files
+# LargeXlsx - A .net library to write large XLSX files
 
 [![NuGet](https://img.shields.io/nuget/v/LargeXlsx.svg)](https://www.nuget.org/packages/LargeXlsx)
 
@@ -25,8 +25,6 @@ Currently the library supports:
 To create a simple single-sheet Excel document:
 
 ```csharp
-        var highlightStyle = new XlsxStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
-
 using (var stream = new FileStream("Simple.xlsx", FileMode.Create, FileAccess.Write))
 using (var xlsxWriter = new XlsxWriter(stream))
 {
@@ -57,7 +55,7 @@ using (var xlsxWriter = new XlsxWriter(stream))
 
 The output is like:
 
-![Single sheet Excel document with 6 rows and 3 columns](https://github.com/salvois/LargeXlsx/raw/master/example.png)
+![Single sheet Excel document with 7 rows and 3 columns](https://github.com/salvois/LargeXlsx/raw/master/example.png)
 
 
 ## Usage

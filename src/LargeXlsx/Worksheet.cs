@@ -39,11 +39,13 @@ namespace LargeXlsx
         private readonly Stylesheet _stylesheet;
         private readonly List<string> _mergedCellRefs;
         private string _autoFilterRef;
+        private string _autoFilterAbsoluteRef;
 
         public int Id { get; }
         public string Name { get; }
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
+        internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
         public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, Stylesheet stylesheet, IEnumerable<XlsxColumn> columns)
         {
@@ -157,6 +159,7 @@ namespace LargeXlsx
             var fromColumnName = Util.GetColumnName(fromColumn);
             var toColumnName = Util.GetColumnName(fromColumn + columnCount - 1);
             _autoFilterRef = $"{fromColumnName}{fromRow}:{toColumnName}{toRow}";
+            _autoFilterAbsoluteRef = $"'{Name.Replace("'", "''")}'!${fromColumnName}${fromRow}:${toColumnName}${toRow}";
         }
 
         private void EnsureRow()
