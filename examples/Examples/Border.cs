@@ -38,7 +38,7 @@ namespace Examples
             using (var xlsxWriter = new XlsxWriter(stream))
             {
                 var leftBorderStyle = XlsxStyle.Default.With(new XlsxBorder(left: new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Thin)));
-                var allBorderStyle = XlsxStyle.Default.With(new XlsxBorder(around: new XlsxBorder.Line(Color.CornflowerBlue, XlsxBorder.Style.Dashed)));
+                var allBorderStyle = XlsxStyle.Default.With(XlsxBorder.Around(new XlsxBorder.Line(Color.CornflowerBlue, XlsxBorder.Style.Dashed)));
                 var diagonalBorderStyle = XlsxStyle.Default.With(
                     new XlsxBorder(diagonal: new XlsxBorder.Line(Color.Red, XlsxBorder.Style.Dotted), diagonalDown: true, diagonalUp: true));
 

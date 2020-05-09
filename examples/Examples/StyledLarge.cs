@@ -48,11 +48,11 @@ namespace Examples
             {
                 var headerStyle = new XlsxStyle(
                     new XlsxFont("Calibri", 11, Color.White, bold: true),
-                    new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86)),
+                    new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
                     XlsxBorder.None,
                     XlsxNumberFormat.General);
                 var cellStyles = Enumerable.Repeat(0, 100)
-                    .Select(_ => XlsxStyle.Default.With(new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256)))))
+                    .Select(_ => XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256)))))
                     .ToList();
 
                 xlsxWriter.BeginWorksheet("Sheet1", 1, 1);

@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/LargeXlsx.svg)](https://www.nuget.org/packages/LargeXlsx)
 
-This is a minimalistic library, written in C# targeting .net standard 2.0, providing simple primitives to write Excel files in XLSX format in a streamed manner, so that potentially huge files can be created while consuming a low, constant amount of memory.
+This is a minimalistic yet feature-rich library, written in C# targeting .net standard 2.0, providing simple primitives to write Excel files in XLSX format in a streamed manner, so that potentially huge files can be created while consuming a low, constant amount of memory.
 
 Starting from version 0.0.9 this library does not rely any longer on Microsoft's [Office Open XML library](https://github.com/OfficeDev/Open-XML-SDK), but writes XLSX files directly. This solves a memory consumption problem on .net core (caused by an [issue on System.IO.Packaging](https://github.com/dotnet/corefx/issues/24457) used by the Open XML SDK to write XLSX's zip packages) and provides further performance boost.
 
@@ -11,11 +11,13 @@ Starting from version 0.0.9 this library does not rely any longer on Microsoft's
 
 Currently the library supports:
 
-* cells containing inline strings and numeric (double) values
+* cells containing inline strings; numeric values; date and time; formulas
 * multiple worksheets
 * merged cells
 * split panes, a.k.a. frozen rows and columns
-* basic styling: font face, size, and color; solid background color; top-right-bottom-left cell borders; numeric formatting
+* styling such as font face, size, and color; background color; cell borders; numeric formatting; alignment
+* column and row formatting (custom width, height, hidden columns/rows)
+* auto filter
 
 
 ## Example
@@ -23,27 +25,33 @@ Currently the library supports:
 To create a simple single-sheet Excel document:
 
 ```csharp
-using (var stream = new FileStream("Simple.xlsx", FileMode.Create, FileAccess.Write))
-{
-    using (var xlsxWriter = new XlsxWriter(stream))
-    {
-        var whiteFont = new XlsxFont("Segoe UI", 9, "ffffff", bold: true);
-        var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, "004586");
-        var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, "ffff88");
-        var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
         var highlightStyle = new XlsxStyle(XlsxFont.Default, yellowFill, XlsxBorder.None, XlsxNumberFormat.General);
 
-        xlsxWriter
-            .BeginWorksheet("Sheet1")
-            .SetDefaultStyle(headerStyle)
-            .BeginRow().Write("Col1").Write("Col2").Write("Col3")
-            .BeginRow().Write().Write("Sub2").Write("Sub3")
-            .SetDefaultStyle(XlsxStyle.Default)
-            .BeginRow().Write("Row3").Write(42).Write(-1, highlightStyle)
-            .BeginRow().Write("Row4").SkipColumns(1).Write(1234)
-            .SkipRows(2)
-            .BeginRow().AddMergedCell(1, 2).Write("Row7").SkipColumns(1).Write(3.14159265359);
-    }
+using (var stream = new FileStream("Simple.xlsx", FileMode.Create, FileAccess.Write))
+using (var xlsxWriter = new XlsxWriter(stream))
+{
+    var headerStyle = new XlsxStyle(
+        new XlsxFont("Segoe UI", 9, Color.White, bold: true),
+        new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
+		XlsxStyle.Default.Border,
+		XlsxStyle.Default.NumberFormat);
+    var highlightStyle = XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88)));
+    var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
+    var borderedStyle = highlightStyle.With(
+        XlsxBorder.Around(new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Dashed)));
+
+    xlsxWriter
+        .BeginWorksheet("Sheet 1",
+            columns: new[] { XlsxColumn.Unformatted(count: 2), XlsxColumn.Formatted(width: 20) })
+        .SetDefaultStyle(headerStyle)
+        .BeginRow().AddMergedCell(2, 1).Write("Col1").Write("Top2").Write("Top3")
+        .BeginRow().Write().Write("Col2").Write("Col3")
+        .SetDefaultStyle(XlsxStyle.Default)
+        .BeginRow().Write("Row3").Write(42).WriteFormula("B3*10", highlightStyle)
+        .BeginRow().Write("Row4").SkipColumns(1).Write(new DateTime(2020, 5, 6, 18, 27, 0), dateStyle)
+        .SkipRows(2)
+        .BeginRow().Write("Row7", borderedStyle, columnSpan: 2).Write(3.14159265359)
+        .SetAutoFilter(2, 1, xlsxWriter.CurrentRowNumber - 1, 3);
 }
 ```
 
@@ -54,141 +62,260 @@ The output is like:
 
 ## Usage
 
-The `XlsxWriter` class is the entry point for all functionality of the library. It is designed so that most of its methods can be chained to write the Excel file using a fluent syntax.
-Please note that an `XlsxWriter` object **must be disposed** to properly finalize the Excel file. Sandwitching its lifetime in a `using` statement is recommended.
+The `XlsxWriter` class is the entry point for almost all functionality of the library. It is designed so that most of its methods can be chained to write the Excel file using a fluent syntax.\
+Please note that an `XlsxWriter` object **must be disposed** to properly finalize the Excel file. Sandwitching its lifetime in a `using` statement is recommended.\
 Pass the constructor a writeable `Stream` to save the Excel file into.
 
-    XlsxWriter(Stream stream)
+```csharp
+// class XlsxWriter
+public XlsxWriter(Stream stream)
+```
 
 The recipe is adding a worksheet with `BeginWorksheet`, adding a row with `BeginRow`, writing cells to that row with `Write`, and repeating as required. Rows and worksheets are implicitly finalized as soon as new rows or worksheets are added, or the `XlsxWriter` is disposed.
 
 ### The insertion point
 
-To enable streamed write, the content of the Excel file must be written strictly from top to bottom and from left to right. Think of an insertion point always advancing when writing content.
+To enable streamed write, the content of the Excel file must be written strictly from top to bottom and from left to right. Think of an insertion point always advancing when writing content.\
 The `CurrentRowNumber` and `CurrentColumnNumber` read-only properties will return the location of the **next** cell that will be written. Both the row and column numbers are **one-based**.
 
-    int CurrentRowNumber { get; }
-    int CurrentColumnNumber { get; }
+```csharp
+// class XlsxWriter
+public int CurrentRowNumber { get; }
+public int CurrentColumnNumber { get; }
+```
 
 Please note that `CurrentColumnNumber` may be zero, and thus invalid, if the current row has not been set up using `BeginRow` (attempting to write a cell would throw an exception).
 
 ### Creating a new worksheet
 
-Call `BeginWorksheet` passing the sheet name and, optionally, the one-based indexes of the row and column where to place a split to create frozen panes.
+Call `BeginWorksheet` passing the sheet name and, optionally, the one-based indexes of the row and column where to place a split to create frozen panes. The `columns` parameter can be used to specify optional column formatting.\
 A call to `BeginWorksheet` finalizes the last worksheet being written, if any, and sets up a new one, so that rows can be added.
 
-    XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0)
+```csharp
+// class XlsxWriter
+public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0,
+								 IEnumerable<XlsxColumn> columns = null)
+```
+
+
+#### Column formating
+
+The `BeginWorksheet` method accepts an optional `columns` parameter to specify a list of column formatting objects of type `XlsxColumn`, each describing one or more adjacent columns, with their custom width, hidden state or default style, starting from column A.
+
+This information must be provided before writing any content to the worksheet, thus the number, width and styles of the columns must be known in advance.
+
+You can create `XlsxColumn` objects with one of these named constructors:
+
+```csharp
+// class XlsxColumn
+public static XlsxColumn Unformatted(int count = 1)
+public static XlsxColumn Formatted(double width, int count = 1, bool hidden = false, XlsxStyle style = null)
+```
+
+`Unformatted` creates a column description that is used basically to skip one or more unformatted columns.
+
+`Formatted` creates a column description to specify the mandatory witdh, optional hidden state, and optional style of one or more contiguous columns. The width is expressed (simplyfing) in approximate number of characters. The column style represents how to style all *empty* cells of a column. Cells that are explicitly written always use the cell style instead.
 
 ### Adding or skipping rows
 
 Call `BeginRow` to advance the insertion point to the beginning of the next line and set up a new row to accept content. If a previous row was being written, it is finalized before creating the new one.
 
-    XlsxWriter BeginRow()
+```csharp
+// class XlsxWriter
+public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null)
+```
+    
+You can specify optional row formatting when creating a new row. The height is expressed in points. The row style represent how to style all *empty* cells of a row. Cells that are explicitly written always use the cell style instead.
 
-Call `SkipRows` to move the insertion point down by the specified count of rows, that will be left empty and unstyled. If a previous row was being written, it is finalized. Please note that `BeginRow` must be called anyways before starting to write a new row.
+Call `SkipRows` to move the insertion point down by the specified count of rows, that will be left empty and unstyled (unless column styles are in place). If a previous row was being written, it is finalized. Please note that `BeginRow` must be called anyways before starting to write a new row.
 
-    XlsxWriter SkipRows(int rowCount)
+```csharp
+// class XlsxWriter
+public XlsxWriter SkipRows(int rowCount)
+```
 
 ### Writing cells
 
-Call one of the `Write` overloads to write content to the cell at the insertion point. You may write one of the following:
+Call one of the `Write` methods to write content to the cell at the insertion point:
 
-  * **Nothing**: a cell containing no value, that will usually be deserialized as `null`.
-  * **Inline string**: a string of text that is written directly into the cell; this is in contrast with a different functionality of the XLSX file format, which can support a global look-up table of strings, and just the string index into the cell; the latter functionality is not supported because it is inherently incompatible with streamed write. If the string is `null` the method falls back on the "Nothing" case.
-  * **Number**: a numeric constant, that will be interpreted as a `double` value; convenience overloads accepting `int` and `decimal` are provided, but the under the hood the value will be converted to `double` because it is the only numeric type truly supported by the XLSX file format.
+```csharp
+// class XlsxWriter
+public XlsxWriter Write(XlsxStyle style = null, int columnSpan = 1, int repeatCount = 1)
+public XlsxWriter Write(string value, XlsxStyle style = null, int columnSpan = 1)
+public XlsxWriter Write(double value, XlsxStyle style = null, int columnSpan = 1)
+public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 1)
+public XlsxWriter Write(int value, XlsxStyle style = null, int columnSpan = 1)
+public XlsxWriter Write(DateTime value, XlsxStyle style = null, int columnSpan = 1)
+public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, object result = null)
+```
 
-This is the list of supported overloads:
+ You may write one of the following:
 
-    XlsxWriter Write()
-    XlsxWriter Write(string value)
-    XlsxWriter Write(double value)
-    XlsxWriter Write(decimal value)
-    XlsxWriter Write(int value)
+  * **Nothing**: a cell containing no value, but styled nonetheless.
+  * **String**: a literal string of text; if the string is `null` the method falls back on the "nothing" case. (Note that only "inline strings" are supported, where each string is written into the cell. The XLSX file format also supports referencing strings from a global look-up table, but this functionality is not supported) 
+  * **Number**: a numeric constant, that will be interpreted as a `double` value; convenience overloads accepting `int` and `decimal` are provided, but under the hood the value will be converted to `double` because it is the only numeric type truly supported by the XLSX file format.
+  * **Date and time**: a `DateTime` value, that will be converted to its `double` representation (days since 1900-01-01). Note that you must style the cell using a date/time number format to have the value appear as a date.
+  * **Formula**: a string that Excel or a compatible application will interpret as a formula to calculate. Note that, unless you provide a `result` calculated by yourself (either string or numeric), no result is saved into the XLSX file. However, a spreadsheet application will calculate the result as soon as the XLSX file is opened.
 
-The cell written with one of the overloads above is styled using the current default style of the `XlsxWriter` (see Styling). You can also explicitly specify the style to use for a cell, without changing the default style, using one of the following overloads:
+The `style` parameter can be used to specify the style to use for the cell being written. If `null` (or omitted), the cell is styled using the current default style of the `XlsxWriter` (see Styling). Note that in no case the style of the column or the row, if any, is used.
 
-    XlsxWriter Write(XlsxStyle style)
-    XlsxWriter Write(string value, XlsxStyle style)
-    XlsxWriter Write(double value, XlsxStyle style)
-    XlsxWriter Write(decimal value, XlsxStyle style)
-    XlsxWriter Write(int value, XlsxStyle style)
+When writing empty cells you can also specify a `repeatCount` parameter, to write multiple consecutive styled empty cells. Note that the difference between `repeatCount` and `columnSpan` both greater than 1 is that the latter creates a merged cell (with their memory consumption drawback) but do not have borders in between.
 
-Like rows, cells can be skipped using the `SkipColumns` method, to move the insertion point to the right by the specified count of cells, that will be left empty and unstyled.
+The `columnSpan` parameter can be used to let the cell span multiple columns. When greater than 1, a merged range of such cells is created (see Merged cells), writing the content to the first cell of the range and advancing the insertion point after the merged cells. Note that `xlsxWriter.Write(value, columnSpan: count)` is actually a shortcut for `xlsxWriter.AddMergedCells(1, count).Write(value).Write(repeatCount: count - 1)`. Since a merged cell is created, **writing a large number of cells with columnSpan greater than 1 may cause high memory consumption**.
 
-    XlsxWriter SkipColumns(int columnCount)
+
+Like rows, cells can be skipped using the `SkipColumns` method, to move the insertion point to the right by the specified count of cells, that will be left empty and unstyled (unless column or row styles are in place).
+
+```csharp
+// class XlsxWriter
+public XlsxWriter SkipColumns(int columnCount)
+```
 
 ### Merged cells
 
-A rectangle of adjacent cells can be merged using the `AddMergedCells` method. Content for the merged cells must be written in the top-left cell of the rectangle, and the other cells of the merged rectangle must be explicitly skipped using `SkipColumns` and/or `SkipRows` as appropriate.
+A rectangle of adjacent cells can be merged using the `AddMergedCells` method:
 
-    XlsxWriter AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
+```csharp
+// class XlsxWriter
+public XlsxWriter AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
+public XlsxWriter AddMergedCell(int rowCount, int columnCount)
+```
 
+The first overload lets you specify an arbitrary rectangle in the worksheet.\
+The second overload facilitates merging cells while fluently writing the file, using the insertion point as the top-left cell for the merged range.
+
+Creating a merged cell range does not advance the insertion point.\
+As a shortcut for the common case of merging a 1 row by n columns range, you can pass a value greater than 1 as the `columnSpan` argument of a `Write` method, that will create the merged cell and advance the insertion point for you.
+
+Content for the merged cells must be written in the top-left cell of the rectangle. A spreadsheet application will not display any content of the remaining cells in the merged range. Thus, you should explicitly skip those cells using `SkipColumns`, `SkipRows` and writing empty cells (if styling is needed) as appropriate.\
 For example, if merging the 2 rows x 3 columns range `A7:C8` using `AddMergedCells(7, 1, 2, 3)`, you must write content for the merged cell in `A7`, then explicitly jump by further 2 columns using `SkipColumns(2)` to continue writing content from `D7`, and the same applies on row 8, where after a `BeginRow()` you must skip 3 columns with `SkipColumns(3)` and continue writing from `D8`.
 
-**Note**: due to the structure of the XLSX file format, the ranges for all merged cells of a worksheet must be accumulated in RAM, because they must be written to the file after the content of the whole worksheet. **Using a large number of merged cells may cause high memory consumption**.
-This also means that you may call `AddMergedCells` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them.
+**Note**: due to the structure of the XLSX file format, the ranges for all merged cells of a worksheet must be accumulated in RAM, because they must be written to the file after the content of the whole worksheet. **Using a large number of merged cells may cause high memory consumption**. This also means that you may call `AddMergedCells` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them.
 
-To facilitate merging cells while fluently writing the file, a convenience overload is provided, using the insertion point as the top-left cell for the merged range, thus requiring you to only specify the height and width of the merged rectangle. This does not advance the insertion point, thus a `Write` should usually follow to write content for the merged rectangle, followed by `SkipColumns` as needed (see the last row of the Example above).
 
-    XlsxWriter AddMergedCell(int rowCount, int columnCount)
+### Auto filter
+
+You can add an auto filter (the one created with the funnel icon in Excel) for a specific rectangular region, containing headers in the first row, using:
+
+```csharp
+// class XlsxWriter
+public XlsxWriter SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount)
+```
+
+You can call `SetAutoFilter` at any moment while writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object). Each worksheet can contain only up to one auto filter, thus if you call `SetAutoFilter` multiple times for the same worksheet only the last one will apply.
+
 
 ### Styling
 
-Styling lets you apply colors or other formatting to cells being written.
+Styling lets you apply colors or other formatting to cells being written. A style is made up of five components:
+- the **font**, including face, size and text color, represented by an `XlsxFont` object
+- the **fill**, specifying the background color, represented by an `XlsxFill` object
+- the **border** style and color, represented by an `XlsxBorder` object
+- the **number format** specifying how a number should appear, such as how many decimals or whether to show it as percentage or date and time, represented by an `XlsxNumberFormat` object
+- an optional **alignment**, specifying horizontal and vertical alignment of cell content or rotation, represented by an `XlsxAlignment` object.
 
-A style is made up of four components: the **font**, including face, size and text color; the **fill**, specifying the background color; the **border** style and color; the **number format** specifying how a number should appear, such as how many decimals or whether to show it as percentage. In this library they are represented by `XlsxFont`, `XlsxFill`, `XlsxBorder` and `XlsxNumberFormat` objects respectively.
+You can create a new style, combining the above five elements, using the constructor of the `XlsxStyle` class, or by cloning an existing style replacing one element with a `With` method:
 
-You can create a new style using the constructor of the `XlsxStyle` class:
+```csharp
+// class XlsxStyle
+public XlsxStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat,
+				 XlsxAlignment alignment = null)
+public XlsxStyle With(XlsxFont font)
+public XlsxStyle With(XlsxFill fill)
+public XlsxStyle With(XlsxBorder border)
+public XlsxStyle With(XlsxNumberFormat numberFormat)
+public XlsxStyle With(XlsxAlignment alignment)
+```
 
-    XlsxStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat)
+The resulting `XlsxStyle` object can be used with a `Write` method to style a cell being written, or with `SetDefaultStyle` to change the default style of the `XlsxWriter`, or to specify column or row styles.
 
-The resulting `XlsxStyle` object can be used with the `Write` method of the `XlsxWriter` to style a cell being written, or with `SetDefaultStyle` to change the default style of the `XlsxWriter`.
+Under the hood, all styles used with an `XlsxWriter` are collected in a stylesheet, and this library **deduplicates** them in **constant time** as needed. Thus, you should usually not worry about performance or memory consumption when you use multiple styles. Note, however, that the stylesheet is kept in RAM until the `XlsxWriter` is disposed, thus using a *very* large number of *different* styles may cause high memory consumption.
 
-Under the hood, all styles used with `Write` are collected in a stylesheet, and this library deduplicates them as needed. Note, however, that the stylesheet is kept in RAM until the `XlsxWriter` is disposed. **Using a large number of different styles may cause high memory consumption**.
-
-The built-in `XlsxStyle.Default` object provides a ready-to-use style combining the `XlsxFont.Default` font, the built-in `XlsxFill.None` fill, the built-in `XlsxBorder.None` border and the built-in `XlsxNumberFormat.General` number format (see below).
+The built-in `XlsxStyle.Default` object provides a ready-to-use style combining the built-in `XlsxFont.Default` font, the built-in `XlsxFill.None` fill, the built-in `XlsxBorder.None` border, the built-in `XlsxNumberFormat.General` number format and a `null` (default) alignment. All those elements are explained later.
 
 #### The default style
 
-Whenever you write a cell using `Write` without specifying an explicit style, the default style of the `XlsxWriter` is used. You can set the default style while fluently write the Excel file with the `SetDefaultStyle` method:
+Each `XlsxWriter` has a default style that is used whenever you write a cell using `Write` without specifying an explicit style. To read the current default stlye, or set it while fluently write the XLSX file, use:
 
-    XlsxWriter SetDefaultStyle(XlsxStyle style)
+```csharp
+// class XlsxWriter
+public XlsxStyle DefaultStyle { get; }
+public XlsxWriter SetDefaultStyle(XlsxStyle style)
+```
 
 The default style of a new `XlsxWriter` is set to `XlsxStyle.Default`, but you can change it at any time, including setting it back to `XlsxStyle.Default`.
 
 
 #### Fonts
 
-An `XlsxFont` object lets you define the font face, its size in points, the text color and emphasis such as bold, italic and strikeout. Create it via constructor:
+An `XlsxFont` object lets you define the font face, its size in points, the text color and emphasis such as bold, italic and strikeout. Create it via constructor, or clone an existing one replacing a property with a `With` method:
 
-    XlsxFont(string fontName, double fontSize, string hexRgbColor,
-             bool bold = false, bool italic = false, bool strike = false)
+```csharp
+// class XlsxFont
+public XlsxFont(
+		string name,
+		double size,
+		System.Drawing.Color color,
+		bool bold = false,
+		bool italic = false,
+		bool strike = false)
+public XlsxFont With(System.Drawing.Color color)
+public XlsxFont WithName(string name)
+public XlsxFont WithSize(double size)
+public XlsxFont WithBold(bool bold = true)
+public XlsxFont WithItalic(bool italic = true)
+public XlsxFont WithStrike(bool strike = true)
+```
 
-Using named arguments is recommended to improve readability. The color is a string of hexadecimal digits in RRGGBB format. For example to create a red, italic, 11-point, Calibri font, use: `var redItalicFont = new XlsxFont("Calibri", 11, "ff0000", italic: true)`.
+Using named arguments is recommended to improve readability. For example to create a red, italic, 11-point, Calibri font, use:\
+`var redItalicFont = new XlsxFont("Calibri", 11, Color.Red, italic: true)`.
 
 The built-in `XlsxFont.Default` object provides a default black, plain, 11-point, Calibri font.
 
 #### Fills
 
-An `XlsxFill` object lets you define the background color of a cell and the pattern to use to fill the background. Create it via the constructor:
+An `XlsxFill` object lets you define the background color of a cell and the pattern to use to fill the background. Create it with:
 
-    XlsxFill(XlsxFill.Pattern patternType, string hexRgbColor)
+```csharp
+// class XlsxFill
+public XlsxFill(System.Drawing.Color color, XlsxFill.Pattern patternType = XlsxFill.Pattern.Solid)
+```
 
-Where `XlsxFill.Pattern` may be `None` for a transparent fill, `Solid` for a solid fill or `Gray125` for a dotted pattern (not necessarily gray) with 12.5% coverage; the color is a string of hexadecimal digits in RRGGBB format. For example to create a yellow solid fill, use: `var yellowFill = new XlsxFill(XlsxFill.Pattern.Solid, "ffff00")`.
+The `XlsxFill.Pattern` enum defines how to apply the background color, and may be `None` for a transparent fill, `Solid` for a solid fill or `Gray125` for a dotted pattern (not necessarily gray) with 12.5% coverage. For example to create a yellow solid fill, use:\
+`var yellowFill = new XlsxFill(Color.Yellow)`
 
 The built-in `XlsxFill.None` object provides a default empty fill.
 
 #### Borders
 
-An `XlsxBorder` object lets you define thickness and colors for the borders of a cell. Currently, this library lets you define thickness independently for the top, right, bottom and left borders, but they must have the same color. Create a new border set via constructor:
+An `XlsxBorder` object lets you define thickness and colors for the borders of a cell. Create a new border set via one of the following:
 
-    XlsxBorder(string hexRgbColor,
-               XlsxBorder.Style top    = XlsxBorder.Style.None,
-               XlsxBorder.Style right  = XlsxBorder.Style.None,
-               XlsxBorder.Style bottom = XlsxBorder.Style.None,
-               XlsxBorder.Style left   = XlsxBorder.Style.None)
+```csharp
+// class XlsxBorder
+public XlsxBorder(
+		XlsxBorder.Line top = null,
+		XlsxBorder.Line right = null,
+		XlsxBorder.Line bottom = null,
+		XlsxBorder.Line left = null,
+		XlsxBorder.Line diagonal = null,
+		bool diagonalDown = false,
+		bool diagonalUp = false)
+public static XlsxBorder Around(XlsxBorder.Line around)
+```
 
-The color is a string of hexadecimal digits in RRGGBB format. The `XlsxBorder.Style` enum defines the kind of border of each cell side, such as `None`, `Thin`, `Thick`, `Dashed` and others. Using named arguments is recommended to improve readability. For example to create a thin black border on the left side only, use: `var leftBorder = new XlsxBorder("000000", left: XlsxBorder.Style.Thin)`.
+The constructor lets you specify each border individually. Using named arguments is recommended to improve readability. The two diagonal borders share the same line style, but you can choose whether to show them individually. The `Around` named constructor is a shortcut for the common case of setting the top, right, bottom and left borders to the same line style, with no diagonals.
+
+Each line is constructed with:
+
+```csharp
+// class XlsxBorder.Line
+public Line(System.Drawing.Color color, XlsxBorder.Style style)
+```
+
+The `XlsxBorder.Style` enum defines the stroke style, such as `None`, `Thin`, `Thick`, `Dashed` and others.
+
+For example to create a thin black border on the left side only, use:\
+`var leftBorder = new XlsxBorder(left: new XlsxBorder.Line(Color.Black, XlsxBorder.Style.Thin))`.
 
 The built-in `XlsxBorder.None` object provides a default empty border set.
 
@@ -196,17 +323,55 @@ The built-in `XlsxBorder.None` object provides a default empty border set.
 
 An `XlsxNumberFormat` object lets you define how the content of a cell should appear when it contains a numeric value. Create it via constructor:
 
-    XlsxNumberFormat(string formatCode)
+```csharp
+// class XlsxNumberFormat
+public XlsxNumberFormat(string formatCode)
+```
 
-The format code has the same format you would normally use in Excel, such as `"0.0%"` for a percentage with exactly one decimal value. For example to create a custom number format with thousand separator, at least two decimal digits and at most six, use: `var customNumberFormat = new XlsxNumberFormat("#,##0.00####")`.
+The format code has the same format you would normally use in Excel, such as `"0.0%"` for a percentage with exactly one decimal value. For example, to create a custom number format with thousand separator, at least two decimal digits and at most six, use:\
+`var customNumberFormat = new XlsxNumberFormat("#,##0.00####")`.
 
-Excel defines and reserves many number formats, and this library exposes some of them as:
+Excel defines and reserves many "magic" number formats, and this library exposes some of them as:
 
 * `XlsxNumberFormat.General`: the default number format, where Excel automatically chooses the "best" representation based on magnitude and number of decimals.
-* `XlsxNumberFormat.TwoDecimal`: two decimal numbers, that is the format code `"0.00"`.
-* `XlsxNumberFormat.ThousandTwoDecimal`: thousand separators and two decimal numbers, that is the format code `"#,##0.00"`.
-* `XlsxNumberFormat.Percentage`: percentage formatting and two decimal numbers, that is the format code `"0.00%"`.
+* `XlsxNumberFormat.Integer`: no decimal digits, that is the format code `"0"`.
+* `XlsxNumberFormat.TwoDecimal`: two decimal digits, that is the format code `"0.00"`.
+* `XlsxNumberFormat.ThousandInteger`: thousand separators and no decimal digits, that is the format code `"#,##0"`.
+* `XlsxNumberFormat.ThousandTwoDecimal`: thousand separators and two decimal digits, that is the format code `"#,##0.00"`.
+* `XlsxNumberFormat.IntegerPercentage`: percentage formatting and no decimal digits, that is the format code `"0%"`.
+* `XlsxNumberFormat.TwoDecimalPercentage`: percentage formatting and two decimal digits, that is the format code `"0.00%"`.
 * `XlsxNumberFormat.Scientific`: scientific notation with two decimals and two-digit exponent, that is the format code `"0.00E+00"`.
+* `XlsxNumberFormat.ShortDate`: localized day, month and year as digits; for a European format the equivalent code would be `"dd/mm/yyyy"` but the actual code would be locale-dependent.
+* `XlsxNumberFormat.ShortDateTime`: localized day, month and year as digits with hours and minutes; for a European format the equivalent code would be `"dd/mm/yyyy hh:mm"` but the actual code would be locale-dependent.
+
+
+#### Alignment
+
+An `XlsxAlignment` object describes alignment and other text control properties, constructed with:
+
+```csharp
+public XlsxAlignment(
+		XlsxAlignment.Horizontal horizontal = XlsxAlignment.Horizontal.General,
+		XlsxAlignment.Vertical vertical = XlsxAlignment.Vertical.Bottom,
+		int indent = 0,
+		bool justifyLastLine = false,
+		XlsxAlignment.ReadingOrder readingOrder = XlsxAlignment.ReadingOrder.ContextDependent,
+		bool shrinkToFit = false,
+		int textRotation = 0,
+		bool wrapText = false)
+```
+
+Using named arguments is recommended to improve readability. The parameters represent:
+- `horizontal`: horizontal alignment of the text, such as left, right, center or justified
+- `vertical`: vertical alignment of the text, such as top, bottom, center or justified
+- `indent`: how many spaces the cell content must be indented
+- `justifyLastLine`: whether to justify even the last line when the alignment is set to `Justify`
+- `readingOrder`: the text direction such as left-to-right or right-to-left
+- `shrinkToFit`: whether to reduce automatically the font size to fit the content into the cell
+- `textRotation`: rotation angle in degrees of the cell content, in range 0..180
+- `wrapText`: whether to insert line breaks automatically into the text to fit the content into the cell
+
+If you don't need to specify any alignment property in a style, you can just use `null` as `XlsxAlignment`.
 
 
 ## Special thanks

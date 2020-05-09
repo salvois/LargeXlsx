@@ -39,11 +39,7 @@ namespace Examples
             using (var stream = new FileStream($"{nameof(ColumnFormatting)}.xlsx", FileMode.Create, FileAccess.Write))
             using (var xlsxWriter = new XlsxWriter(stream))
             {
-                var blueStyle = new XlsxStyle(
-                    new XlsxFont(XlsxFont.Default.FontName, XlsxFont.Default.FontSize, Color.White),
-                    new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86)),
-                    XlsxBorder.None,
-                    XlsxNumberFormat.General);
+                var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White), new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General);
 
                 xlsxWriter
                     .BeginWorksheet("Sheet 1", columns: new[]

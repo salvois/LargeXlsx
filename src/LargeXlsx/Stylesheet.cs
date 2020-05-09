@@ -152,7 +152,7 @@ namespace LargeXlsx
                                    + "<family val=\"2\"/>"
                                    + "{3}{4}{5}"
                                    + "</font>",
-                    font.Key.FontSize, GetColorString(font.Key.Color), Util.EscapeXmlAttribute(font.Key.FontName),
+                    font.Key.Size, GetColorString(font.Key.Color), Util.EscapeXmlAttribute(font.Key.Name),
                     font.Key.Bold ? "<b/>" : "", font.Key.Italic ? "<i/>" : "", font.Key.Strike ? "<strike/>" : "");
             }
             streamWriter.Write("</fonts>");

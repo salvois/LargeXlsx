@@ -49,7 +49,7 @@ namespace Examples
                 var colors = Enumerable.Repeat(0, 100).Select(_ => Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256))).ToList();
                 var headerStyle = new XlsxStyle(
                     new XlsxFont("Calibri", 11, Color.White, bold: true),
-                    new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86)),
+                    new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
                     XlsxBorder.None,
                     XlsxNumberFormat.General);
 
@@ -63,7 +63,7 @@ namespace Examples
                     xlsxWriter.BeginRow().Write($"Row {i}");
                     for (var j = 1; j < 180; j++)
                     {
-                        xlsxWriter.Write(i * ColumnCount + j, XlsxStyle.Default.With(new XlsxFill(XlsxFill.Pattern.Solid, colors[colorIndex])));
+                        xlsxWriter.Write(i * ColumnCount + j, XlsxStyle.Default.With(new XlsxFill(colors[colorIndex])));
                         colorIndex = (colorIndex + 1) % colors.Count;
                     }
                 }

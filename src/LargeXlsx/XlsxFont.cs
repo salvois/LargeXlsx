@@ -34,22 +34,29 @@ namespace LargeXlsx
     {
         public static readonly XlsxFont Default = new XlsxFont("Calibri", 11, Color.Black);
 
-        public string FontName { get; }
-        public double FontSize { get; }
+        public string Name { get; }
+        public double Size { get; }
         public Color Color { get; }
         public bool Bold { get; }
         public bool Italic { get; }
         public bool Strike { get; }
 
-        public XlsxFont(string fontName, double fontSize, Color color, bool bold = false, bool italic = false, bool strike = false)
+        public XlsxFont(string name, double size, Color color, bool bold = false, bool italic = false, bool strike = false)
         {
-            FontName = fontName;
-            FontSize = fontSize;
+            Name = name;
+            Size = size;
             Color = color;
             Bold = bold;
             Italic = italic;
             Strike = strike;
         }
+
+        public XlsxFont With(Color color) => new XlsxFont(Name, Size, color, Bold, Italic, Strike);
+        public XlsxFont WithName(string name) => new XlsxFont(name, Size, Color, Bold, Italic, Strike);
+        public XlsxFont WithSize(double size) => new XlsxFont(Name, size, Color, Bold, Italic, Strike);
+        public XlsxFont WithBold(bool bold = true) => new XlsxFont(Name, Size, Color, bold, Italic, Strike);
+        public XlsxFont WithItalic(bool italic = true) => new XlsxFont(Name, Size, Color, Bold, italic, Strike);
+        public XlsxFont WithStrike(bool strike = true) => new XlsxFont(Name, Size, Color, Bold, Italic, strike);
 
         public override bool Equals(object obj)
         {
@@ -59,15 +66,15 @@ namespace LargeXlsx
         public bool Equals(XlsxFont other)
         {
             return other != null
-                   && FontName == other.FontName && FontSize == other.FontSize && Color == other.Color
+                   && Name == other.Name && Size == other.Size && Color == other.Color
                    && Bold == other.Bold && Italic == other.Italic && Strike == other.Strike;
         }
 
         public override int GetHashCode()
         {
             var hashCode = -1593953530;
-            hashCode = hashCode * -1521134295 + FontName.GetHashCode();
-            hashCode = hashCode * -1521134295 + FontSize.GetHashCode();
+            hashCode = hashCode * -1521134295 + Name.GetHashCode();
+            hashCode = hashCode * -1521134295 + Size.GetHashCode();
             hashCode = hashCode * -1521134295 + Color.GetHashCode();
             hashCode = hashCode * -1521134295 + Bold.GetHashCode();
             hashCode = hashCode * -1521134295 + Italic.GetHashCode();

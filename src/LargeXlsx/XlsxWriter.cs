@@ -143,25 +143,28 @@ namespace LargeXlsx
             return DoOnWorksheet(() => _currentWorksheet.SkipColumns(columnCount));
         }
 
-        public XlsxWriter Write(XlsxStyle style = null, int columnSpan = 1)
+        public XlsxWriter Write(XlsxStyle style = null, int columnSpan = 1, int repeatCount = 1)
         {
-            return columnSpan == 1
-                ? DoOnWorksheet(() => _currentWorksheet.Write(style ?? DefaultStyle))
-                : AddMergedCell(1, columnSpan).Write(style, 1).SkipColumns(columnSpan - 1);
+            if (columnSpan == 1)
+                return DoOnWorksheet(() => _currentWorksheet.Write(style ?? DefaultStyle, repeatCount));
+            
+            for (var i = 0; i < repeatCount; i++)
+                AddMergedCell(1, columnSpan).Write(style, 1).Write(style, repeatCount: columnSpan - 1);
+            return this;
         }
 
         public XlsxWriter Write(string value, XlsxStyle style = null, int columnSpan = 1)
         {
             return columnSpan == 1
                 ? DoOnWorksheet(() => _currentWorksheet.Write(value, style ?? DefaultStyle))
-                : AddMergedCell(1, columnSpan).Write(value, style, 1).SkipColumns(columnSpan - 1);
+                : AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
 
         public XlsxWriter Write(double value, XlsxStyle style = null, int columnSpan = 1)
         {
             return columnSpan == 1
                 ? DoOnWorksheet(() => _currentWorksheet.Write(value, style ?? DefaultStyle))
-                : AddMergedCell(1, columnSpan).Write(value, style, 1).SkipColumns(columnSpan - 1);
+                : AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
 
         public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 1)
@@ -187,7 +190,7 @@ namespace LargeXlsx
                     if (result == null) _hasFormulasWithoutResult = true;
                     _currentWorksheet.WriteFormula(formula, style ?? DefaultStyle, result);
                 })
-                : AddMergedCell(1, columnSpan).WriteFormula(formula, style, 1, result).SkipColumns(columnSpan - 1);
+                : AddMergedCell(1, columnSpan).WriteFormula(formula, style, 1, result).Write(style, repeatCount: columnSpan - 1);
         }
 
         public XlsxWriter AddMergedCell(int rowCount, int columnCount)

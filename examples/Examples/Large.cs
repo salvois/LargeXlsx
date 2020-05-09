@@ -18,9 +18,9 @@ namespace Examples
             using (var xlsxWriter = new XlsxWriter(stream))
             {
                 var whiteFont = new XlsxFont("Calibri", 11, Color.White, bold: true);
-                var blueFill = new XlsxFill(XlsxFill.Pattern.Solid, Color.FromArgb(0, 0x45, 0x86));
+                var blueFill = new XlsxFill(Color.FromArgb(0, 0x45, 0x86));
                 var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
-                var numberStyle = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.ThousandTwoDecimal);
+                var numberStyle = XlsxStyle.Default.With(XlsxNumberFormat.ThousandTwoDecimal);
 
                 xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
                 xlsxWriter.BeginRow();

@@ -31,33 +31,35 @@ using LargeXlsx;
 
 namespace Examples
 {
-    public static class Simple
+    public static class MultipleSheet
     {
         public static void Run()
         {
-            using (var stream = new FileStream($"{nameof(Simple)}.xlsx", FileMode.Create, FileAccess.Write))
+            using (var stream = new FileStream($"{nameof(MultipleSheet)}.xlsx", FileMode.Create, FileAccess.Write))
             using (var xlsxWriter = new XlsxWriter(stream))
             {
-                var headerStyle = new XlsxStyle(
-                    new XlsxFont("Segoe UI", 9, Color.White, bold: true),
-                    new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
-                    XlsxStyle.Default.Border,
-                    XlsxStyle.Default.NumberFormat);
-                var highlightStyle = XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88)));
+                var whiteFont = new XlsxFont("Segoe UI", 9, Color.White, bold: true);
+                var blueFill = new XlsxFill(Color.FromArgb(0, 0x45, 0x86));
+                var yellowFill = new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88));
+                var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
+                var highlightStyle = XlsxStyle.Default.With(yellowFill);
                 var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
-                var borderedStyle = highlightStyle.With(XlsxBorder.Around(new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Dashed)));
 
                 xlsxWriter
-                    .BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Unformatted(count: 2), XlsxColumn.Formatted(width: 20) })
+                    .BeginWorksheet("Sheet&'<1>\"", columns: new [] { XlsxColumn.Unformatted(count: 2), XlsxColumn.Formatted(width: 20) })
                     .SetDefaultStyle(headerStyle)
-                    .BeginRow().AddMergedCell(2, 1).Write("Col1").Write("Top2").Write("Top3")
-                    .BeginRow().Write().Write("Col2").Write("Col3")
+                    .BeginRow().Write("Col<1>").Write("Col2").Write("Col&3")
+                    .BeginRow().Write().Write("Sub2").Write("Sub3")
                     .SetDefaultStyle(XlsxStyle.Default)
                     .BeginRow().Write("Row3").Write(42).WriteFormula("B3*10", highlightStyle)
                     .BeginRow().Write("Row4").SkipColumns(1).Write(new DateTime(2020, 5, 6, 18, 27, 0), dateStyle)
                     .SkipRows(2)
-                    .BeginRow().Write("Row7", borderedStyle, columnSpan: 2).Write(3.14159265359)
-                    .SetAutoFilter(2, 1, xlsxWriter.CurrentRowNumber - 1, 3);
+                    .BeginRow().Write("Row7", XlsxStyle.Default.With(XlsxBorder.Around(new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Dashed))), columnSpan: 2).Write(3.14159265359)
+                    .SetAutoFilter(1, 1, xlsxWriter.CurrentRowNumber, 3)
+                    .BeginWorksheet("Sheet2")
+                    .BeginRow().Write("Lorem ipsum dolor sit amet,")
+                    .BeginRow().Write("consectetur adipiscing elit,")
+                    .BeginRow().Write("sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
             }
         }
     }

@@ -118,16 +118,7 @@ namespace LargeXlsx
             DiagonalUp = diagonalUp;
         }
 
-        public XlsxBorder(Line around)
-        {
-            Top = around;
-            Right = around;
-            Bottom = around;
-            Left = around;
-            Diagonal = null;
-            DiagonalDown = false;
-            DiagonalUp = false;
-        }
+        public static XlsxBorder Around(Line around) => new XlsxBorder(around, around, around, around);
 
         #region Equality members
         public bool Equals(XlsxBorder other)

@@ -99,18 +99,19 @@ namespace LargeXlsx
             CurrentColumnNumber += columnCount;
         }
 
-        public void Write(XlsxStyle style)
+        public void Write(XlsxStyle style, int repeatCount)
         {
             EnsureRow();
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style));
-            CurrentColumnNumber++;
+            var resolveStyleId = _stylesheet.ResolveStyleId(style);
+            for (var i = 0; i < repeatCount; i++) 
+                _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber++), CurrentRowNumber, resolveStyleId);
         }
 
         public void Write(string value, XlsxStyle style)
         {
             if (value == null)
             {
-                Write(style);
+                Write(style, 1);
                 return;
             }
 

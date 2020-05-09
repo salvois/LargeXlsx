@@ -39,13 +39,13 @@ namespace LargeXlsx
             Solid
         }
 
-        public static readonly XlsxFill None = new XlsxFill(Pattern.None, Color.White);
-        public static readonly XlsxFill Gray125 = new XlsxFill(Pattern.Gray125, Color.White);
+        public static readonly XlsxFill None = new XlsxFill(Color.White, Pattern.None);
+        public static readonly XlsxFill Gray125 = new XlsxFill(Color.White, Pattern.Gray125);
 
         public Pattern PatternType { get; }
         public Color Color { get; }
 
-        public XlsxFill(Pattern patternType, Color color)
+        public XlsxFill(Color color, Pattern patternType = Pattern.Solid)
         {
             PatternType = patternType;
             Color = color;
