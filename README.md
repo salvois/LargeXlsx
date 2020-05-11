@@ -32,8 +32,8 @@ using (var xlsxWriter = new XlsxWriter(stream))
     var headerStyle = new XlsxStyle(
         new XlsxFont("Segoe UI", 9, Color.White, bold: true),
         new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
-		XlsxStyle.Default.Border,
-		XlsxStyle.Default.NumberFormat);
+        XlsxStyle.Default.Border,
+        XlsxStyle.Default.NumberFormat);
     var highlightStyle = XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88)));
     var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
     var borderedStyle = highlightStyle.With(
@@ -93,7 +93,7 @@ A call to `BeginWorksheet` finalizes the last worksheet being written, if any, a
 ```csharp
 // class XlsxWriter
 public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0,
-								 IEnumerable<XlsxColumn> columns = null)
+                                 IEnumerable<XlsxColumn> columns = null)
 ```
 
 
@@ -145,7 +145,7 @@ public XlsxWriter Write(double value, XlsxStyle style = null, int columnSpan = 1
 public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 1)
 public XlsxWriter Write(int value, XlsxStyle style = null, int columnSpan = 1)
 public XlsxWriter Write(DateTime value, XlsxStyle style = null, int columnSpan = 1)
-public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, object result = null)
+public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, IConvertible result = null)
 ```
 
  You may write one of the following:
@@ -156,11 +156,11 @@ public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int colum
   * **Date and time**: a `DateTime` value, that will be converted to its `double` representation (days since 1900-01-01). Note that you must style the cell using a date/time number format to have the value appear as a date.
   * **Formula**: a string that Excel or a compatible application will interpret as a formula to calculate. Note that, unless you provide a `result` calculated by yourself (either string or numeric), no result is saved into the XLSX file. However, a spreadsheet application will calculate the result as soon as the XLSX file is opened.
 
-The `style` parameter can be used to specify the style to use for the cell being written. If `null` (or omitted), the cell is styled using the current default style of the `XlsxWriter` (see Styling). Note that in no case the style of the column or the row, if any, is used.
+The `style` parameter specifies the style to use for the cell being written. If `null` (or omitted), the cell is styled using the current default style of the `XlsxWriter` (see Styling). Note that in no case the style of the column or the row, if any, is used for written cells.
 
-When writing empty cells you can also specify a `repeatCount` parameter, to write multiple consecutive styled empty cells. Note that the difference between `repeatCount` and `columnSpan` both greater than 1 is that the latter creates a merged cell (with their memory consumption drawback) but do not have borders in between.
+When writing empty cells you can also specify a `repeatCount` parameter, to write multiple consecutive styled empty cells. Note that the difference between `repeatCount` and `columnSpan` both greater than 1 is that the latter creates a merged cell (with its memory consumption drawback) and does not have in-between borders.
 
-The `columnSpan` parameter can be used to let the cell span multiple columns. When greater than 1, a merged range of such cells is created (see Merged cells), writing the content to the first cell of the range and advancing the insertion point after the merged cells. Note that `xlsxWriter.Write(value, columnSpan: count)` is actually a shortcut for `xlsxWriter.AddMergedCells(1, count).Write(value).Write(repeatCount: count - 1)`. Since a merged cell is created, **writing a large number of cells with columnSpan greater than 1 may cause high memory consumption**.
+The `columnSpan` parameter can be used to let the cell span multiple columns. When greater than 1, a merged range of such cells is created (see Merged cells), content is written to the first cell of the range and the insertion point is advanced after the merged cells. Note that `xlsxWriter.Write(value, columnSpan: count)` is actually a shortcut for `xlsxWriter.AddMergedCells(1, count).Write(value).Write(repeatCount: count - 1)`. Since a merged cell is created, **writing a large number of cells with columnSpan greater than 1 may cause high memory consumption**.
 
 
 Like rows, cells can be skipped using the `SkipColumns` method, to move the insertion point to the right by the specified count of cells, that will be left empty and unstyled (unless column or row styles are in place).
@@ -189,7 +189,7 @@ As a shortcut for the common case of merging a 1 row by n columns range, you can
 Content for the merged cells must be written in the top-left cell of the rectangle. A spreadsheet application will not display any content of the remaining cells in the merged range. Thus, you should explicitly skip those cells using `SkipColumns`, `SkipRows` and writing empty cells (if styling is needed) as appropriate.\
 For example, if merging the 2 rows x 3 columns range `A7:C8` using `AddMergedCells(7, 1, 2, 3)`, you must write content for the merged cell in `A7`, then explicitly jump by further 2 columns using `SkipColumns(2)` to continue writing content from `D7`, and the same applies on row 8, where after a `BeginRow()` you must skip 3 columns with `SkipColumns(3)` and continue writing from `D8`.
 
-**Note**: due to the structure of the XLSX file format, the ranges for all merged cells of a worksheet must be accumulated in RAM, because they must be written to the file after the content of the whole worksheet. **Using a large number of merged cells may cause high memory consumption**. This also means that you may call `AddMergedCells` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them.
+**Note**: due to the structure of the XLSX file format, the ranges for all merged cells of a worksheet must be accumulated in RAM, because they must be written to the file after the content of the whole worksheet. **Using a large number of merged cells may cause high memory consumption**. This also means that you may call `AddMergedCell` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or cells you won't write content to.
 
 
 ### Auto filter
@@ -211,19 +211,19 @@ Data validation lets you add constraints on cell content. Such constraints are  
 ```csharp
 // class XlsxDataValidation
 public XlsxDataValidation(
-    bool allowBlank = false,
-    string error = null,
-    string errorTitle = null,
-    XlsxDataValidation.ErrorStyle? errorStyle = null,
-    XlsxDataValidation.Operator? operatorType = null,
-    string prompt = null,
-    string promptTitle = null,
-    bool showDropDown = false,
-    bool showErrorMessage = false,
-    bool showInputMessage = false,
-    XlsxDataValidation.ValidationType? validationType = null,
-    string formula1 = null,
-    string formula2 = null)
+        bool allowBlank = false,
+        string error = null,
+        string errorTitle = null,
+        XlsxDataValidation.ErrorStyle? errorStyle = null,
+        XlsxDataValidation.Operator? operatorType = null,
+        string prompt = null,
+        string promptTitle = null,
+        bool showDropDown = false,
+        bool showErrorMessage = false,
+        bool showInputMessage = false,
+        XlsxDataValidation.ValidationType? validationType = null,
+        string formula1 = null,
+        string formula2 = null)
 ```
 
 Using named arguments is recommended to improve readability. The parameters represent:
@@ -246,16 +246,16 @@ To ease creation of an `XlsxDataValidation` specifying validation against a list
 ```csharp
 // class XlsxDataValidation
 public static XlsxDataValidation List(
-    IEnumerable<string> choices,
-    bool allowBlank = false,
-    string error = null,
-    string errorTitle = null,
-    XlsxDataValidation.ErrorStyle? errorStyle = null,
-    string prompt = null,
-    string promptTitle = null,
-    bool showDropDown = false,
-    bool showErrorMessage = false,
-    bool showInputMessage = false)
+        IEnumerable<string> choices,
+        bool allowBlank = false,
+        string error = null,
+        string errorTitle = null,
+        XlsxDataValidation.ErrorStyle? errorStyle = null,
+        string prompt = null,
+        string promptTitle = null,
+        bool showDropDown = false,
+        bool showErrorMessage = false,
+        bool showInputMessage = false)
 ```
 
 To add validation rules to a worksheet, use one of the following while writing content:
@@ -264,16 +264,15 @@ To add validation rules to a worksheet, use one of the following while writing c
 // class XlsxWriter
 public XlsxWriter AddDataValidation(int fromRow, int fromColumn, int rowCount, int columnCount,
                                     XlsxDataValidation dataValidation)
-public XlsxWriter AddDataValidation(int rowCount, int columnCount,
-                                    XlsxDataValidation dataValidation)
+public XlsxWriter AddDataValidation(int rowCount, int columnCount, XlsxDataValidation dataValidation)
 public XlsxWriter AddDataValidation(XlsxDataValidation dataValidation)
 ```
 
-The first overload applies the validation rules to all cells in the specified rectangular range. The second overloads uses the insertion point as the top-left corner of the rectangular range. The third overload applies the validation only on the cell at the insertion point.
+The first overload applies the validation rules to all cells in the specified rectangular range. The second overload uses the insertion point as the top-left corner of the rectangular range. The third overload applies validation only on the cell at the insertion point.
 
 Note that, due to the internals of the XLSX file format, all validation objects and their cell references must be kept in RAM until a worksheet is finalized, but this library **deduplicates** validation objects in **constant time** as needed. Thus, you should usually not worry about performance or memory consumption when you use multiple validation objects, unless you are using a large number of different ones, or specify a lot of separate cell references.
 
-This means that you may call `AddDataValidation` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or even for cells that you won't write content to.
+This means that you may call `AddDataValidation` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or cells you won't write content to.
 
 
 ### Styling
@@ -290,7 +289,7 @@ You can create a new style, combining the above five elements, using the constru
 ```csharp
 // class XlsxStyle
 public XlsxStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat,
-				 XlsxAlignment alignment = null)
+                 XlsxAlignment alignment = null)
 public XlsxStyle With(XlsxFont font)
 public XlsxStyle With(XlsxFill fill)
 public XlsxStyle With(XlsxBorder border)
@@ -306,7 +305,7 @@ The built-in `XlsxStyle.Default` object provides a ready-to-use style combining 
 
 #### The default style
 
-Each `XlsxWriter` has a default style that is used whenever you write a cell using `Write` without specifying an explicit style. To read the current default stlye, or set it while fluently write the XLSX file, use:
+Each `XlsxWriter` has a default style that is used whenever you write a cell using `Write` without specifying an explicit style. To read the current default style, or set it while fluently write the XLSX file, use:
 
 ```csharp
 // class XlsxWriter
@@ -324,12 +323,12 @@ An `XlsxFont` object lets you define the font face, its size in points, the text
 ```csharp
 // class XlsxFont
 public XlsxFont(
-		string name,
-		double size,
-		System.Drawing.Color color,
-		bool bold = false,
-		bool italic = false,
-		bool strike = false)
+        string name,
+        double size,
+        System.Drawing.Color color,
+        bool bold = false,
+        bool italic = false,
+        bool strike = false)
 public XlsxFont With(System.Drawing.Color color)
 public XlsxFont WithName(string name)
 public XlsxFont WithSize(double size)
@@ -364,13 +363,13 @@ An `XlsxBorder` object lets you define thickness and colors for the borders of a
 ```csharp
 // class XlsxBorder
 public XlsxBorder(
-		XlsxBorder.Line top = null,
-		XlsxBorder.Line right = null,
-		XlsxBorder.Line bottom = null,
-		XlsxBorder.Line left = null,
-		XlsxBorder.Line diagonal = null,
-		bool diagonalDown = false,
-		bool diagonalUp = false)
+        XlsxBorder.Line top = null,
+        XlsxBorder.Line right = null,
+        XlsxBorder.Line bottom = null,
+        XlsxBorder.Line left = null,
+        XlsxBorder.Line diagonal = null,
+        bool diagonalDown = false,
+        bool diagonalUp = false)
 public static XlsxBorder Around(XlsxBorder.Line around)
 ```
 
@@ -422,14 +421,14 @@ An `XlsxAlignment` object describes alignment and other text control properties,
 
 ```csharp
 public XlsxAlignment(
-		XlsxAlignment.Horizontal horizontal = XlsxAlignment.Horizontal.General,
-		XlsxAlignment.Vertical vertical = XlsxAlignment.Vertical.Bottom,
-		int indent = 0,
-		bool justifyLastLine = false,
-		XlsxAlignment.ReadingOrder readingOrder = XlsxAlignment.ReadingOrder.ContextDependent,
-		bool shrinkToFit = false,
-		int textRotation = 0,
-		bool wrapText = false)
+        XlsxAlignment.Horizontal horizontal = XlsxAlignment.Horizontal.General,
+        XlsxAlignment.Vertical vertical = XlsxAlignment.Vertical.Bottom,
+        int indent = 0,
+        bool justifyLastLine = false,
+        XlsxAlignment.ReadingOrder readingOrder = XlsxAlignment.ReadingOrder.ContextDependent,
+        bool shrinkToFit = false,
+        int textRotation = 0,
+        bool wrapText = false)
 ```
 
 Using named arguments is recommended to improve readability. The parameters represent:
