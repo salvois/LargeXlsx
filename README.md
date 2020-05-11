@@ -18,6 +18,7 @@ Currently the library supports:
 * styling such as font face, size, and color; background color; cell borders; numeric formatting; alignment
 * column and row formatting (custom width, height, hidden columns/rows)
 * auto filter
+* cell validation, such as dropdown list of allowed values
 
 
 ## Example
@@ -201,6 +202,78 @@ public XlsxWriter SetAutoFilter(int fromRow, int fromColumn, int rowCount, int c
 ```
 
 You can call `SetAutoFilter` at any moment while writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object). Each worksheet can contain only up to one auto filter, thus if you call `SetAutoFilter` multiple times for the same worksheet only the last one will apply.
+
+
+### Data validation
+
+Data validation lets you add constraints on cell content. Such constraints are  represented by `XlsxDataValidation` objects, created with:
+
+```csharp
+// class XlsxDataValidation
+public XlsxDataValidation(
+    bool allowBlank = false,
+    string error = null,
+    string errorTitle = null,
+    XlsxDataValidation.ErrorStyle? errorStyle = null,
+    XlsxDataValidation.Operator? operatorType = null,
+    string prompt = null,
+    string promptTitle = null,
+    bool showDropDown = false,
+    bool showErrorMessage = false,
+    bool showInputMessage = false,
+    XlsxDataValidation.ValidationType? validationType = null,
+    string formula1 = null,
+    string formula2 = null)
+```
+
+Using named arguments is recommended to improve readability. The parameters represent:
+- `allowBlank`: whether an empty cell is considered valid
+- `error`: an optional error message to replace the default message of the spreadsheet application when invalid content is detected
+- `errorTitle`: an optional title to replace the default title of the spreadsheet application when invalid content is detected
+- `errorStyle`: whether to report detection of invalid content as a blocking error, a warning or a notice
+- `operatorType`: for validation involving comparison (see `validationType`), the comparison operator to apply
+- `prompt`: an optional message to be shown as tooltip when the cell receives focus
+- `promptTitle`: an optional title to show in the prompt tooltip
+- `showDropDown`: whether to show a dropdown list when the validation type is set to `XlsxDataValidation.ValidationType.List`; **Note:** for some reason, this seems to work backwards, with both Excel and LibreOffice showing the dropdown when this property is **false**
+- `showErrorMessage`: whether the spreadsheet application will show an error when invalid content is detected
+- `showInputMessage`: whether the spreadsheet application will show the prompt tooltip when a validated cell is focused
+- `validationType`: specifies to do validation on numeric values, whole integer values, date values, text length (using the comparison operator specified by `operatorType`) or against a list of allowed values
+- `formula1`: the value to compare the cell content against; for lists, it can be a reference to a cell range containing the allowed values, or a list of comma separated case-sensitive string contants, enclosed by double quotes (e.g. `"\"item1,item2\"")`; for other validation types, it can be a reference to a cell containing the value or a constant
+- `formula2`: for comparison involving two values (e.g. operator `Between`), the second value, specified as in `formula1`.
+
+To ease creation of an `XlsxDataValidation` specifying validation against a list of string contants, the following named constructor is provided. Note that it basically does a `string.Join` of choices into `formula1`, thus if a choice includes a comma, the spreadsheet application will split it in separate choices. There is no way to include real commas in choices specified as string constants (rather than as cell range).
+
+```csharp
+// class XlsxDataValidation
+public static XlsxDataValidation List(
+    IEnumerable<string> choices,
+    bool allowBlank = false,
+    string error = null,
+    string errorTitle = null,
+    XlsxDataValidation.ErrorStyle? errorStyle = null,
+    string prompt = null,
+    string promptTitle = null,
+    bool showDropDown = false,
+    bool showErrorMessage = false,
+    bool showInputMessage = false)
+```
+
+To add validation rules to a worksheet, use one of the following while writing content:
+
+```csharp
+// class XlsxWriter
+public XlsxWriter AddDataValidation(int fromRow, int fromColumn, int rowCount, int columnCount,
+                                    XlsxDataValidation dataValidation)
+public XlsxWriter AddDataValidation(int rowCount, int columnCount,
+                                    XlsxDataValidation dataValidation)
+public XlsxWriter AddDataValidation(XlsxDataValidation dataValidation)
+```
+
+The first overload applies the validation rules to all cells in the specified rectangular range. The second overloads uses the insertion point as the top-left corner of the rectangular range. The third overload applies the validation only on the cell at the insertion point.
+
+Note that, due to the internals of the XLSX file format, all validation objects and their cell references must be kept in RAM until a worksheet is finalized, but this library **deduplicates** validation objects in **constant time** as needed. Thus, you should usually not worry about performance or memory consumption when you use multiple validation objects, unless you are using a large number of different ones, or specify a lot of separate cell references.
+
+This means that you may call `AddDataValidation` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or even for cells that you won't write content to.
 
 
 ### Styling
@@ -391,3 +464,4 @@ Redistribution and use in source and binary forms, with or without modification,
 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+,

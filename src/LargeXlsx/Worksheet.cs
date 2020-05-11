@@ -26,6 +26,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using SharpCompress.Writers.Zip;
@@ -38,6 +39,7 @@ namespace LargeXlsx
         private readonly StreamWriter _streamWriter;
         private readonly Stylesheet _stylesheet;
         private readonly List<string> _mergedCellRefs;
+        private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
         private string _autoFilterRef;
         private string _autoFilterAbsoluteRef;
 
@@ -55,6 +57,7 @@ namespace LargeXlsx
             CurrentColumnNumber = 0;
             _stylesheet = stylesheet;
             _mergedCellRefs = new List<string>();
+            _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
@@ -72,6 +75,7 @@ namespace LargeXlsx
             _streamWriter.Write("</sheetData>");
             WriteAutoFilter();
             WriteMergedCells();
+            WriteDataValidations();
             _streamWriter.Write("</worksheet>");
             _streamWriter.Dispose();
             _stream.Dispose();
@@ -131,12 +135,12 @@ namespace LargeXlsx
             CurrentColumnNumber++;
         }
 
-        public void WriteFormula(string formula, XlsxStyle style, object result)
+        public void WriteFormula(string formula, XlsxStyle style, IConvertible result)
         {
             EnsureRow();
             _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"str\"><f>{3}</f>",
                 Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.EscapeXmlText(formula));
-            if (result != null) _streamWriter.Write("<v>{0}</v>", Util.EscapeXmlText(result.ToString()));
+            if (result != null) _streamWriter.Write("<v>{0}</v>", Util.EscapeXmlText(result.ToString(CultureInfo.InvariantCulture)));
             _streamWriter.Write("</c>");
             CurrentColumnNumber++;
         }
@@ -160,6 +164,21 @@ namespace LargeXlsx
             var toColumnName = Util.GetColumnName(fromColumn + columnCount - 1);
             _autoFilterRef = $"{fromColumnName}{fromRow}:{toColumnName}{toRow}";
             _autoFilterAbsoluteRef = $"'{Name.Replace("'", "''")}'!${fromColumnName}${fromRow}:${toColumnName}${toRow}";
+        }
+
+        public void AddDataValidation(int fromRow, int fromColumn, int rowCount, int columnCount, XlsxDataValidation dataValidation)
+        {
+            if (rowCount < 1 || columnCount < 1)
+                throw new ArgumentOutOfRangeException();
+            var cellRef = rowCount > 1 || columnCount > 1
+                ? $"{Util.GetColumnName(fromColumn)}{fromRow}:{Util.GetColumnName(fromColumn + columnCount - 1)}{fromRow + rowCount - 1}"
+                : $"{Util.GetColumnName(fromColumn)}{fromRow}";
+            if (!_cellRefsByDataValidation.TryGetValue(dataValidation, out var cellRefs))
+            {
+                cellRefs = new List<string>();
+                _cellRefsByDataValidation.Add(dataValidation, cellRefs);
+            }
+            cellRefs.Add(cellRef);
         }
 
         private void EnsureRow()
@@ -223,6 +242,33 @@ namespace LargeXlsx
             foreach (var mergedCell in _mergedCellRefs)
                 _streamWriter.Write("<mergeCell ref=\"{0}\"/>", mergedCell);
             _streamWriter.Write("</mergeCells>");
+        }
+
+        private void WriteDataValidations()
+        {
+            if (!_cellRefsByDataValidation.Any()) return;
+
+            _streamWriter.Write("<dataValidations count=\"{0}\">", _cellRefsByDataValidation.Count);
+            foreach (var kvp in _cellRefsByDataValidation)
+            {
+                _streamWriter.Write("<dataValidation sqref=\"{0}\" allowBlank=\"{1}\"",
+                    string.Join(" ", kvp.Value.Distinct()), Util.BoolToInt(kvp.Key.AllowBlank));
+                if (kvp.Key.Error != null) _streamWriter.Write(" error=\"{0}\"", Util.EscapeXmlAttribute(kvp.Key.Error));
+                if (kvp.Key.ErrorStyleValue.HasValue) _streamWriter.Write(" errorStyle=\"{0}\"", Util.EnumToAttributeValue(kvp.Key.ErrorStyleValue));
+                if (kvp.Key.ErrorTitle != null) _streamWriter.Write(" errorTitle=\"{0}\"", Util.EscapeXmlAttribute(kvp.Key.ErrorTitle));
+                if (kvp.Key.OperatorValue.HasValue) _streamWriter.Write(" operator=\"{0}\"", Util.EnumToAttributeValue(kvp.Key.OperatorValue));
+                if (kvp.Key.Prompt != null) _streamWriter.Write(" prompt=\"{0}\"", Util.EscapeXmlAttribute(kvp.Key.Prompt));
+                if (kvp.Key.PromptTitle != null) _streamWriter.Write(" promptTitle=\"{0}\"", Util.EscapeXmlAttribute(kvp.Key.PromptTitle));
+                if (kvp.Key.ShowDropDown) _streamWriter.Write(" showDropDown=\"1\"");
+                if (kvp.Key.ShowErrorMessage) _streamWriter.Write(" showErrorMessage=\"1\"");
+                if (kvp.Key.ShowInputMessage) _streamWriter.Write(" showInputMessage=\"1\"");
+                if (kvp.Key.ValidationTypeValue.HasValue) _streamWriter.Write(" type=\"{0}\"", Util.EnumToAttributeValue(kvp.Key.ValidationTypeValue));
+                _streamWriter.Write(">");
+                if (kvp.Key.Formula1 != null) _streamWriter.Write("<formula1>{0}</formula1>", Util.EscapeXmlText(kvp.Key.Formula1));
+                if (kvp.Key.Formula2 != null) _streamWriter.Write("<formula2>{0}</formula2>", Util.EscapeXmlText(kvp.Key.Formula2));
+                _streamWriter.Write("</dataValidation>");
+            }
+            _streamWriter.Write("</dataValidations>");
         }
     }
 }

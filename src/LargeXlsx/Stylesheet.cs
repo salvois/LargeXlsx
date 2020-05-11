@@ -169,7 +169,7 @@ namespace LargeXlsx
                                    + "<bgColor rgb=\"{1}\"/>"
                                    + "</patternFill>"
                                    + "</fill>",
-                    EnumToAttributeValue(fill.Key.PatternType), GetColorString(fill.Key.Color));
+                    Util.EnumToAttributeValue(fill.Key.PatternType), GetColorString(fill.Key.Color));
             }
             streamWriter.Write("</fills>");
         }
@@ -179,7 +179,7 @@ namespace LargeXlsx
             streamWriter.Write($"<borders count=\"{_borders.Count}\">");
             foreach (var border in _borders.OrderBy(b => b.Value))
             {
-                streamWriter.Write($"<border diagonalDown=\"{BoolToInt(border.Key.DiagonalDown)}\" diagonalUp=\"{BoolToInt(border.Key.DiagonalUp)}\">");
+                streamWriter.Write($"<border diagonalDown=\"{Util.BoolToInt(border.Key.DiagonalDown)}\" diagonalUp=\"{Util.BoolToInt(border.Key.DiagonalUp)}\">");
                 WriteBorderLine(streamWriter, "left", border.Key.Left);
                 WriteBorderLine(streamWriter, "right", border.Key.Right);
                 WriteBorderLine(streamWriter, "top", border.Key.Top);
@@ -194,7 +194,7 @@ namespace LargeXlsx
         {
             if (line != null)
             {
-                streamWriter.Write($"<{elementName} style=\"{EnumToAttributeValue(line.Style)}\">");
+                streamWriter.Write($"<{elementName} style=\"{Util.EnumToAttributeValue(line.Style)}\">");
                 if (line.Color != Color.Transparent)
                     streamWriter.Write($"<color rgb=\"{GetColorString(line.Color)}\"/>");
                 streamWriter.Write($"</{elementName}>");
@@ -218,8 +218,8 @@ namespace LargeXlsx
                 {
                     streamWriter.Write(" applyAlignment=\"1\"><alignment");
                     var a = style.Key.Alignment;
-                    if (a.HorizontalType != XlsxAlignment.Horizontal.General) streamWriter.Write(" horizontal=\"{0}\"", EnumToAttributeValue(a.HorizontalType));
-                    if (a.VerticalType != XlsxAlignment.Vertical.Bottom) streamWriter.Write(" vertical=\"{0}\"", EnumToAttributeValue(a.VerticalType));
+                    if (a.HorizontalType != XlsxAlignment.Horizontal.General) streamWriter.Write(" horizontal=\"{0}\"", Util.EnumToAttributeValue(a.HorizontalType));
+                    if (a.VerticalType != XlsxAlignment.Vertical.Bottom) streamWriter.Write(" vertical=\"{0}\"", Util.EnumToAttributeValue(a.VerticalType));
                     if (a.Indent != 0) streamWriter.Write(" indent=\"{0}\"", a.Indent);
                     if (a.JustifyLastLine) streamWriter.Write(" justifyLastLine=\"1\"");
                     if (a.ReadingOrderType != XlsxAlignment.ReadingOrder.ContextDependent) streamWriter.Write(" readingOrder=\"{0}\"", (int)a.ReadingOrderType);
@@ -237,13 +237,5 @@ namespace LargeXlsx
         }
 
         private static string GetColorString(Color color) => $"{color.R:x2}{color.G:x2}{color.B:x2}";
-
-        private static int BoolToInt(bool value) => value ? 1 : 0;
-
-        private static string EnumToAttributeValue<T>(T enumValue)
-        {
-            var s = enumValue.ToString();
-            return char.ToLowerInvariant(s[0]) + s.Substring(1);
-        }
     }
 }

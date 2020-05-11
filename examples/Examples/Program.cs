@@ -37,6 +37,7 @@ namespace Examples
             RowFormatting.Run();
             Alignment.Run();
             Border.Run();
+            DataValidation.Run();
             Large.Run();
             StyledLarge.Run();
             StyledLargeCreateStyles.Run();

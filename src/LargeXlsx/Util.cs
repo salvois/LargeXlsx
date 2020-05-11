@@ -89,6 +89,14 @@ namespace LargeXlsx
             // https://docs.microsoft.com/en-us/office/troubleshoot/excel/wrongly-assumes-1900-is-leap-year
             if (date >= Date19000301) days++;
             return days;
-        } 
+        }
+
+        public static int BoolToInt(bool value) => value ? 1 : 0;
+
+        public static string EnumToAttributeValue<T>(T enumValue)
+        {
+            var s = enumValue.ToString();
+            return char.ToLowerInvariant(s[0]) + s.Substring(1);
+        }
     }
 }

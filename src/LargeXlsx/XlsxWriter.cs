@@ -189,7 +189,7 @@ namespace LargeXlsx
             return Write(Util.DateToDouble(value), style, columnSpan);
         }
 
-        public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, object result = null)
+        public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, IConvertible result = null)
         {
             return columnSpan == 1
                 ? DoOnWorksheet(() =>
@@ -200,19 +200,34 @@ namespace LargeXlsx
                 : AddMergedCell(1, columnSpan).WriteFormula(formula, style, 1, result).Write(style, repeatCount: columnSpan - 1);
         }
 
-        public XlsxWriter AddMergedCell(int rowCount, int columnCount)
-        {
-            return DoOnWorksheet(() => _currentWorksheet.AddMergedCell(_currentWorksheet.CurrentRowNumber, _currentWorksheet.CurrentColumnNumber, rowCount, columnCount));
-        }
-
         public XlsxWriter AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
         {
             return DoOnWorksheet(() => _currentWorksheet.AddMergedCell(fromRow, fromColumn, rowCount, columnCount));
         }
 
+        public XlsxWriter AddMergedCell(int rowCount, int columnCount)
+        {
+            return AddMergedCell(CurrentRowNumber, CurrentColumnNumber, rowCount, columnCount);
+        }
+
         public XlsxWriter SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount)
         {
             return DoOnWorksheet(() => _currentWorksheet.SetAutoFilter(fromRow, fromColumn, rowCount, columnCount));
+        }
+
+        public XlsxWriter AddDataValidation(int fromRow, int fromColumn, int rowCount, int columnCount, XlsxDataValidation dataValidation)
+        {
+            return DoOnWorksheet(() => _currentWorksheet.AddDataValidation(fromRow, fromColumn, rowCount, columnCount, dataValidation));
+        }
+
+        public XlsxWriter AddDataValidation(int rowCount, int columnCount, XlsxDataValidation dataValidation)
+        {
+            return AddDataValidation(CurrentRowNumber, CurrentColumnNumber, rowCount, columnCount, dataValidation);
+        }
+
+        public XlsxWriter AddDataValidation(XlsxDataValidation dataValidation)
+        {
+            return AddDataValidation(CurrentRowNumber, CurrentColumnNumber, 1, 1, dataValidation);
         }
 
         public XlsxWriter SetDefaultStyle(XlsxStyle style)
