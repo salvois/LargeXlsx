@@ -30,6 +30,8 @@ namespace LargeXlsx
 {
     public class XlsxAlignment : IEquatable<XlsxAlignment>
     {
+        public static readonly XlsxAlignment Default = new XlsxAlignment();
+
         public Horizontal HorizontalType { get; }
         public Vertical VerticalType { get; }
         public int Indent { get; }
@@ -38,20 +40,6 @@ namespace LargeXlsx
         public bool ShrinkToFit { get; }
         public int TextRotation { get; }
         public bool WrapText { get; }
-
-        public XlsxAlignment(Horizontal horizontal = Horizontal.General, Vertical vertical = Vertical.Bottom,
-            int indent = 0, bool justifyLastLine = false, ReadingOrder readingOrder = ReadingOrder.ContextDependent,
-            bool shrinkToFit = false, int textRotation = 0, bool wrapText = false)
-        {
-            HorizontalType = horizontal;
-            VerticalType = vertical;
-            Indent = indent;
-            JustifyLastLine = justifyLastLine;
-            ReadingOrderType = readingOrder;
-            ShrinkToFit = shrinkToFit;
-            TextRotation = textRotation;
-            WrapText = wrapText;
-        }
 
         public enum Horizontal
         {
@@ -79,6 +67,20 @@ namespace LargeXlsx
             ContextDependent = 0,
             LeftToRight = 1,
             RightToLeft = 2
+        }
+
+        public XlsxAlignment(Horizontal horizontal = Horizontal.General, Vertical vertical = Vertical.Bottom,
+            int indent = 0, bool justifyLastLine = false, ReadingOrder readingOrder = ReadingOrder.ContextDependent,
+            bool shrinkToFit = false, int textRotation = 0, bool wrapText = false)
+        {
+            HorizontalType = horizontal;
+            VerticalType = vertical;
+            Indent = indent;
+            JustifyLastLine = justifyLastLine;
+            ReadingOrderType = readingOrder;
+            ShrinkToFit = shrinkToFit;
+            TextRotation = textRotation;
+            WrapText = wrapText;
         }
 
         public bool Equals(XlsxAlignment other)

@@ -51,7 +51,8 @@ namespace Examples
                     new XlsxFont("Calibri", 11, Color.White, bold: true),
                     new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
                     XlsxBorder.None,
-                    XlsxNumberFormat.General);
+                    XlsxNumberFormat.General,
+                    XlsxAlignment.Default);
 
                 xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
                 xlsxWriter.BeginRow();

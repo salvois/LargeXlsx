@@ -31,7 +31,7 @@ namespace LargeXlsx
 {
     public class XlsxStyle : IEquatable<XlsxStyle>
     {
-        public static readonly XlsxStyle Default = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.General);
+        public static readonly XlsxStyle Default = new XlsxStyle(XlsxFont.Default, XlsxFill.None, XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
 
         public XlsxFont Font { get; }
         public XlsxFill Fill { get; }
@@ -39,7 +39,7 @@ namespace LargeXlsx
         public XlsxNumberFormat NumberFormat { get; }
         public XlsxAlignment Alignment { get; }
 
-        public XlsxStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat, XlsxAlignment alignment = null)
+        public XlsxStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat, XlsxAlignment alignment)
         {
             Font = font;
             Fill = fill;

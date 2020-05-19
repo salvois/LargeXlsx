@@ -214,7 +214,7 @@ namespace LargeXlsx
                                    + " applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\"",
                     _numberFormats[style.Key.NumberFormat], _fonts[style.Key.Font], _fills[style.Key.Fill],
                     _borders[style.Key.Border]);
-                if (style.Key.Alignment != null)
+                if (style.Key.Alignment != XlsxAlignment.Default)
                 {
                     streamWriter.Write(" applyAlignment=\"1\"><alignment");
                     var a = style.Key.Alignment;

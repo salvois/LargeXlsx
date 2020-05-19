@@ -42,7 +42,8 @@ namespace Examples
                     new XlsxFont("Segoe UI", 9, Color.White, bold: true),
                     new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
                     XlsxStyle.Default.Border,
-                    XlsxStyle.Default.NumberFormat);
+                    XlsxStyle.Default.NumberFormat,
+                    XlsxAlignment.Default);
                 var highlightStyle = XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88)));
                 var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
                 var borderedStyle = highlightStyle.With(XlsxBorder.Around(new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Dashed)));

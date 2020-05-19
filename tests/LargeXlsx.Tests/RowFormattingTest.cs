@@ -69,7 +69,8 @@ namespace LargeXlsx.Tests
                 XlsxFont.Default.With(Color.White),
                 new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
                 XlsxBorder.None,
-                XlsxNumberFormat.General);
+                XlsxNumberFormat.General,
+                XlsxAlignment.Default);
 
             using (var stream = new MemoryStream())
             {

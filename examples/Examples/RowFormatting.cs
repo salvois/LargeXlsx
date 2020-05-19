@@ -37,7 +37,7 @@ namespace Examples
             using (var stream = new FileStream($"{nameof(RowFormatting)}.xlsx", FileMode.Create, FileAccess.Write))
             using (var xlsxWriter = new XlsxWriter(stream))
             {
-                var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White), new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General);
+                var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White), new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
 
                 xlsxWriter
                     .BeginWorksheet("Sheet 1")

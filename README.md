@@ -33,7 +33,8 @@ using (var xlsxWriter = new XlsxWriter(stream))
         new XlsxFont("Segoe UI", 9, Color.White, bold: true),
         new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
         XlsxStyle.Default.Border,
-        XlsxStyle.Default.NumberFormat);
+        XlsxStyle.Default.NumberFormat,
+        XlsxAlignment.Default);
     var highlightStyle = XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88)));
     var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
     var borderedStyle = highlightStyle.With(
@@ -289,7 +290,7 @@ You can create a new style, combining the above five elements, using the constru
 ```csharp
 // class XlsxStyle
 public XlsxStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat,
-                 XlsxAlignment alignment = null)
+                 XlsxAlignment alignment)
 public XlsxStyle With(XlsxFont font)
 public XlsxStyle With(XlsxFill fill)
 public XlsxStyle With(XlsxBorder border)
@@ -301,7 +302,7 @@ The resulting `XlsxStyle` object can be used with a `Write` method to style a ce
 
 Under the hood, all styles used with an `XlsxWriter` are collected in a stylesheet, and this library **deduplicates** them in **constant time** as needed. Thus, you should usually not worry about performance or memory consumption when you use multiple styles. Note, however, that the stylesheet is kept in RAM until the `XlsxWriter` is disposed, thus using a *very* large number of *different* styles may cause high memory consumption.
 
-The built-in `XlsxStyle.Default` object provides a ready-to-use style combining the built-in `XlsxFont.Default` font, the built-in `XlsxFill.None` fill, the built-in `XlsxBorder.None` border, the built-in `XlsxNumberFormat.General` number format and a `null` (default) alignment. All those elements are explained later.
+The built-in `XlsxStyle.Default` object provides a ready-to-use style combining the built-in `XlsxFont.Default` font, the built-in `XlsxFill.None` fill, the built-in `XlsxBorder.None` border, the built-in `XlsxNumberFormat.General` number format and the built-in `XlsxAlignment.Default` alignment. All those elements are explained later.
 
 #### The default style
 
@@ -441,7 +442,7 @@ Using named arguments is recommended to improve readability. The parameters repr
 - `textRotation`: rotation angle in degrees of the cell content, in range 0..180
 - `wrapText`: whether to insert line breaks automatically into the text to fit the content into the cell
 
-If you don't need to specify any alignment property in a style, you can just use `null` as `XlsxAlignment`.
+The built-in `XlsxAlignment.Default` object provides a default alignment properties.
 
 
 ## Special thanks

@@ -41,7 +41,7 @@ namespace Examples
                 var whiteFont = new XlsxFont("Segoe UI", 9, Color.White, bold: true);
                 var blueFill = new XlsxFill(Color.FromArgb(0, 0x45, 0x86));
                 var yellowFill = new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88));
-                var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General);
+                var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
                 var highlightStyle = XlsxStyle.Default.With(yellowFill);
                 var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
 
