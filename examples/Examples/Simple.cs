@@ -54,7 +54,8 @@ namespace Examples
                     .BeginRow().AddMergedCell(2, 1).Write("Col1").Write("Top2").Write("Top3")
                     .BeginRow().Write().Write("Col2").Write("Col3")
                     .SetDefaultStyle(XlsxStyle.Default)
-                    .BeginRow().Write("Row3").Write(42).WriteFormula("B3*10", highlightStyle)
+                    .BeginRow().Write("Row3").Write(42).WriteFormula(
+                        $"{xlsxWriter.GetRelativeColumnName(-1)}{xlsxWriter.CurrentRowNumber}*10", highlightStyle)
                     .BeginRow().Write("Row4").SkipColumns(1).Write(new DateTime(2020, 5, 6, 18, 27, 0), dateStyle)
                     .SkipRows(2)
                     .BeginRow().Write("Row7", borderedStyle, columnSpan: 2).Write(3.14159265359)

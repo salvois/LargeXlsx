@@ -47,7 +47,8 @@ using (var xlsxWriter = new XlsxWriter(stream))
         .BeginRow().AddMergedCell(2, 1).Write("Col1").Write("Top2").Write("Top3")
         .BeginRow().Write().Write("Col2").Write("Col3")
         .SetDefaultStyle(XlsxStyle.Default)
-        .BeginRow().Write("Row3").Write(42).WriteFormula("B3*10", highlightStyle)
+        .BeginRow().Write("Row3").Write(42).WriteFormula(
+            $"{xlsxWriter.GetRelativeColumnName(-1)}{xlsxWriter.CurrentRowNumber}*10", highlightStyle)
         .BeginRow().Write("Row4").SkipColumns(1).Write(new DateTime(2020, 5, 6, 18, 27, 0), dateStyle)
         .SkipRows(2)
         .BeginRow().Write("Row7", borderedStyle, columnSpan: 2).Write(3.14159265359)
@@ -86,6 +87,22 @@ public int CurrentColumnNumber { get; }
 
 Please note that `CurrentColumnNumber` may be zero, and thus invalid, if the current row has not been set up using `BeginRow` (attempting to write a cell would throw an exception).
 
+
+### Column names
+
+In the usual "A1" cell reference format, columns are named from A (for column number 1) to XFD (for column number 16384).\
+The following functions facilitate conversion from column numbers to column names:
+
+```csharp
+// class XlsxWriter
+public string CurrentColumnName { get; }
+public string GetRelativeColumnName(int offsetFromCurrentColumn);
+public static string GetColumnName(int columnIndex);
+```
+
+The first version returns the column name for the column at the insertion point. The second version returns the column name for a column relative to the insertion point. The last version returns the column name for an absolute column index. Absolute or relative indexes outside the range [1..16384] will result in an `ArgumentOutOfRangeException`.
+
+
 ### Creating a new worksheet
 
 Call `BeginWorksheet` passing the sheet name and, optionally, the one-based indexes of the row and column where to place a split to create frozen panes. The `columns` parameter can be used to specify optional column formatting.\
@@ -108,8 +125,8 @@ You can create `XlsxColumn` objects with one of these named constructors:
 
 ```csharp
 // class XlsxColumn
-public static XlsxColumn Unformatted(int count = 1)
-public static XlsxColumn Formatted(double width, int count = 1, bool hidden = false, XlsxStyle style = null)
+public static XlsxColumn Unformatted(int count = 1);
+public static XlsxColumn Formatted(double width, int count = 1, bool hidden = false, XlsxStyle style = null);
 ```
 
 `Unformatted` creates a column description that is used basically to skip one or more unformatted columns.

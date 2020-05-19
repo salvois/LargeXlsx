@@ -46,6 +46,9 @@ namespace LargeXlsx
         public XlsxStyle DefaultStyle { get; private set; }
         public int CurrentRowNumber => _currentWorksheet.CurrentRowNumber;
         public int CurrentColumnNumber => _currentWorksheet.CurrentColumnNumber;
+        public string CurrentColumnName => Util.GetColumnName(CurrentColumnNumber);
+        public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
+        public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
 
         public XlsxWriter(Stream stream)
         {

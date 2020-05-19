@@ -67,6 +67,15 @@ namespace LargeXlsx.Tests
             name.Should().Be(expectedName);
         }
 
+        [TestCase(-1)]
+        [TestCase(0)]
+        [TestCase(16385)]
+        public static void GetColumnNameOutOfRange(int index)
+        {
+            Func<string> act = () => Util.GetColumnName(index);
+            act.Should().Throw<ArgumentOutOfRangeException>();
+        }
+
         [TestCase("2020-05-06T18:27:00", 43957.76875)]
         [TestCase("1900-01-01", 1)]
         [TestCase("1900-02-28", 59)]

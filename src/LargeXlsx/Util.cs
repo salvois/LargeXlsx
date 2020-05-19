@@ -66,6 +66,8 @@ namespace LargeXlsx
 
         public static string GetColumnName(int columnIndex)
         {
+            if (columnIndex < 1 || columnIndex > 16384)
+                throw new ArgumentOutOfRangeException();
             var columnName = new StringBuilder(3);
             while (true)
             {
