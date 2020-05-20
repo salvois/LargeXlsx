@@ -69,7 +69,7 @@ Pass the constructor a writeable `Stream` to save the Excel file into.
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter(Stream stream)
+public XlsxWriter(Stream stream);
 ```
 
 The recipe is adding a worksheet with `BeginWorksheet`, adding a row with `BeginRow`, writing cells to that row with `Write`, and repeating as required. Rows and worksheets are implicitly finalized as soon as new rows or worksheets are added, or the `XlsxWriter` is disposed.
@@ -91,7 +91,7 @@ Please note that `CurrentColumnNumber` may be zero, and thus invalid, if the cur
 ### Column names
 
 In the usual "A1" cell reference format, columns are named from A (for column number 1) to XFD (for column number 16384).\
-The following functions facilitate conversion from column numbers to column names:
+The following facilitate conversion from column numbers to column names, useful when writing formulas:
 
 ```csharp
 // class XlsxWriter
@@ -111,7 +111,7 @@ A call to `BeginWorksheet` finalizes the last worksheet being written, if any, a
 ```csharp
 // class XlsxWriter
 public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0,
-                                 IEnumerable<XlsxColumn> columns = null)
+                                 IEnumerable<XlsxColumn> columns = null);
 ```
 
 
@@ -139,7 +139,7 @@ Call `BeginRow` to advance the insertion point to the beginning of the next line
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null)
+public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null);
 ```
     
 You can specify optional row formatting when creating a new row. The height is expressed in points. The row style represent how to style all *empty* cells of a row. Cells that are explicitly written always use the cell style instead.
@@ -148,7 +148,7 @@ Call `SkipRows` to move the insertion point down by the specified count of rows,
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter SkipRows(int rowCount)
+public XlsxWriter SkipRows(int rowCount);
 ```
 
 ### Writing cells
@@ -157,13 +157,13 @@ Call one of the `Write` methods to write content to the cell at the insertion po
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter Write(XlsxStyle style = null, int columnSpan = 1, int repeatCount = 1)
-public XlsxWriter Write(string value, XlsxStyle style = null, int columnSpan = 1)
-public XlsxWriter Write(double value, XlsxStyle style = null, int columnSpan = 1)
-public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 1)
-public XlsxWriter Write(int value, XlsxStyle style = null, int columnSpan = 1)
-public XlsxWriter Write(DateTime value, XlsxStyle style = null, int columnSpan = 1)
-public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, IConvertible result = null)
+public XlsxWriter Write(XlsxStyle style = null, int columnSpan = 1, int repeatCount = 1);
+public XlsxWriter Write(string value, XlsxStyle style = null, int columnSpan = 1);
+public XlsxWriter Write(double value, XlsxStyle style = null, int columnSpan = 1);
+public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 1);
+public XlsxWriter Write(int value, XlsxStyle style = null, int columnSpan = 1);
+public XlsxWriter Write(DateTime value, XlsxStyle style = null, int columnSpan = 1);
+public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, IConvertible result = null);
 ```
 
  You may write one of the following:
@@ -185,7 +185,7 @@ Like rows, cells can be skipped using the `SkipColumns` method, to move the inse
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter SkipColumns(int columnCount)
+public XlsxWriter SkipColumns(int columnCount);
 ```
 
 ### Merged cells
@@ -194,8 +194,8 @@ A rectangle of adjacent cells can be merged using the `AddMergedCells` method:
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
-public XlsxWriter AddMergedCell(int rowCount, int columnCount)
+public XlsxWriter AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount);
+public XlsxWriter AddMergedCell(int rowCount, int columnCount);
 ```
 
 The first overload lets you specify an arbitrary rectangle in the worksheet.\
@@ -216,7 +216,7 @@ You can add an auto filter (the one created with the funnel icon in Excel) for a
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount)
+public XlsxWriter SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount);
 ```
 
 You can call `SetAutoFilter` at any moment while writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object). Each worksheet can contain only up to one auto filter, thus if you call `SetAutoFilter` multiple times for the same worksheet only the last one will apply.
@@ -241,7 +241,7 @@ public XlsxDataValidation(
         bool showInputMessage = false,
         XlsxDataValidation.ValidationType? validationType = null,
         string formula1 = null,
-        string formula2 = null)
+        string formula2 = null);
 ```
 
 Using named arguments is recommended to improve readability. The parameters represent:
@@ -273,7 +273,7 @@ public static XlsxDataValidation List(
         string promptTitle = null,
         bool showDropDown = false,
         bool showErrorMessage = false,
-        bool showInputMessage = false)
+        bool showInputMessage = false);
 ```
 
 To add validation rules to a worksheet, use one of the following while writing content:
@@ -281,9 +281,9 @@ To add validation rules to a worksheet, use one of the following while writing c
 ```csharp
 // class XlsxWriter
 public XlsxWriter AddDataValidation(int fromRow, int fromColumn, int rowCount, int columnCount,
-                                    XlsxDataValidation dataValidation)
-public XlsxWriter AddDataValidation(int rowCount, int columnCount, XlsxDataValidation dataValidation)
-public XlsxWriter AddDataValidation(XlsxDataValidation dataValidation)
+                                    XlsxDataValidation dataValidation);
+public XlsxWriter AddDataValidation(int rowCount, int columnCount, XlsxDataValidation dataValidation);
+public XlsxWriter AddDataValidation(XlsxDataValidation dataValidation);
 ```
 
 The first overload applies the validation rules to all cells in the specified rectangular range. The second overload uses the insertion point as the top-left corner of the rectangular range. The third overload applies validation only on the cell at the insertion point.
@@ -300,19 +300,19 @@ Styling lets you apply colors or other formatting to cells being written. A styl
 - the **fill**, specifying the background color, represented by an `XlsxFill` object
 - the **border** style and color, represented by an `XlsxBorder` object
 - the **number format** specifying how a number should appear, such as how many decimals or whether to show it as percentage or date and time, represented by an `XlsxNumberFormat` object
-- an optional **alignment**, specifying horizontal and vertical alignment of cell content or rotation, represented by an `XlsxAlignment` object.
+- the **alignment**, specifying horizontal and vertical alignment of cell content or rotation, represented by an `XlsxAlignment` object.
 
 You can create a new style, combining the above five elements, using the constructor of the `XlsxStyle` class, or by cloning an existing style replacing one element with a `With` method:
 
 ```csharp
 // class XlsxStyle
 public XlsxStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat,
-                 XlsxAlignment alignment)
-public XlsxStyle With(XlsxFont font)
-public XlsxStyle With(XlsxFill fill)
-public XlsxStyle With(XlsxBorder border)
-public XlsxStyle With(XlsxNumberFormat numberFormat)
-public XlsxStyle With(XlsxAlignment alignment)
+                 XlsxAlignment alignment);
+public XlsxStyle With(XlsxFont font);
+public XlsxStyle With(XlsxFill fill);
+public XlsxStyle With(XlsxBorder border);
+public XlsxStyle With(XlsxNumberFormat numberFormat);
+public XlsxStyle With(XlsxAlignment alignment);
 ```
 
 The resulting `XlsxStyle` object can be used with a `Write` method to style a cell being written, or with `SetDefaultStyle` to change the default style of the `XlsxWriter`, or to specify column or row styles.
@@ -328,7 +328,7 @@ Each `XlsxWriter` has a default style that is used whenever you write a cell usi
 ```csharp
 // class XlsxWriter
 public XlsxStyle DefaultStyle { get; }
-public XlsxWriter SetDefaultStyle(XlsxStyle style)
+public XlsxWriter SetDefaultStyle(XlsxStyle style);
 ```
 
 The default style of a new `XlsxWriter` is set to `XlsxStyle.Default`, but you can change it at any time, including setting it back to `XlsxStyle.Default`.
@@ -346,13 +346,13 @@ public XlsxFont(
         System.Drawing.Color color,
         bool bold = false,
         bool italic = false,
-        bool strike = false)
-public XlsxFont With(System.Drawing.Color color)
-public XlsxFont WithName(string name)
-public XlsxFont WithSize(double size)
-public XlsxFont WithBold(bool bold = true)
-public XlsxFont WithItalic(bool italic = true)
-public XlsxFont WithStrike(bool strike = true)
+        bool strike = false);
+public XlsxFont With(System.Drawing.Color color);
+public XlsxFont WithName(string name);
+public XlsxFont WithSize(double size);
+public XlsxFont WithBold(bool bold = true);
+public XlsxFont WithItalic(bool italic = true);
+public XlsxFont WithStrike(bool strike = true);
 ```
 
 Using named arguments is recommended to improve readability. For example to create a red, italic, 11-point, Calibri font, use:\
@@ -366,7 +366,7 @@ An `XlsxFill` object lets you define the background color of a cell and the patt
 
 ```csharp
 // class XlsxFill
-public XlsxFill(System.Drawing.Color color, XlsxFill.Pattern patternType = XlsxFill.Pattern.Solid)
+public XlsxFill(System.Drawing.Color color, XlsxFill.Pattern patternType = XlsxFill.Pattern.Solid);
 ```
 
 The `XlsxFill.Pattern` enum defines how to apply the background color, and may be `None` for a transparent fill, `Solid` for a solid fill or `Gray125` for a dotted pattern (not necessarily gray) with 12.5% coverage. For example to create a yellow solid fill, use:\
@@ -387,8 +387,8 @@ public XlsxBorder(
         XlsxBorder.Line left = null,
         XlsxBorder.Line diagonal = null,
         bool diagonalDown = false,
-        bool diagonalUp = false)
-public static XlsxBorder Around(XlsxBorder.Line around)
+        bool diagonalUp = false);
+public static XlsxBorder Around(XlsxBorder.Line around);
 ```
 
 The constructor lets you specify each border individually. Using named arguments is recommended to improve readability. The two diagonal borders share the same line style, but you can choose whether to show them individually. The `Around` named constructor is a shortcut for the common case of setting the top, right, bottom and left borders to the same line style, with no diagonals.
@@ -397,7 +397,7 @@ Each line is constructed with:
 
 ```csharp
 // class XlsxBorder.Line
-public Line(System.Drawing.Color color, XlsxBorder.Style style)
+public Line(System.Drawing.Color color, XlsxBorder.Style style);
 ```
 
 The `XlsxBorder.Style` enum defines the stroke style, such as `None`, `Thin`, `Thick`, `Dashed` and others.
@@ -413,7 +413,7 @@ An `XlsxNumberFormat` object lets you define how the content of a cell should ap
 
 ```csharp
 // class XlsxNumberFormat
-public XlsxNumberFormat(string formatCode)
+public XlsxNumberFormat(string formatCode);
 ```
 
 The format code has the same format you would normally use in Excel, such as `"0.0%"` for a percentage with exactly one decimal value. For example, to create a custom number format with thousand separator, at least two decimal digits and at most six, use:\
@@ -446,7 +446,7 @@ public XlsxAlignment(
         XlsxAlignment.ReadingOrder readingOrder = XlsxAlignment.ReadingOrder.ContextDependent,
         bool shrinkToFit = false,
         int textRotation = 0,
-        bool wrapText = false)
+        bool wrapText = false);
 ```
 
 Using named arguments is recommended to improve readability. The parameters represent:
@@ -459,7 +459,7 @@ Using named arguments is recommended to improve readability. The parameters repr
 - `textRotation`: rotation angle in degrees of the cell content, in range 0..180
 - `wrapText`: whether to insert line breaks automatically into the text to fit the content into the cell
 
-The built-in `XlsxAlignment.Default` object provides a default alignment properties.
+The built-in `XlsxAlignment.Default` object provides an alignment with default values for all properties.
 
 
 ## Special thanks
