@@ -41,6 +41,7 @@ namespace LargeXlsx
         public static readonly XlsxNumberFormat Scientific = new XlsxNumberFormat("0.00E+00");
         public static readonly XlsxNumberFormat ShortDate = new XlsxNumberFormat("dd/mm/yyyy");
         public static readonly XlsxNumberFormat ShortDateTime = new XlsxNumberFormat("dd/mm/yyyy hh:mm");
+        public static readonly XlsxNumberFormat Text = new XlsxNumberFormat("@");
         
         public string FormatCode { get; }
 

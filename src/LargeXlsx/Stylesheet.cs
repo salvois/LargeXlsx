@@ -75,7 +75,8 @@ namespace LargeXlsx
                 [XlsxNumberFormat.TwoDecimalPercentage] = 10,
                 [XlsxNumberFormat.Scientific] = 11,
                 [XlsxNumberFormat.ShortDate] = 14,
-                [XlsxNumberFormat.ShortDateTime] = 22
+                [XlsxNumberFormat.ShortDateTime] = 22,
+                [XlsxNumberFormat.Text] = 49
             };
             _nextNumberFormatId = FirstCustomNumberFormatId;
 

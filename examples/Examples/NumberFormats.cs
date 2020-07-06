@@ -49,6 +49,7 @@ namespace Examples
                 var scientificStyle = XlsxStyle.Default.With(XlsxNumberFormat.Scientific);
                 var shortDateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDate);
                 var shortDateTimeStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
+                var textStyle = XlsxStyle.Default.With(XlsxNumberFormat.Text);
                 var customStyle1 = XlsxStyle.Default.With(customNumberFormat1);
                 var customStyle2 = XlsxStyle.Default.With(customNumberFormat2);
 
@@ -64,6 +65,7 @@ namespace Examples
                     .BeginRow().Write(nameof(XlsxNumberFormat.Scientific)).Write(1234.5678, scientificStyle).Write(1.2, scientificStyle)
                     .BeginRow().Write(nameof(XlsxNumberFormat.ShortDate)).Write(1234.5678, shortDateStyle).Write(1.2, shortDateStyle)
                     .BeginRow().Write(nameof(XlsxNumberFormat.ShortDateTime)).Write(1234.5678, shortDateTimeStyle).Write(1.2, shortDateTimeStyle)
+                    .BeginRow().Write(nameof(XlsxNumberFormat.Text)).Write(1234.5678, textStyle).Write(1.2, textStyle)
                     .BeginRow().Write(customNumberFormat1.FormatCode).Write(1234.5678, customStyle1).Write(1.2, customStyle1)
                     .BeginRow().Write(customNumberFormat2.FormatCode).Write(1234.5678, customStyle2).Write(1.2, customStyle2);
             }
