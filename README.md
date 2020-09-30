@@ -23,7 +23,22 @@ Currently the library supports:
 
 ## Example
 
-To create a simple single-sheet Excel document:
+To create a basic single-sheet Excel document:
+
+```csharp
+using (var stream = new FileStream("Basic.xlsx", FileMode.Create, FileAccess.Write))
+using (var xlsxWriter = new XlsxWriter(stream))
+{
+    xlsxWriter
+        .BeginWorksheet("Sheet 1")
+        .BeginRow().Write("Name").Write("Location").Write("Height (m)")
+        .BeginRow().Write("Kingda Ka").Write("Six Flags Great Adventure").Write(139)
+        .BeginRow().Write("Top Thrill Dragster").Write("Cedar Point").Write(130)
+        .BeginRow().Write("Superman: Escape from Krypton").Write("Six Flags Magic Mountain").Write(126);
+}
+```
+
+To create an Excel document with some fancy formatting:
 
 ```csharp
 using (var stream = new FileStream("Simple.xlsx", FileMode.Create, FileAccess.Write))
@@ -114,6 +129,8 @@ public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn 
                                  IEnumerable<XlsxColumn> columns = null);
 ```
 
+Note that, for compatibility with a restriction of the Excel application, names are restricted to a maximum of 31 character. An `ArgumentException` is thrown if a longer name is passed.
+An `ArgumentException` is also thrown when trying to add a worksheet with a name already used for another worksheet.
 
 #### Column formating
 

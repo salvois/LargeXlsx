@@ -37,6 +37,7 @@ namespace LargeXlsx
 {
     public class XlsxWriter : IDisposable
     {
+        private const int MaxSheetNameLength = 31;
         private readonly ZipWriter _zipWriter;
         private readonly List<Worksheet> _worksheets;
         private readonly Stylesheet _stylesheet;
@@ -132,6 +133,10 @@ namespace LargeXlsx
 
         public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0, IEnumerable<XlsxColumn> columns = null)
         {
+            if (name.Length > MaxSheetNameLength)
+                throw new ArgumentException($"The name \"{name}\" exceeds the maximum length of {MaxSheetNameLength} characters supported by Excel");
+            if (_worksheets.Any(ws => string.Equals(ws.Name, name, StringComparison.InvariantCultureIgnoreCase)))
+                throw new ArgumentException($"A worksheet named \"{name}\" has already been added");
             _currentWorksheet?.Dispose();
             _currentWorksheet = new Worksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn, _stylesheet, columns ?? Enumerable.Empty<XlsxColumn>());
             _worksheets.Add(_currentWorksheet);

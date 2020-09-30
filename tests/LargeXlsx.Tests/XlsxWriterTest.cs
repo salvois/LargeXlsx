@@ -225,5 +225,28 @@ namespace LargeXlsx.Tests
                     package.Workbook.Worksheets[0].AutoFilterAddress.Address.Should().Be("A1:C4");
             }
         }
+
+        [Test]
+        public static void WorksheetNameTooLong()
+        {
+            using (var stream = new MemoryStream())
+            using (var xlsxWriter = new XlsxWriter(stream))
+            {
+                Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("A very, very, very, long worksheet name exceeding what Excel can handle");
+                act.Should().Throw<ArgumentException>();
+            }
+        }
+
+        [Test]
+        public static void DuplicateWorksheetName()
+        {
+            using (var stream = new MemoryStream())
+            using (var xlsxWriter = new XlsxWriter(stream))
+            {
+                xlsxWriter.BeginWorksheet("Sheet1");
+                Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("Sheet1");
+                act.Should().Throw<ArgumentException>();
+            }
+        }
     }
 }
