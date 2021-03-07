@@ -80,11 +80,13 @@ The output is like:
 
 The `XlsxWriter` class is the entry point for almost all functionality of the library. It is designed so that most of its methods can be chained to write the Excel file using a fluent syntax.\
 Please note that an `XlsxWriter` object **must be disposed** to properly finalize the Excel file. Sandwitching its lifetime in a `using` statement is recommended.\
-Pass the constructor a writeable `Stream` to save the Excel file into.
+Pass the constructor a writeable `Stream` to save the Excel file into, and optionally the desired compression level of the underlying zip stream. The default `CompressionLevel.Level3` roughly matches file sizes produced by Excel.
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter(Stream stream);
+public XlsxWriter(
+    Stream stream,
+    SharpCompress.Compressors.Deflate.CompressionLevel compressionLevel = CompressionLevel.Level3);
 ```
 
 The recipe is adding a worksheet with `BeginWorksheet`, adding a row with `BeginRow`, writing cells to that row with `Write`, and repeating as required. Rows and worksheets are implicitly finalized as soon as new rows or worksheets are added, or the `XlsxWriter` is disposed.

@@ -1,7 +1,7 @@
 /*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2021 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using LargeXlsx;
+using SharpCompress.Compressors.Deflate;
 
 namespace Examples
 {
@@ -44,7 +45,7 @@ namespace Examples
             var rnd = new Random();
             var stopwatch = Stopwatch.StartNew();
             using (var stream = new FileStream($"{nameof(StyledLarge)}.xlsx", FileMode.Create, FileAccess.Write))
-            using (var xlsxWriter = new XlsxWriter(stream))
+            using (var xlsxWriter = new XlsxWriter(stream, CompressionLevel.Level3))
             {
                 var headerStyle = new XlsxStyle(
                     new XlsxFont("Calibri", 11, Color.White, bold: true),
