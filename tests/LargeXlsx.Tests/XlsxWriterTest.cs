@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2021 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -208,6 +208,26 @@ namespace LargeXlsx.Tests
         }
 
         [Test]
+        public static void SplitPanesOnMultipleSheets()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    xlsxWriter
+                        .BeginWorksheet("Sheet1", splitRow: 1, splitColumn: 2)
+                        .BeginWorksheet("Sheet2", splitRow: 2, splitColumn: 1);
+                }
+
+                using (var package = new ExcelPackage(stream))
+                {
+                    package.Workbook.Worksheets[0].View.ActiveCell.Should().Be("C2");
+                    package.Workbook.Worksheets[1].View.ActiveCell.Should().Be("B3");
+                }
+            }
+        }
+
+        [Test]
         public static void AutoFilter()
         {
             using (var stream = new MemoryStream())
@@ -246,6 +266,22 @@ namespace LargeXlsx.Tests
                 xlsxWriter.BeginWorksheet("Sheet1");
                 Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("Sheet1");
                 act.Should().Throw<ArgumentException>();
+            }
+        }
+
+        [Theory]
+        public static void RightToLeftWorksheet(bool rightToLeft)
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter
+                        .BeginWorksheet("Sheet 1", rightToLeft: rightToLeft)
+                        .BeginRow().Write(@"ما هو ""لوريم إيبسوم"" ؟")
+                        .BeginRow().Write(@"لوريم إيبسوم(Lorem Ipsum) هو ببساطة نص شكلي (بمعنى أن الغاية هي الشكل وليس المحتوى) ويُستخدم في صناعات المطابع ودور النشر.");
+
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].View.RightToLeft.Should().Be(rightToLeft);
             }
         }
     }

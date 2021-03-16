@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2021 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -49,7 +49,7 @@ namespace LargeXlsx
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, Stylesheet stylesheet, IEnumerable<XlsxColumn> columns)
+        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, IEnumerable<XlsxColumn> columns)
         {
             Id = id;
             Name = name;
@@ -61,9 +61,12 @@ namespace LargeXlsx
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
-            _streamWriter.Write("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
+            _streamWriter.Write("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
+                                + "<sheetViews>"
+                                + $"<sheetView workbookViewId=\"0\" rightToLeft=\"{(rightToLeft ? 1 : 0)}\">");
             if (splitRow > 0 && splitColumn > 0)
                 FreezePanes(splitRow, splitColumn);
+            _streamWriter.Write("</sheetView></sheetViews>");
             if (columns.Any())
                 WriteColumns(columns);
             _streamWriter.Write("<sheetData>");
@@ -199,12 +202,8 @@ namespace LargeXlsx
         private void FreezePanes(int fromRow, int fromColumn)
         {
             var topLeftCell = $"{Util.GetColumnName(fromColumn + 1)}{fromRow + 1}";
-            _streamWriter.Write("<sheetViews>"
-                                + "<sheetView tabSelected=\"1\" workbookViewId=\"0\">"
-                                + "<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>"
-                                + "<selection pane=\"bottomRight\" activeCell=\"{2}\" sqref=\"{2}\"/>"
-                                + "</sheetView>"
-                                + "</sheetViews>",
+            _streamWriter.Write("<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>"
+                                + "<selection pane=\"bottomRight\" activeCell=\"{2}\" sqref=\"{2}\"/>",
                 fromColumn, fromRow, topLeftCell);
         }
 

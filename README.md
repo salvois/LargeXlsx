@@ -19,6 +19,7 @@ Currently the library supports:
 * column and row formatting (custom width, height, hidden columns/rows)
 * auto filter
 * cell validation, such as dropdown list of allowed values
+* right-to-left worksheets, to support languages such as Arabic and Hebrew
 
 
 ## Example
@@ -122,13 +123,17 @@ The first version returns the column name for the column at the insertion point.
 
 ### Creating a new worksheet
 
-Call `BeginWorksheet` passing the sheet name and, optionally, the one-based indexes of the row and column where to place a split to create frozen panes. The `columns` parameter can be used to specify optional column formatting.\
+Call `BeginWorksheet` passing the sheet name and, optionally, the one-based indexes of the row and column where to place a split to create frozen panes. Setting `rightToLeft` to `true` switches the worksheet to right-to-left mode (to support languages such as Arabic and Hebrew). Finally, the `columns` parameter can be used to specify optional column formatting.\
 A call to `BeginWorksheet` finalizes the last worksheet being written, if any, and sets up a new one, so that rows can be added.
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0,
-                                 IEnumerable<XlsxColumn> columns = null);
+public XlsxWriter BeginWorksheet(
+        string name,
+        int splitRow = 0,
+        int splitColumn = 0,
+        bool rightToLeft = false,
+        IEnumerable<XlsxColumn> columns = null);
 ```
 
 Note that, for compatibility with a restriction of the Excel application, names are restricted to a maximum of 31 character. An `ArgumentException` is thrown if a longer name is passed.

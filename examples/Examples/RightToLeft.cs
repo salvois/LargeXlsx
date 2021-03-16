@@ -24,24 +24,24 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+using System.IO;
+using LargeXlsx;
+
 namespace Examples
 {
-    public static class Program
+    public static class RightToLeft
     {
-        public static void Main(string[] args)
+        public static void Run()
         {
-            Simple.Run();
-            MultipleSheet.Run();
-            NumberFormats.Run();
-            ColumnFormatting.Run();
-            RowFormatting.Run();
-            Alignment.Run();
-            Border.Run();
-            DataValidation.Run();
-            RightToLeft.Run();
-            Large.Run();
-            StyledLarge.Run();
-            StyledLargeCreateStyles.Run();
+            using (var stream = new FileStream($"{nameof(RightToLeft)}.xlsx", FileMode.Create, FileAccess.Write))
+            using (var xlsxWriter = new XlsxWriter(stream))
+            {
+                xlsxWriter
+                    .BeginWorksheet("Sheet 1", rightToLeft: true)
+                    .BeginRow().Write(@"ما هو ""لوريم إيبسوم"" ؟")
+                    .BeginRow().Write(@"لوريم إيبسوم(Lorem Ipsum) هو ببساطة نص شكلي (بمعنى أن الغاية هي الشكل وليس المحتوى) ويُستخدم في صناعات المطابع ودور النشر.");
+            }
         }
     }
 }

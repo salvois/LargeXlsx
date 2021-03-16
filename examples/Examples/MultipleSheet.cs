@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2021 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -46,7 +46,7 @@ namespace Examples
                 var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
 
                 xlsxWriter
-                    .BeginWorksheet("Sheet&'<1>\"", columns: new [] { XlsxColumn.Unformatted(count: 2), XlsxColumn.Formatted(width: 20) })
+                    .BeginWorksheet("Sheet&'<1>\"", splitColumn: 1, splitRow: 2, columns: new [] { XlsxColumn.Unformatted(count: 2), XlsxColumn.Formatted(width: 20) })
                     .SetDefaultStyle(headerStyle)
                     .BeginRow().Write("Col<1>").Write("Col2").Write("Col&3")
                     .BeginRow().Write().Write("Sub2").Write("Sub3")
@@ -56,7 +56,7 @@ namespace Examples
                     .SkipRows(2)
                     .BeginRow().Write("Row7", XlsxStyle.Default.With(XlsxBorder.Around(new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Dashed))), columnSpan: 2).Write(3.14159265359)
                     .SetAutoFilter(1, 1, xlsxWriter.CurrentRowNumber, 3)
-                    .BeginWorksheet("Sheet2")
+                    .BeginWorksheet("Sheet2", splitColumn: 1, splitRow: 1)
                     .BeginRow().Write("Lorem ipsum dolor sit amet,")
                     .BeginRow().Write("consectetur adipiscing elit,")
                     .BeginRow().Write("sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
