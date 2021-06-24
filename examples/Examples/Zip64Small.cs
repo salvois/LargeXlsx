@@ -24,26 +24,19 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+using System.IO;
+using LargeXlsx;
+using SharpCompress.Compressors.Deflate;
+
 namespace Examples
 {
-    public static class Program
+    public static class Zip64Small
     {
-        public static void Main(string[] args)
+        public static void Run()
         {
-            Simple.Run();
-            MultipleSheet.Run();
-            NumberFormats.Run();
-            ColumnFormatting.Run();
-            RowFormatting.Run();
-            Alignment.Run();
-            Border.Run();
-            DataValidation.Run();
-            RightToLeft.Run();
-            Zip64Small.Run();
-            Large.Run();
-            StyledLarge.Run();
-            StyledLargeCreateStyles.Run();
-            Zip64Huge.Run();
+            using (var stream = new FileStream($"{nameof(Zip64Small)}.xlsx", FileMode.Create, FileAccess.Write))
+            using (var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.BestSpeed, useZip64: true))
+                xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("A1").Write("B1").BeginRow().Write("A2").Write("B2");
         }
     }
 }

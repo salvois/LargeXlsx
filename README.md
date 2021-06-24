@@ -77,18 +77,31 @@ The output is like:
 ![Single sheet Excel document with 7 rows and 3 columns](https://github.com/salvois/LargeXlsx/raw/master/example.png)
 
 
+## Changelog
+
+* 1.3: Optional ZIP64 support for really huge files.
+* 1.2: Right-to-left worksheets. Parametric compression level to trade between space and speed.
+* 1.1: Number format for text-formatted cells (the "@" formatting).
+* 1.0: Finalized API.
+
 ## Usage
 
-The `XlsxWriter` class is the entry point for almost all functionality of the library. It is designed so that most of its methods can be chained to write the Excel file using a fluent syntax.\
-Please note that an `XlsxWriter` object **must be disposed** to properly finalize the Excel file. Sandwitching its lifetime in a `using` statement is recommended.\
-Pass the constructor a writeable `Stream` to save the Excel file into, and optionally the desired compression level of the underlying zip stream. The default `CompressionLevel.Level3` roughly matches file sizes produced by Excel.
+The `XlsxWriter` class is the entry point for almost all functionality of the library. It is designed so that most of its methods can be chained to write the Excel file using a fluent syntax.
+
+The constructor allows you to create an XLSX writer. Please note that an `XlsxWriter` object **must be disposed** to properly finalize the Excel file. Sandwitching its lifetime in a `using` statement is recommended.
 
 ```csharp
 // class XlsxWriter
 public XlsxWriter(
     Stream stream,
-    SharpCompress.Compressors.Deflate.CompressionLevel compressionLevel = CompressionLevel.Level3);
+    SharpCompress.Compressors.Deflate.CompressionLevel compressionLevel = CompressionLevel.Level3,
+    bool uzeZip64 = false);
 ```
+
+The constructor accepts:
+* A writeable `Stream` to save the Excel file into
+* An optional desired compression level of the underlying zip stream. The default `CompressionLevel.Level3` roughly matches file sizes produced by Excel. Higher compression levels may result in lower speed.
+* An optional flag indicating whether to use ZIP64 compression to support content larger than 4 GiB uncompressed. Recent versions of XLSX-enabled applications such as Excel or LibreOffice should be able to read any file compressd using ZIP64, even small ones, thus, if you don't know the file size in advance and you target recent software, you could just set it to `true`.
 
 The recipe is adding a worksheet with `BeginWorksheet`, adding a row with `BeginRow`, writing cells to that row with `Write`, and repeating as required. Rows and worksheets are implicitly finalized as soon as new rows or worksheets are added, or the `XlsxWriter` is disposed.
 

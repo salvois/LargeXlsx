@@ -52,13 +52,13 @@ namespace LargeXlsx
         public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
         public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
 
-        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3)
+        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3, bool useZip64 = false)
         {
             _worksheets = new List<Worksheet>();
             _stylesheet = new Stylesheet();
             DefaultStyle = XlsxStyle.Default;
 
-            _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate) { DeflateCompressionLevel = compressionLevel });
+            _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate) { DeflateCompressionLevel = compressionLevel, UseZip64 = useZip64 });
         }
 
         public void Dispose()
@@ -163,7 +163,7 @@ namespace LargeXlsx
         {
             if (columnSpan == 1)
                 return DoOnWorksheet(() => _currentWorksheet.Write(style ?? DefaultStyle, repeatCount));
-            
+
             for (var i = 0; i < repeatCount; i++)
                 AddMergedCell(1, columnSpan).Write(style, 1).Write(style, repeatCount: columnSpan - 1);
             return this;
