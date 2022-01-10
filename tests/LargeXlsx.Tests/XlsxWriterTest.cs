@@ -165,6 +165,38 @@ namespace LargeXlsx.Tests
         }
 
         [Test]
+        public static void UnderLine()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    var singleUnderLineStyle =
+                        XlsxStyle.Default.With(XlsxFont.Default.WithUnderline());
+                    var doubleUnderLineStyle =
+                        XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.Double));
+
+                    xlsxWriter.BeginWorksheet("Sheet1")
+                        .BeginRow().Write("Row1")
+                        .BeginRow().Write("Row2", singleUnderLineStyle)
+                        .BeginRow().Write("Row3", doubleUnderLineStyle);
+                }
+
+                using (var package = new ExcelPackage(stream))
+                {
+                    var sheet = package.Workbook.Worksheets[0];
+
+                    sheet.Cells["A1"].Style.Font.UnderLine.Should().Be(false);
+                    sheet.Cells["A1"].Style.Font.UnderLineType.Should().Be(ExcelUnderLineType.None);
+                    sheet.Cells["A2"].Style.Font.UnderLine.Should().Be(true);
+                    sheet.Cells["A2"].Style.Font.UnderLineType.Should().Be(ExcelUnderLineType.Single);
+                    sheet.Cells["A3"].Style.Font.UnderLine.Should().Be(true);
+                    sheet.Cells["A3"].Style.Font.UnderLineType.Should().Be(ExcelUnderLineType.Double);
+                }
+            }
+        }
+
+        [Test]
         public static void MultipleSheets()
         {
             using (var stream = new MemoryStream())
