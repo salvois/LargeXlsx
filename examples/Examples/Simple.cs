@@ -59,6 +59,13 @@ namespace Examples
                     .BeginRow().Write("Row4").SkipColumns(1).Write(new DateTime(2020, 5, 6, 18, 27, 0), dateStyle)
                     .SkipRows(2)
                     .BeginRow().Write("Row7", borderedStyle, columnSpan: 2).Write(3.14159265359)
+                    .BeginRow().Write("Bold").Write().Write("Be bold", XlsxStyle.Default.With(XlsxFont.Default.WithBold()))
+                    .BeginRow().Write("Italic").Write().Write("Be italic", XlsxStyle.Default.With(XlsxFont.Default.WithItalic()))
+                    .BeginRow().Write("Strike").Write().Write("Be struck", XlsxStyle.Default.With(XlsxFont.Default.WithStrike()))
+                    .BeginRow().Write("Underline").Write().Write("Single", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline()))
+                    .BeginRow().Write("Underline").Write().Write("Double", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.Double)))
+                    .BeginRow().Write("Underline").Write().Write("SingleAccounting", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.SingleAccounting)))
+                    .BeginRow().Write("Underline").Write().Write("DoubleAccounting", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.DoubleAccounting)))
                     .SetAutoFilter(2, 1, xlsxWriter.CurrentRowNumber - 1, 3);
             }
         }
