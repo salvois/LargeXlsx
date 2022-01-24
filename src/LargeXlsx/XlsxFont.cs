@@ -40,8 +40,19 @@ namespace LargeXlsx
         public bool Bold { get; }
         public bool Italic { get; }
         public bool Strike { get; }
+        public Underline UnderlineType { get; }
 
-        public XlsxFont(string name, double size, Color color, bool bold = false, bool italic = false, bool strike = false)
+
+        public enum Underline
+        {
+            None,
+            Single,
+            Double,
+            SingleAccounting,
+            DoubleAccounting
+        }
+
+        public XlsxFont(string name, double size, Color color, bool bold = false, bool italic = false, bool strike = false, Underline underline = Underline.None)
         {
             Name = name;
             Size = size;
@@ -49,6 +60,7 @@ namespace LargeXlsx
             Bold = bold;
             Italic = italic;
             Strike = strike;
+            UnderlineType = underline;
         }
 
         public XlsxFont With(Color color) => new XlsxFont(Name, Size, color, Bold, Italic, Strike);
@@ -57,6 +69,7 @@ namespace LargeXlsx
         public XlsxFont WithBold(bool bold = true) => new XlsxFont(Name, Size, Color, bold, Italic, Strike);
         public XlsxFont WithItalic(bool italic = true) => new XlsxFont(Name, Size, Color, Bold, italic, Strike);
         public XlsxFont WithStrike(bool strike = true) => new XlsxFont(Name, Size, Color, Bold, Italic, strike);
+        public XlsxFont WithUnderline(Underline underline = Underline.Single) => new XlsxFont(Name, Size, Color, Bold, Italic, Strike, underline);
 
         public override bool Equals(object obj)
         {
@@ -67,7 +80,8 @@ namespace LargeXlsx
         {
             return other != null
                    && Name == other.Name && Size == other.Size && Color == other.Color
-                   && Bold == other.Bold && Italic == other.Italic && Strike == other.Strike;
+                   && Bold == other.Bold && Italic == other.Italic && Strike == other.Strike
+                   && UnderlineType == other.UnderlineType;
         }
 
         public override int GetHashCode()
@@ -79,6 +93,7 @@ namespace LargeXlsx
             hashCode = hashCode * -1521134295 + Bold.GetHashCode();
             hashCode = hashCode * -1521134295 + Italic.GetHashCode();
             hashCode = hashCode * -1521134295 + Strike.GetHashCode();
+            hashCode = hashCode * -1521134295 + UnderlineType.GetHashCode();
             return hashCode;
         }
 

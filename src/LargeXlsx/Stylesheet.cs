@@ -151,12 +151,26 @@ namespace LargeXlsx
                                    + "<color rgb=\"{1}\"/>"
                                    + "<name val=\"{2}\"/>"
                                    + "<family val=\"2\"/>"
-                                   + "{3}{4}{5}"
+                                   + "{3}{4}{5}{6}"
                                    + "</font>",
                     font.Key.Size, GetColorString(font.Key.Color), Util.EscapeXmlAttribute(font.Key.Name),
-                    font.Key.Bold ? "<b/>" : "", font.Key.Italic ? "<i/>" : "", font.Key.Strike ? "<strike/>" : "");
+                    font.Key.Bold ? "<b/>" : "", font.Key.Italic ? "<i/>" : "", font.Key.Strike ? "<strike/>" : "",
+                    GetUnderline(font.Key.UnderlineType));
             }
             streamWriter.Write("</fonts>");
+        }
+
+        private static string GetUnderline(XlsxFont.Underline underline)
+        {
+            switch (underline)
+            {
+                case XlsxFont.Underline.None:
+                    return "";
+                case XlsxFont.Underline.Single:
+                    return "<u/>";
+                default:
+                    return $"<u val=\"{Util.EnumToAttributeValue(underline)}\"/>";
+            }
         }
 
         private void WriteFills(StreamWriter streamWriter)

@@ -383,14 +383,18 @@ public XlsxFont(
         System.Drawing.Color color,
         bool bold = false,
         bool italic = false,
-        bool strike = false);
+        bool strike = false,
+        XlsxFont.Underline underline = XlsxFont.Underline.None);
 public XlsxFont With(System.Drawing.Color color);
 public XlsxFont WithName(string name);
 public XlsxFont WithSize(double size);
 public XlsxFont WithBold(bool bold = true);
 public XlsxFont WithItalic(bool italic = true);
 public XlsxFont WithStrike(bool strike = true);
+public XlsxFont WithUnderline(XlsxFont.Underline underline = XlsxFont.Underline.None);
 ```
+
+XlsxFont.Underline enum provides underline styles None, Single, Double, SingleAccounting and DoubleAccounting.
 
 Using named arguments is recommended to improve readability. For example to create a red, italic, 11-point, Calibri font, use:\
 `var redItalicFont = new XlsxFont("Calibri", 11, Color.Red, italic: true)`.
