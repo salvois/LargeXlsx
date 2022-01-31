@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020-2021 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -341,6 +341,59 @@ namespace LargeXlsx.Tests
                     sheet.Cells["B2"].Value.Should().Be("B2");
                 }
             }
+        }
+
+        [Test]
+        public static void SheetProtection()
+        {
+            using var stream = new MemoryStream();
+            using (var xlsxWriter = new XlsxWriter(stream))
+            {
+                xlsxWriter
+                    .BeginWorksheet("Sheet1")
+                    .SetSheetProtection(new XlsxSheetProtection("Lorem ipsum", autoFilter: false))
+                    .BeginRow().Write("A1");
+            }
+
+            using (var package = new ExcelPackage(stream))
+            {
+                package.Workbook.Worksheets.Count.Should().Be(1);
+                var protection = package.Workbook.Worksheets[0].Protection;
+                protection.IsProtected.Should().BeTrue();
+                protection.AllowAutoFilter.Should().BeTrue();
+                protection.AllowDeleteColumns.Should().BeFalse();
+                protection.AllowDeleteRows.Should().BeFalse();
+                protection.AllowEditObject.Should().BeFalse();
+                protection.AllowEditScenarios.Should().BeFalse();
+                protection.AllowFormatCells.Should().BeFalse();
+                protection.AllowFormatColumns.Should().BeFalse();
+                protection.AllowFormatRows.Should().BeFalse();
+                protection.AllowInsertColumns.Should().BeFalse();
+                protection.AllowInsertHyperlinks.Should().BeFalse();
+                protection.AllowInsertRows.Should().BeFalse();
+                protection.AllowPivotTables.Should().BeFalse();
+                protection.AllowSelectLockedCells.Should().BeTrue();
+                protection.AllowSelectUnlockedCells.Should().BeTrue();
+                protection.AllowSort.Should().BeFalse();
+            }
+        }
+
+        [Test]
+        public static void SheetProtection_PasswordTooShort()
+        {
+            using var stream = new MemoryStream();
+            using var xlsxWriter = new XlsxWriter(stream);
+            Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection(""));
+            act.Should().Throw<ArgumentException>();
+        }
+
+        [Test]
+        public static void SheetProtection_PasswordTooLong()
+        {
+            using var stream = new MemoryStream();
+            using var xlsxWriter = new XlsxWriter(stream);
+            Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in"));
+            act.Should().Throw<ArgumentException>();
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,6 +25,8 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace LargeXlsx
@@ -99,6 +101,21 @@ namespace LargeXlsx
         {
             var s = enumValue.ToString();
             return char.ToLowerInvariant(s[0]) + s.Substring(1);
+        }
+
+        // Hashing procedure courtesy of https://docs.microsoft.com/en-us/openspecs/office_file_formats/ms-offcrypto/1357ea58-646e-4483-92ef-95d718079d6f
+        public static byte[] ComputePasswordHash(string password, byte[] saltValue, int spinCount)
+        {
+            var hasher = new SHA512Managed();
+            var hash = hasher.ComputeHash(saltValue.Concat(Encoding.Unicode.GetBytes(password)).ToArray());
+            for (var i = 0; i < spinCount; i++)
+            {
+                var iterator = BitConverter.GetBytes(i);
+                if (!BitConverter.IsLittleEndian)
+                    Array.Reverse(iterator);
+                hash = hasher.ComputeHash(hash.Concat(iterator).ToArray());
+            }
+            return hash;
         }
     }
 }

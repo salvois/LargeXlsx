@@ -4,8 +4,6 @@
 
 This is a minimalistic yet feature-rich library, written in C# targeting .net standard 2.0, providing simple primitives to write Excel files in XLSX format in a streamed manner, so that potentially huge files can be created while consuming a low, constant amount of memory.
 
-Starting from version 0.0.9 this library does not rely any longer on Microsoft's [Office Open XML library](https://github.com/OfficeDev/Open-XML-SDK), but writes XLSX files directly. This solves a memory consumption problem on .net core (caused by an [issue on System.IO.Packaging](https://github.com/dotnet/corefx/issues/24457) used by the Open XML SDK to write XLSX's zip packages) and provides further performance boost.
-
 
 ## Supported features
 
@@ -20,6 +18,7 @@ Currently the library supports:
 * auto filter
 * cell validation, such as dropdown list of allowed values
 * right-to-left worksheets, to support languages such as Arabic and Hebrew
+* password protection of sheets against accidental modification
 
 
 ## Example
@@ -79,10 +78,13 @@ The output is like:
 
 ## Changelog
 
-* 1.3: Optional ZIP64 support for really huge files.
-* 1.2: Right-to-left worksheets. Parametric compression level to trade between space and speed.
-* 1.1: Number format for text-formatted cells (the "@" formatting).
-* 1.0: Finalized API.
+* 1.5: Password protection of sheets
+* 1.4: Support for font underline, thanks to [Sergey Bochkin](https://github.com/sbochkin)
+* 1.3: Optional ZIP64 support for really huge files
+* 1.2: Right-to-left worksheets. Parametric compression level to trade between space and speed
+* 1.1: Number format for text-formatted cells (the "@" formatting)
+* 1.0: Finalized API
+* 0.0.9: Started writing XLSX files directly rather than using Microsoft's [Office Open XML library](https://github.com/OfficeDev/Open-XML-SDK)
 
 ## Usage
 
@@ -328,6 +330,42 @@ The first overload applies the validation rules to all cells in the specified re
 Note that, due to the internals of the XLSX file format, all validation objects and their cell references must be kept in RAM until a worksheet is finalized, but this library **deduplicates** validation objects in **constant time** as needed. Thus, you should usually not worry about performance or memory consumption when you use multiple validation objects, unless you are using a large number of different ones, or specify a lot of separate cell references.
 
 This means that you may call `AddDataValidation` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or cells you won't write content to.
+
+
+### Password protection of sheets
+
+Password protection of worksheets helps preventing accidental modification of data. You can enable protection on the worksheet being written using:
+
+```csharp
+// class XlsxWriter
+public XlsxWriter SetSheetProtection(XlsxSheetProtection sheetProtection);
+
+// class XlsxSheetProtection
+public XlsxSheetProtection(
+        string password,
+        bool sheet = true,
+        bool objects = true,
+        bool scenarios = true,
+        bool formatCells = true,
+        bool formatColumns = true,
+        bool formatRows = true,
+        bool insertColumns = true,
+        bool insertRows = true,
+        bool insertHyperlinks = true,
+        bool deleteColumns = true,
+        bool deleteRows = true,
+        bool selectLockedCells = false,
+        bool sort = true,
+        bool autoFilter = true,
+        bool pivotTables = true,
+        bool selectUnlockedCells = false);
+```
+
+Each flag in `XlsxSheetProtection` specifies what operations are **protected**, that is not allowed. By default, only selecting cells is allowed. The password must have a length between 1 and 255 characters.
+
+You can call `SetSheetProtection` at any moment while writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object). Each worksheet can contain only up to one protection definition, thus if you call `SetSheetProtection` multiple times for the same worksheet only the last one will apply.
+
+**Note:** password protection of sheets is not to be confused with workbook encryption and is not meant to be secure. File contents are still written in clear text and may be changed by deliberately editing the file. The password is not written into the file but a hash of the password is.
 
 
 ### Styling

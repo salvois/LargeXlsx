@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020-2021 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -35,6 +35,8 @@ namespace LargeXlsx
 {
     internal class Worksheet : IDisposable
     {
+        private const int MinSheetProtectionPasswordLength = 1;
+        private const int MaxSheetProtectionPasswordLength = 255;
         private readonly Stream _stream;
         private readonly StreamWriter _streamWriter;
         private readonly Stylesheet _stylesheet;
@@ -42,6 +44,7 @@ namespace LargeXlsx
         private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
         private string _autoFilterRef;
         private string _autoFilterAbsoluteRef;
+        private XlsxSheetProtection _sheetProtection;
 
         public int Id { get; }
         public string Name { get; }
@@ -76,6 +79,7 @@ namespace LargeXlsx
         {
             CloseLastRow();
             _streamWriter.Write("</sheetData>");
+            WriteSheetProtection();
             WriteAutoFilter();
             WriteMergedCells();
             WriteDataValidations();
@@ -184,6 +188,13 @@ namespace LargeXlsx
             cellRefs.Add(cellRef);
         }
 
+        public void SetSheetProtection(XlsxSheetProtection sheetProtection)
+        {
+            if (sheetProtection.Password.Length < MinSheetProtectionPasswordLength || sheetProtection.Password.Length > MaxSheetProtectionPasswordLength)
+                throw new ArgumentException("Invalid password length");
+            _sheetProtection = sheetProtection;
+        }
+
         private void EnsureRow()
         {
             if (CurrentColumnNumber == 0)
@@ -235,8 +246,8 @@ namespace LargeXlsx
 
         private void WriteMergedCells()
         {
-            if (!_mergedCellRefs.Any()) return;
-
+            if (!_mergedCellRefs.Any())
+                return;
             _streamWriter.Write("<mergeCells count=\"{0}\">", _mergedCellRefs.Count);
             foreach (var mergedCell in _mergedCellRefs)
                 _streamWriter.Write("<mergeCell ref=\"{0}\"/>", mergedCell);
@@ -245,8 +256,8 @@ namespace LargeXlsx
 
         private void WriteDataValidations()
         {
-            if (!_cellRefsByDataValidation.Any()) return;
-
+            if (!_cellRefsByDataValidation.Any())
+                return;
             _streamWriter.Write("<dataValidations count=\"{0}\">", _cellRefsByDataValidation.Count);
             foreach (var kvp in _cellRefsByDataValidation)
             {
@@ -268,6 +279,33 @@ namespace LargeXlsx
                 _streamWriter.Write("</dataValidation>");
             }
             _streamWriter.Write("</dataValidations>");
+        }
+
+        private void WriteSheetProtection()
+        {
+            if (_sheetProtection == null)
+                return;
+            const int spinCount = 100000;
+            var saltValue = Guid.NewGuid().ToByteArray();
+            var hash = Util.ComputePasswordHash(_sheetProtection.Password, saltValue, spinCount);
+            _streamWriter.Write("<sheetProtection algorithmName=\"SHA-512\" hashValue=\"{0}\" saltValue=\"{1}\" spinCount=\"{2}\"", Convert.ToBase64String(hash), Convert.ToBase64String(saltValue), spinCount);
+            if (_sheetProtection.Sheet) _streamWriter.Write(" sheet=\"1\"");
+            if (_sheetProtection.Objects) _streamWriter.Write(" objects=\"1\"");
+            if (_sheetProtection.Scenarios) _streamWriter.Write(" scenarios=\"1\"");
+            if (!_sheetProtection.FormatCells) _streamWriter.Write(" formatCells=\"0\"");
+            if (!_sheetProtection.FormatColumns) _streamWriter.Write(" formatColumns=\"0\"");
+            if (!_sheetProtection.FormatRows) _streamWriter.Write(" formatRows=\"0\"");
+            if (!_sheetProtection.InsertColumns) _streamWriter.Write(" insertColumns=\"0\"");
+            if (!_sheetProtection.InsertRows) _streamWriter.Write(" insertRows=\"0\"");
+            if (!_sheetProtection.InsertHyperlinks) _streamWriter.Write(" insertHyperlinks=\"0\"");
+            if (!_sheetProtection.DeleteColumns) _streamWriter.Write(" deleteColumns=\"0\"");
+            if (!_sheetProtection.DeleteRows) _streamWriter.Write(" deleteRows=\"0\"");
+            if (_sheetProtection.SelectLockedCells) _streamWriter.Write(" selectLockedCells=\"1\"");
+            if (!_sheetProtection.Sort) _streamWriter.Write(" sort=\"0\"");
+            if (!_sheetProtection.AutoFilter) _streamWriter.Write(" autoFilter=\"0\"");
+            if (!_sheetProtection.PivotTables) _streamWriter.Write(" pivotTables=\"0\"");
+            if (_sheetProtection.SelectUnlockedCells) _streamWriter.Write(" selectUnlockedCells=\"1\"");
+            _streamWriter.Write("/>");
         }
     }
 }

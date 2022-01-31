@@ -24,27 +24,25 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+using System.IO;
+using LargeXlsx;
+
 namespace Examples
 {
-    public static class Program
+    public static class SheetProtection
     {
-        public static void Main(string[] args)
+        public static void Run()
         {
-            Simple.Run();
-            MultipleSheet.Run();
-            NumberFormats.Run();
-            ColumnFormatting.Run();
-            RowFormatting.Run();
-            Alignment.Run();
-            Border.Run();
-            DataValidation.Run();
-            RightToLeft.Run();
-            Zip64Small.Run();
-            SheetProtection.Run();
-            Large.Run();
-            StyledLarge.Run();
-            StyledLargeCreateStyles.Run();
-            Zip64Huge.Run();
+            using var stream = new FileStream($"{nameof(SheetProtection)}.xlsx", FileMode.Create, FileAccess.Write);
+            using var xlsxWriter = new XlsxWriter(stream);
+            xlsxWriter
+                .BeginWorksheet("Sheet 1")
+                .SetSheetProtection(new XlsxSheetProtection("Lorem ipsum", autoFilter: false))
+                .BeginRow().Write("A1").Write("B1")
+                .BeginRow().Write("A2").Write("B2")
+                .BeginRow().Write("A3").Write("B3")
+                .SetAutoFilter(1, 1, xlsxWriter.CurrentRowNumber - 1, 2);
         }
     }
 }

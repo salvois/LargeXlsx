@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -86,5 +86,13 @@ namespace LargeXlsx.Tests
             var serialDate = Util.DateToDouble(date);
             serialDate.Should().BeApproximately(expected, 0.000001);
         }
+
+        [Test]
+        public static void ComputePasswordHash() =>
+            Convert.ToBase64String(Util.ComputePasswordHash(
+                    password: "Lorem ipsum",
+                    saltValue: Convert.FromBase64String("5kelhTC7DUqQ5qi78ihM8A=="),
+                    spinCount: 100000))
+                .Should().Be("/dQmPXViT1u/fiTHmjLlP2HqOjYeRKI8W367Qn/Eikv63K8nnZMiyk2Wl9ShdHaBL7y1AeeJq5gxm4bW0ArxYg==");
     }
 }
