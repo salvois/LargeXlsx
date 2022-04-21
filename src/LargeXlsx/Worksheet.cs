@@ -67,7 +67,7 @@ namespace LargeXlsx
             _streamWriter.Write("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
                                 + "<sheetViews>"
                                 + $"<sheetView workbookViewId=\"0\" rightToLeft=\"{(rightToLeft ? 1 : 0)}\">");
-            if (splitRow > 0 && splitColumn > 0)
+            if (splitRow > 0 || splitColumn > 0)
                 FreezePanes(splitRow, splitColumn);
             _streamWriter.Write("</sheetView></sheetViews>");
             if (columns.Any())
