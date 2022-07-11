@@ -1,7 +1,7 @@
 /*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,46 +31,48 @@ using System.IO;
 using System.Linq;
 using LargeXlsx;
 
-namespace Examples
+namespace Examples;
+
+public static class StyledLargeCreateStyles
 {
-    public static class StyledLargeCreateStyles
+    private const int RowCount = 50000;
+    private const int ColumnCount = 180;
+    private const int ColorCount = 100;
+
+    public static void Run()
     {
-        private const int RowCount = 50000;
-        private const int ColumnCount = 180;
-        private const int ColorCount = 100;
+        var stopwatch = Stopwatch.StartNew();
+        DoRun();
+        stopwatch.Stop();
+        Console.WriteLine($"{nameof(StyledLargeCreateStyles)} completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+    }
 
-        public static void Run()
+    private static void DoRun()
+    {
+        var rnd = new Random();
+        using var stream = new FileStream($"{nameof(StyledLargeCreateStyles)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream);
+        var colors = Enumerable.Repeat(0, 100).Select(_ => Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256))).ToList();
+        var headerStyle = new XlsxStyle(
+            new XlsxFont("Calibri", 11, Color.White, bold: true),
+            new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
+            XlsxBorder.None,
+            XlsxNumberFormat.General,
+            XlsxAlignment.Default);
+
+        xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
+        xlsxWriter.BeginRow();
+        for (var j = 0; j < ColumnCount; j++)
+            xlsxWriter.Write($"Column {j}", headerStyle);
+        var colorIndex = 0;
+        for (var i = 0; i < RowCount; i++)
         {
-            var rnd = new Random();
-            var stopwatch = Stopwatch.StartNew();
-            using (var stream = new FileStream($"{nameof(StyledLargeCreateStyles)}.xlsx", FileMode.Create, FileAccess.Write))
-            using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginRow().Write($"Row {i}");
+            for (var j = 1; j < 180; j++)
             {
-                var colors = Enumerable.Repeat(0, 100).Select(_ => Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256))).ToList();
-                var headerStyle = new XlsxStyle(
-                    new XlsxFont("Calibri", 11, Color.White, bold: true),
-                    new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
-                    XlsxBorder.None,
-                    XlsxNumberFormat.General,
-                    XlsxAlignment.Default);
-
-                xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
-                xlsxWriter.BeginRow();
-                for (var j = 0; j < ColumnCount; j++)
-                    xlsxWriter.Write($"Column {j}", headerStyle);
-                var colorIndex = 0;
-                for (var i = 0; i < RowCount; i++)
-                {
-                    xlsxWriter.BeginRow().Write($"Row {i}");
-                    for (var j = 1; j < 180; j++)
-                    {
-                        xlsxWriter.Write(i * ColumnCount + j, XlsxStyle.Default.With(new XlsxFill(colors[colorIndex])));
-                        colorIndex = (colorIndex + 1) % colors.Count;
-                    }
-                }
+                xlsxWriter.Write(i * ColumnCount + j, XlsxStyle.Default.With(new XlsxFill(colors[colorIndex])));
+                colorIndex = (colorIndex + 1) % colors.Count;
             }
-            stopwatch.Stop();
-            Console.WriteLine($"{nameof(StyledLargeCreateStyles)} completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
         }
     }
 }

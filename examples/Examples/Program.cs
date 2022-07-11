@@ -24,28 +24,27 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-namespace Examples
+namespace Examples;
+
+public static class Program
 {
-    public static class Program
+    public static void Main(string[] _)
     {
-        public static void Main(string[] args)
-        {
-            Simple.Run();
-            MultipleSheet.Run();
-            FrozenPanes.Run();
-            NumberFormats.Run();
-            ColumnFormatting.Run();
-            RowFormatting.Run();
-            Alignment.Run();
-            Border.Run();
-            DataValidation.Run();
-            RightToLeft.Run();
-            Zip64Small.Run();
-            SheetProtection.Run();
-            Large.Run();
-            StyledLarge.Run();
-            StyledLargeCreateStyles.Run();
-            Zip64Huge.Run();
-        }
+        Simple.Run();
+        MultipleSheet.Run();
+        FrozenPanes.Run();
+        NumberFormats.Run();
+        ColumnFormatting.Run();
+        RowFormatting.Run();
+        Alignment.Run();
+        Border.Run();
+        DataValidation.Run();
+        RightToLeft.Run();
+        Zip64Small.Run();
+        SheetProtection.Run();
+        Large.Run();
+        StyledLarge.Run();
+        StyledLargeCreateStyles.Run();
+        Zip64Huge.Run();
     }
 }

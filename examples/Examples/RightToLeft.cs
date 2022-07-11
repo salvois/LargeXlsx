@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020-2021 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -24,24 +24,20 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
 using System.IO;
 using LargeXlsx;
 
-namespace Examples
+namespace Examples;
+
+public static class RightToLeft
 {
-    public static class RightToLeft
+    public static void Run()
     {
-        public static void Run()
-        {
-            using (var stream = new FileStream($"{nameof(RightToLeft)}.xlsx", FileMode.Create, FileAccess.Write))
-            using (var xlsxWriter = new XlsxWriter(stream))
-            {
-                xlsxWriter
-                    .BeginWorksheet("Sheet 1", rightToLeft: true)
-                    .BeginRow().Write(@"ما هو ""لوريم إيبسوم"" ؟")
-                    .BeginRow().Write(@"لوريم إيبسوم(Lorem Ipsum) هو ببساطة نص شكلي (بمعنى أن الغاية هي الشكل وليس المحتوى) ويُستخدم في صناعات المطابع ودور النشر.");
-            }
-        }
+        using var stream = new FileStream($"{nameof(RightToLeft)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream);
+        xlsxWriter
+            .BeginWorksheet("Sheet 1", rightToLeft: true)
+            .BeginRow().Write(@"ما هو ""لوريم إيبسوم"" ؟")
+            .BeginRow().Write(@"لوريم إيبسوم(Lorem Ipsum) هو ببساطة نص شكلي (بمعنى أن الغاية هي الشكل وليس المحتوى) ويُستخدم في صناعات المطابع ودور النشر.");
     }
 }

@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,33 +29,30 @@ using System.Drawing;
 using System.IO;
 using LargeXlsx;
 
-namespace Examples
-{
-    public static class ColumnFormatting
-    {
-        public static void Run()
-        {
-            var rnd = new Random();
-            using (var stream = new FileStream($"{nameof(ColumnFormatting)}.xlsx", FileMode.Create, FileAccess.Write))
-            using (var xlsxWriter = new XlsxWriter(stream))
-            {
-                var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White), new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
+namespace Examples;
 
-                xlsxWriter
-                    .BeginWorksheet("Sheet 1", columns: new[]
-                    {
-                        XlsxColumn.Formatted(count: 2, width: 20),
-                        XlsxColumn.Unformatted(3),
-                        XlsxColumn.Formatted(style: blueStyle, width: 9),
-                        XlsxColumn.Formatted(hidden: true, width: 0)
-                    });
-                for (var i = 0; i < 10; i++)
-                {
-                    xlsxWriter.BeginRow();
-                    for (var j = 0; j < 10; j++)
-                        xlsxWriter.Write(rnd.Next());
-                }
-            }
+public static class ColumnFormatting
+{
+    public static void Run()
+    {
+        var rnd = new Random();
+        using var stream = new FileStream($"{nameof(ColumnFormatting)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream);
+        var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White), new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
+
+        xlsxWriter
+            .BeginWorksheet("Sheet 1", columns: new[]
+            {
+                XlsxColumn.Formatted(count: 2, width: 20),
+                XlsxColumn.Unformatted(3),
+                XlsxColumn.Formatted(style: blueStyle, width: 9),
+                XlsxColumn.Formatted(hidden: true, width: 0)
+            });
+        for (var i = 0; i < 10; i++)
+        {
+            xlsxWriter.BeginRow();
+            for (var j = 0; j < 10; j++)
+                xlsxWriter.Write(rnd.Next());
         }
     }
 }

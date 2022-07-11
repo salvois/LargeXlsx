@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,81 +31,64 @@ using NUnit.Framework;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 
-namespace LargeXlsx.Tests
+namespace LargeXlsx.Tests;
+
+[TestFixture]
+public static class ColumnFormattingTest
 {
-    [TestFixture]
-    public static class ColumnFormattingTest
+    [Test]
+    public static void Width()
     {
-        [Test]
-        public static void Width()
-        {
-            using (var stream = new MemoryStream())
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 20) });
+        using (var package = new ExcelPackage(stream))
+            package.Workbook.Worksheets[0].Column(1).Width.Should().Be(20);
+    }
+
+    [Test]
+    public static void Style()
+    {
+        var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White), new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 20, style: blueStyle) });
+        using var package = new ExcelPackage(stream);
+        var style = package.Workbook.Worksheets[0].Column(1).Style;
+        style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
+        style.Fill.BackgroundColor.Rgb.Should().Be("004586");
+        style.Font.Color.Rgb.Should().Be("ffffff");
+    }
+
+    [Test]
+    public static void Hidden()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 0, hidden: true) });
+        using (var package = new ExcelPackage(stream))
+            package.Workbook.Worksheets[0].Column(1).Hidden.Should().BeTrue();
+    }
+
+    [Test]
+    public static void SkipUnformatted()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1", columns: new[]
             {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                    xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 20) });
-
-                using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Column(1).Width.Should().Be(20);
-            }
-        }
-
-        [Test]
-        public static void Style()
-        {
-            var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White), new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
-            using (var stream = new MemoryStream())
-            {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                    xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 20, style: blueStyle) });
-
-                using (var package = new ExcelPackage(stream))
-                {
-                    var style = package.Workbook.Worksheets[0].Column(1).Style;
-                    style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-                    style.Fill.BackgroundColor.Rgb.Should().Be("004586");
-                    style.Font.Color.Rgb.Should().Be("ffffff");
-                }
-            }
-        }
-
-        [Test]
-        public static void Hidden()
-        {
-            using (var stream = new MemoryStream())
-            {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                    xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 0, hidden: true) });
-
-                using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Column(1).Hidden.Should().BeTrue();
-            }
-        }
-
-        [Test]
-        public static void SkipUnformatted()
-        {
-            using (var stream = new MemoryStream())
-            {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                    xlsxWriter.BeginWorksheet("Sheet 1", columns: new[]
-                    {
-                        XlsxColumn.Formatted(count: 2, width: 0, hidden: true),
-                        XlsxColumn.Unformatted(count: 3),
-                        XlsxColumn.Formatted(count: 1, width: 0, hidden: true)
-                    });
-
-                using (var package = new ExcelPackage(stream))
-                {
-                    var worksheet = package.Workbook.Worksheets[0];
-                    worksheet.Column(1).Hidden.Should().BeTrue();
-                    worksheet.Column(2).Hidden.Should().BeTrue();
-                    worksheet.Column(3).Hidden.Should().BeFalse();
-                    worksheet.Column(4).Hidden.Should().BeFalse();
-                    worksheet.Column(5).Hidden.Should().BeFalse();
-                    worksheet.Column(6).Hidden.Should().BeTrue();
-                    worksheet.Column(7).Hidden.Should().BeFalse();
-                }
-            }
-        }
+                XlsxColumn.Formatted(count: 2, width: 0, hidden: true),
+                XlsxColumn.Unformatted(count: 3),
+                XlsxColumn.Formatted(count: 1, width: 0, hidden: true)
+            });
+        using var package = new ExcelPackage(stream);
+        var worksheet = package.Workbook.Worksheets[0];
+        worksheet.Column(1).Hidden.Should().BeTrue();
+        worksheet.Column(2).Hidden.Should().BeTrue();
+        worksheet.Column(3).Hidden.Should().BeFalse();
+        worksheet.Column(4).Hidden.Should().BeFalse();
+        worksheet.Column(5).Hidden.Should().BeFalse();
+        worksheet.Column(6).Hidden.Should().BeTrue();
+        worksheet.Column(7).Hidden.Should().BeFalse();
     }
 }

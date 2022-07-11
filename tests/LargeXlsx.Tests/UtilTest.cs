@@ -28,71 +28,70 @@ using System;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace LargeXlsx.Tests
+namespace LargeXlsx.Tests;
+
+[TestFixture]
+public static class UtilTest
 {
-    [TestFixture]
-    public static class UtilTest
+    [Test]
+    public static void EscapeXmlText()
     {
-        [Test]
-        public static void EscapeXmlText()
-        {
-            var escapedXmlText = Util.EscapeXmlText("Lorem 'ipsum' & \"dolor\" <sit> amet");
-            escapedXmlText.Should().Be("Lorem 'ipsum' &amp; \"dolor\" &lt;sit&gt; amet");
-        }
-
-        [Test]
-        public static void EscapeXmlAttribute()
-        {
-            var escapedXmlText = Util.EscapeXmlAttribute("Lorem 'ipsum' & \"dolor\" <sit> amet");
-            escapedXmlText.Should().Be("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; &lt;sit&gt; amet");
-        }
-
-        [TestCase(1, "A")]
-        [TestCase(2, "B")]
-        [TestCase(26, "Z")]
-        [TestCase(27, "AA")]
-        [TestCase(28, "AB")]
-        [TestCase(52, "AZ")]
-        [TestCase(53, "BA")]
-        [TestCase(702, "ZZ")]
-        [TestCase(703, "AAA")]
-        [TestCase(704, "AAB")]
-        [TestCase(729, "ABA")]
-        [TestCase(1378, "AZZ")]
-        [TestCase(1379, "BAA")]
-        [TestCase(16384, "XFD")]
-        public static void GetColumnName(int index, string expectedName)
-        {
-            var name = Util.GetColumnName(index);
-            name.Should().Be(expectedName);
-        }
-
-        [TestCase(-1)]
-        [TestCase(0)]
-        [TestCase(16385)]
-        public static void GetColumnNameOutOfRange(int index)
-        {
-            Func<string> act = () => Util.GetColumnName(index);
-            act.Should().Throw<ArgumentOutOfRangeException>();
-        }
-
-        [TestCase("2020-05-06T18:27:00", 43957.76875)]
-        [TestCase("1900-01-01", 1)]
-        [TestCase("1900-02-28", 59)]
-        [TestCase("1900-03-01", 61)]
-        public static void DateToDouble(string dateString, double expected)
-        {
-            var date = DateTime.Parse(dateString);
-            var serialDate = Util.DateToDouble(date);
-            serialDate.Should().BeApproximately(expected, 0.000001);
-        }
-
-        [Test]
-        public static void ComputePasswordHash() =>
-            Convert.ToBase64String(Util.ComputePasswordHash(
-                    password: "Lorem ipsum",
-                    saltValue: Convert.FromBase64String("5kelhTC7DUqQ5qi78ihM8A=="),
-                    spinCount: 100000))
-                .Should().Be("/dQmPXViT1u/fiTHmjLlP2HqOjYeRKI8W367Qn/Eikv63K8nnZMiyk2Wl9ShdHaBL7y1AeeJq5gxm4bW0ArxYg==");
+        var escapedXmlText = Util.EscapeXmlText("Lorem 'ipsum' & \"dolor\" <sit> amet");
+        escapedXmlText.Should().Be("Lorem 'ipsum' &amp; \"dolor\" &lt;sit&gt; amet");
     }
+
+    [Test]
+    public static void EscapeXmlAttribute()
+    {
+        var escapedXmlText = Util.EscapeXmlAttribute("Lorem 'ipsum' & \"dolor\" <sit> amet");
+        escapedXmlText.Should().Be("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; &lt;sit&gt; amet");
+    }
+
+    [TestCase(1, "A")]
+    [TestCase(2, "B")]
+    [TestCase(26, "Z")]
+    [TestCase(27, "AA")]
+    [TestCase(28, "AB")]
+    [TestCase(52, "AZ")]
+    [TestCase(53, "BA")]
+    [TestCase(702, "ZZ")]
+    [TestCase(703, "AAA")]
+    [TestCase(704, "AAB")]
+    [TestCase(729, "ABA")]
+    [TestCase(1378, "AZZ")]
+    [TestCase(1379, "BAA")]
+    [TestCase(16384, "XFD")]
+    public static void GetColumnName(int index, string expectedName)
+    {
+        var name = Util.GetColumnName(index);
+        name.Should().Be(expectedName);
+    }
+
+    [TestCase(-1)]
+    [TestCase(0)]
+    [TestCase(16385)]
+    public static void GetColumnNameOutOfRange(int index)
+    {
+        Func<string> act = () => Util.GetColumnName(index);
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [TestCase("2020-05-06T18:27:00", 43957.76875)]
+    [TestCase("1900-01-01", 1)]
+    [TestCase("1900-02-28", 59)]
+    [TestCase("1900-03-01", 61)]
+    public static void DateToDouble(string dateString, double expected)
+    {
+        var date = DateTime.Parse(dateString);
+        var serialDate = Util.DateToDouble(date);
+        serialDate.Should().BeApproximately(expected, 0.000001);
+    }
+
+    [Test]
+    public static void ComputePasswordHash() =>
+        Convert.ToBase64String(Util.ComputePasswordHash(
+                password: "Lorem ipsum",
+                saltValue: Convert.FromBase64String("5kelhTC7DUqQ5qi78ihM8A=="),
+                spinCount: 100000))
+            .Should().Be("/dQmPXViT1u/fiTHmjLlP2HqOjYeRKI8W367Qn/Eikv63K8nnZMiyk2Wl9ShdHaBL7y1AeeJq5gxm4bW0ArxYg==");
 }

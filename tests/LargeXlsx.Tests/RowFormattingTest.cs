@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,60 +31,47 @@ using NUnit.Framework;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 
-namespace LargeXlsx.Tests
+namespace LargeXlsx.Tests;
+
+[TestFixture]
+public static class RowFormattingTest
 {
-    [TestFixture]
-    public static class RowFormattingTest
+    [Test]
+    public static void Height()
     {
-        [Test]
-        public static void Height()
-        {
-            using (var stream = new MemoryStream())
-            {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(height: 36.5).Write("Test");
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(height: 36.5).Write("Test");
+        using (var package = new ExcelPackage(stream))
+            package.Workbook.Worksheets[0].Row(1).Height.Should().Be(36.5);
+    }
 
-                using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Row(1).Height.Should().Be(36.5);
-            }
-        }
+    [Test]
+    public static void Hidden()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(hidden: true).Write("Test");
+        using (var package = new ExcelPackage(stream))
+            package.Workbook.Worksheets[0].Row(1).Hidden.Should().BeTrue();
+    }
 
-        [Test]
-        public static void Hidden()
-        {
-            using (var stream = new MemoryStream())
-            {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(hidden: true).Write("Test");
-
-                using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Row(1).Hidden.Should().BeTrue();
-            }
-        }
-
-        [Test]
-        public static void Style()
-        {
-            var blueStyle = new XlsxStyle(
-                XlsxFont.Default.With(Color.White),
-                new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
-                XlsxBorder.None,
-                XlsxNumberFormat.General,
-                XlsxAlignment.Default);
-
-            using (var stream = new MemoryStream())
-            {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(style: blueStyle).Write("Test");
-
-                using (var package = new ExcelPackage(stream))
-                {
-                    var row = package.Workbook.Worksheets[0].Row(1);
-                    row.Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-                    row.Style.Fill.BackgroundColor.Rgb.Should().Be("004586");
-                    row.Style.Font.Color.Rgb.Should().Be("ffffff");
-                }
-            }
-        }
+    [Test]
+    public static void Style()
+    {
+        var blueStyle = new XlsxStyle(
+            XlsxFont.Default.With(Color.White),
+            new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
+            XlsxBorder.None,
+            XlsxNumberFormat.General,
+            XlsxAlignment.Default);
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(style: blueStyle).Write("Test");
+        using var package = new ExcelPackage(stream);
+        var row = package.Workbook.Worksheets[0].Row(1);
+        row.Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
+        row.Style.Fill.BackgroundColor.Rgb.Should().Be("004586");
+        row.Style.Font.Color.Rgb.Should().Be("ffffff");
     }
 }

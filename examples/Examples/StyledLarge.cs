@@ -1,7 +1,7 @@
 /*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020-2021 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -32,48 +32,50 @@ using System.Linq;
 using LargeXlsx;
 using SharpCompress.Compressors.Deflate;
 
-namespace Examples
+namespace Examples;
+
+public static class StyledLarge
 {
-    public static class StyledLarge
+    private const int RowCount = 50000;
+    private const int ColumnCount = 180;
+    private const int ColorCount = 100;
+
+    public static void Run()
     {
-        private const int RowCount = 50000;
-        private const int ColumnCount = 180;
-        private const int ColorCount = 100;
+        var stopwatch = Stopwatch.StartNew();
+        DoRun();
+        stopwatch.Stop();
+        Console.WriteLine($"{nameof(StyledLarge)} completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+    }
 
-        public static void Run()
+    private static void DoRun()
+    {
+        var rnd = new Random();
+        using var stream = new FileStream($"{nameof(StyledLarge)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream, CompressionLevel.Level3);
+        var headerStyle = new XlsxStyle(
+            new XlsxFont("Calibri", 11, Color.White, bold: true),
+            new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
+            XlsxBorder.None,
+            XlsxNumberFormat.General,
+            XlsxAlignment.Default);
+        var cellStyles = Enumerable.Repeat(0, 100)
+            .Select(_ => XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256)))))
+            .ToList();
+
+        xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
+        xlsxWriter.BeginRow();
+        for (var j = 0; j < ColumnCount; j++)
+            xlsxWriter.Write($"Column {j}", headerStyle);
+        var cellStyleIndex = 0;
+        for (var i = 0; i < RowCount; i++)
         {
-            var rnd = new Random();
-            var stopwatch = Stopwatch.StartNew();
-            using (var stream = new FileStream($"{nameof(StyledLarge)}.xlsx", FileMode.Create, FileAccess.Write))
-            using (var xlsxWriter = new XlsxWriter(stream, CompressionLevel.Level3))
+            xlsxWriter.BeginRow().Write($"Row {i}");
+            for (var j = 1; j < 180; j++)
             {
-                var headerStyle = new XlsxStyle(
-                    new XlsxFont("Calibri", 11, Color.White, bold: true),
-                    new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
-                    XlsxBorder.None,
-                    XlsxNumberFormat.General,
-                    XlsxAlignment.Default);
-                var cellStyles = Enumerable.Repeat(0, 100)
-                    .Select(_ => XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256)))))
-                    .ToList();
-
-                xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
-                xlsxWriter.BeginRow();
-                for (var j = 0; j < ColumnCount; j++)
-                    xlsxWriter.Write($"Column {j}", headerStyle);
-                var cellStyleIndex = 0;
-                for (var i = 0; i < RowCount; i++)
-                {
-                    xlsxWriter.BeginRow().Write($"Row {i}");
-                    for (var j = 1; j < 180; j++)
-                    {
-                        xlsxWriter.Write(i * ColumnCount + j, cellStyles[cellStyleIndex]);
-                        cellStyleIndex = (cellStyleIndex + 1) % cellStyles.Count;
-                    }
-                }
+                xlsxWriter.Write(i * ColumnCount + j, cellStyles[cellStyleIndex]);
+                cellStyleIndex = (cellStyleIndex + 1) % cellStyles.Count;
             }
-            stopwatch.Stop();
-            Console.WriteLine($"{nameof(StyledLarge)} completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
         }
     }
 }

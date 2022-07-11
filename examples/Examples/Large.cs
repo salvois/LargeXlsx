@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020-2021 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,37 +31,39 @@ using System.IO;
 using LargeXlsx;
 using SharpCompress.Compressors.Deflate;
 
-namespace Examples
+namespace Examples;
+
+public static class Large
 {
-    public static class Large
+    private const int RowCount = 50000;
+    private const int ColumnCount = 180;
+
+    public static void Run()
     {
-        private const int RowCount = 50000;
-        private const int ColumnCount = 180;
+        var stopwatch = Stopwatch.StartNew();
+        DoRun();
+        stopwatch.Stop();
+        Console.WriteLine($"{nameof(Large)} completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
+    }
 
-        public static void Run()
+    private static void DoRun()
+    {
+        using var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream, CompressionLevel.Level3);
+        var whiteFont = new XlsxFont("Calibri", 11, Color.White, bold: true);
+        var blueFill = new XlsxFill(Color.FromArgb(0, 0x45, 0x86));
+        var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
+        var numberStyle = XlsxStyle.Default.With(XlsxNumberFormat.ThousandTwoDecimal);
+
+        xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
+        xlsxWriter.BeginRow();
+        for (var j = 0; j < ColumnCount; j++)
+            xlsxWriter.Write($"Column {j}", headerStyle);
+        for (var i = 0; i < RowCount; i++)
         {
-            var stopwatch = Stopwatch.StartNew();
-            using (var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create, FileAccess.Write))
-            using (var xlsxWriter = new XlsxWriter(stream, CompressionLevel.Level3))
-            {
-                var whiteFont = new XlsxFont("Calibri", 11, Color.White, bold: true);
-                var blueFill = new XlsxFill(Color.FromArgb(0, 0x45, 0x86));
-                var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
-                var numberStyle = XlsxStyle.Default.With(XlsxNumberFormat.ThousandTwoDecimal);
-
-                xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
-                xlsxWriter.BeginRow();
-                for (var j = 0; j < ColumnCount; j++)
-                    xlsxWriter.Write($"Column {j}", headerStyle);
-                for (var i = 0; i < RowCount; i++)
-                {
-                    xlsxWriter.BeginRow().Write($"Row {i}");
-                    for (var j = 1; j < ColumnCount; j++)
-                        xlsxWriter.Write(i * 1000 + j, numberStyle);
-                }
-            }
-            stopwatch.Stop();
-            Console.WriteLine($"{nameof(Large)} completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
+            xlsxWriter.BeginRow().Write($"Row {i}");
+            for (var j = 1; j < ColumnCount; j++)
+                xlsxWriter.Write(i * 1000 + j, numberStyle);
         }
     }
 }

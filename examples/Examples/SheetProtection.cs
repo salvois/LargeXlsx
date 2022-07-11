@@ -28,21 +28,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.IO;
 using LargeXlsx;
 
-namespace Examples
+namespace Examples;
+
+public static class SheetProtection
 {
-    public static class SheetProtection
+    public static void Run()
     {
-        public static void Run()
-        {
-            using var stream = new FileStream($"{nameof(SheetProtection)}.xlsx", FileMode.Create, FileAccess.Write);
-            using var xlsxWriter = new XlsxWriter(stream);
-            xlsxWriter
-                .BeginWorksheet("Sheet 1")
-                .SetSheetProtection(new XlsxSheetProtection("Lorem ipsum", autoFilter: false))
-                .BeginRow().Write("A1").Write("B1")
-                .BeginRow().Write("A2").Write("B2")
-                .BeginRow().Write("A3").Write("B3")
-                .SetAutoFilter(1, 1, xlsxWriter.CurrentRowNumber - 1, 2);
-        }
+        using var stream = new FileStream($"{nameof(SheetProtection)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream);
+        xlsxWriter
+            .BeginWorksheet("Sheet 1")
+            .SetSheetProtection(new XlsxSheetProtection("Lorem ipsum", autoFilter: false))
+            .BeginRow().Write("A1").Write("B1")
+            .BeginRow().Write("A2").Write("B2")
+            .BeginRow().Write("A3").Write("B3")
+            .SetAutoFilter(1, 1, xlsxWriter.CurrentRowNumber - 1, 2);
     }
 }

@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,43 +29,32 @@ using FluentAssertions;
 using NUnit.Framework;
 using OfficeOpenXml;
 
-namespace LargeXlsx.Tests
+namespace LargeXlsx.Tests;
+
+[TestFixture]
+public static class FormulaTest
 {
-    [TestFixture]
-    public static class FormulaTest
+    [Test]
+    public static void FormulaWithResult()
     {
-        [Test]
-        public static void FormulaWithResult()
-        {
-            using (var stream = new MemoryStream())
-            {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().WriteFormula("41.5+1", result: 42.5);
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().WriteFormula("41.5+1", result: 42.5);
+        using var package = new ExcelPackage(stream);
+        // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
+        package.Workbook.Worksheets[0].Cells["A1"].Formula.Should().Be("41.5+1");
+        package.Workbook.Worksheets[0].Cells["A1"].Value.Should().Be("42.5");
+    }
 
-                using (var package = new ExcelPackage(stream))
-                {
-                    // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
-                    package.Workbook.Worksheets[0].Cells["A1"].Formula.Should().Be("41.5+1");
-                    package.Workbook.Worksheets[0].Cells["A1"].Value.Should().Be("42.5");
-                }
-            }
-        }
-
-        [Test]
-        public static void FormulaWithoutResult()
-        {
-            using (var stream = new MemoryStream())
-            {
-                using (var xlsxWriter = new XlsxWriter(stream))
-                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().WriteFormula("41+1");
-
-                using (var package = new ExcelPackage(stream))
-                {
-                    // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
-                    package.Workbook.Worksheets[0].Cells["A1"].Formula.Should().Be("41+1");
-                    package.Workbook.Worksheets[0].Cells["A1"].Value.Should().BeNull();
-                }
-            }
-        }
+    [Test]
+    public static void FormulaWithoutResult()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().WriteFormula("41+1");
+        using var package = new ExcelPackage(stream);
+        // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
+        package.Workbook.Worksheets[0].Cells["A1"].Formula.Should().Be("41+1");
+        package.Workbook.Worksheets[0].Cells["A1"].Value.Should().BeNull();
     }
 }
