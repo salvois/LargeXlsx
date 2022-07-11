@@ -24,28 +24,32 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+using System.IO;
+using LargeXlsx;
+
 namespace Examples
 {
-    public static class Program
+    public static class FrozenPanes
     {
-        public static void Main(string[] args)
+        public static void Run()
         {
-            Simple.Run();
-            MultipleSheet.Run();
-            FrozenPanes.Run();
-            NumberFormats.Run();
-            ColumnFormatting.Run();
-            RowFormatting.Run();
-            Alignment.Run();
-            Border.Run();
-            DataValidation.Run();
-            RightToLeft.Run();
-            Zip64Small.Run();
-            SheetProtection.Run();
-            Large.Run();
-            StyledLarge.Run();
-            StyledLargeCreateStyles.Run();
-            Zip64Huge.Run();
+            using (var stream = new FileStream($"{nameof(FrozenPanes)}.xlsx", FileMode.Create, FileAccess.Write))
+            using (var xlsxWriter = new XlsxWriter(stream))
+            {
+                xlsxWriter
+                    .BeginWorksheet("SplitRow", splitRow: 1)
+                    .BeginRow().Write("A1").Write("B1").Write("C1")
+                    .BeginRow().Write("A2").Write("B2").Write("C2")
+                    .BeginRow().Write("A3").Write("B3").Write("C3")
+                    .BeginWorksheet("SplitColumn", splitColumn: 1)
+                    .BeginRow().Write("A1").Write("B1").Write("C1")
+                    .BeginRow().Write("A2").Write("B2").Write("C2")
+                    .BeginRow().Write("A3").Write("B3").Write("C3")
+                    .BeginWorksheet("SplitBoth", splitRow: 10, splitColumn: 20)
+                    .BeginRow().Write("A1").Write("B1").Write("C1")
+                    .BeginRow().Write("A2").Write("B2").Write("C2")
+                    .BeginRow().Write("A3").Write("B3").Write("C3");
+            }
         }
     }
 }
