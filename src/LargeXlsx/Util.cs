@@ -35,10 +35,11 @@ namespace LargeXlsx
     {
         private static readonly DateTime ExcelEpoch = new DateTime(1900, 1, 1);
         private static readonly DateTime Date19000301 = new DateTime(1900, 3, 1);
-
+        
         public static string EscapeXmlText(string value)
         {
-            var sb = new StringBuilder(value.Length);
+            var sb = CachedStringBuilder.Get(value.Length);
+
             foreach (var c in value)
             {
                 if (c == '<') sb.Append("&lt;");
@@ -52,7 +53,8 @@ namespace LargeXlsx
 
         public static string EscapeXmlAttribute(string value)
         {
-            var sb = new StringBuilder(value.Length);
+            var sb = CachedStringBuilder.Get(value.Length);
+
             foreach (var c in value)
             {
                 if (c == '<') sb.Append("&lt;");
@@ -70,7 +72,7 @@ namespace LargeXlsx
         {
             if (columnIndex < 1 || columnIndex > 16384)
                 throw new ArgumentOutOfRangeException();
-            var columnName = new StringBuilder(3);
+            var columnName = CachedStringBuilder.Get(3);
             while (true)
             {
                 if (columnIndex > 26)
