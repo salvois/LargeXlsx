@@ -25,6 +25,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -35,6 +36,7 @@ namespace LargeXlsx
     {
         private static readonly DateTime ExcelEpoch = new DateTime(1900, 1, 1);
         private static readonly DateTime Date19000301 = new DateTime(1900, 3, 1);
+        private static readonly Dictionary<int, string> _columnNames = new Dictionary<int, string>();
 
         public static string EscapeXmlText(string value)
         {
@@ -68,20 +70,32 @@ namespace LargeXlsx
 
         public static string GetColumnName(int columnIndex)
         {
+            if (!_columnNames.TryGetValue(columnIndex, out var columnName))
+            {
+                columnName = GetColumnNameInternal(columnIndex);
+                _columnNames.Add(columnIndex, columnName);
+            }
+
+            return columnName;
+        }
+
+        private static string GetColumnNameInternal(int columnIndex)
+        {
             if (columnIndex < 1 || columnIndex > 16384)
                 throw new ArgumentOutOfRangeException();
-            var columnName = new StringBuilder(3);
+
+            var columnName = string.Empty;
+
             while (true)
             {
                 if (columnIndex > 26)
                 {
                     columnIndex = Math.DivRem(columnIndex - 1, 26, out var rem);
-                    columnName.Insert(0, (char)('A' + rem));
+                    columnName = (char) ('A' + rem) + columnName;
                 }
                 else
                 {
-                    columnName.Insert(0, (char)('A' + columnIndex - 1));
-                    return columnName.ToString();
+                    return (char) ('A' + columnIndex - 1) + columnName;
                 }
             }
         }
