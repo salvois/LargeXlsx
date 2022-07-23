@@ -9,7 +9,7 @@ This is a minimalistic yet feature-rich library, written in C# targeting .net st
 
 Currently the library supports:
 
-* cells containing inline strings; numeric values; date and time; formulas
+* cells containing inline or shared strings; numeric values; date and time; formulas
 * multiple worksheets
 * merged cells
 * split panes, a.k.a. frozen rows and columns
@@ -26,49 +26,45 @@ Currently the library supports:
 To create a basic single-sheet Excel document:
 
 ```csharp
-using (var stream = new FileStream("Basic.xlsx", FileMode.Create, FileAccess.Write))
-using (var xlsxWriter = new XlsxWriter(stream))
-{
-    xlsxWriter
-        .BeginWorksheet("Sheet 1")
-        .BeginRow().Write("Name").Write("Location").Write("Height (m)")
-        .BeginRow().Write("Kingda Ka").Write("Six Flags Great Adventure").Write(139)
-        .BeginRow().Write("Top Thrill Dragster").Write("Cedar Point").Write(130)
-        .BeginRow().Write("Superman: Escape from Krypton").Write("Six Flags Magic Mountain").Write(126);
-}
+using var stream = new FileStream("Basic.xlsx", FileMode.Create, FileAccess.Write);
+using var xlsxWriter = new XlsxWriter(stream);
+xlsxWriter
+    .BeginWorksheet("Sheet 1")
+    .BeginRow().Write("Name").Write("Location").Write("Height (m)")
+    .BeginRow().Write("Kingda Ka").Write("Six Flags Great Adventure").Write(139)
+    .BeginRow().Write("Top Thrill Dragster").Write("Cedar Point").Write(130)
+    .BeginRow().Write("Superman: Escape from Krypton").Write("Six Flags Magic Mountain").Write(126);
 ```
 
 To create an Excel document with some fancy formatting:
 
 ```csharp
-using (var stream = new FileStream("Simple.xlsx", FileMode.Create, FileAccess.Write))
-using (var xlsxWriter = new XlsxWriter(stream))
-{
-    var headerStyle = new XlsxStyle(
-        new XlsxFont("Segoe UI", 9, Color.White, bold: true),
-        new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
-        XlsxStyle.Default.Border,
-        XlsxStyle.Default.NumberFormat,
-        XlsxAlignment.Default);
-    var highlightStyle = XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88)));
-    var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
-    var borderedStyle = highlightStyle.With(
-        XlsxBorder.Around(new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Dashed)));
+using var stream = new FileStream("Simple.xlsx", FileMode.Create, FileAccess.Write);
+using var xlsxWriter = new XlsxWriter(stream);
+var headerStyle = new XlsxStyle(
+    new XlsxFont("Segoe UI", 9, Color.White, bold: true),
+    new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
+    XlsxStyle.Default.Border,
+    XlsxStyle.Default.NumberFormat,
+    XlsxAlignment.Default);
+var highlightStyle = XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88)));
+var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
+var borderedStyle = highlightStyle.With(
+    XlsxBorder.Around(new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Dashed)));
 
-    xlsxWriter
-        .BeginWorksheet("Sheet 1",
-            columns: new[] { XlsxColumn.Unformatted(count: 2), XlsxColumn.Formatted(width: 20) })
-        .SetDefaultStyle(headerStyle)
-        .BeginRow().AddMergedCell(2, 1).Write("Col1").Write("Top2").Write("Top3")
-        .BeginRow().Write().Write("Col2").Write("Col3")
-        .SetDefaultStyle(XlsxStyle.Default)
-        .BeginRow().Write("Row3").Write(42).WriteFormula(
-            $"{xlsxWriter.GetRelativeColumnName(-1)}{xlsxWriter.CurrentRowNumber}*10", highlightStyle)
-        .BeginRow().Write("Row4").SkipColumns(1).Write(new DateTime(2020, 5, 6, 18, 27, 0), dateStyle)
-        .SkipRows(2)
-        .BeginRow().Write("Row7", borderedStyle, columnSpan: 2).Write(3.14159265359)
-        .SetAutoFilter(2, 1, xlsxWriter.CurrentRowNumber - 1, 3);
-}
+xlsxWriter
+    .BeginWorksheet("Sheet 1",
+        columns: new[] { XlsxColumn.Unformatted(count: 2), XlsxColumn.Formatted(width: 20) })
+    .SetDefaultStyle(headerStyle)
+    .BeginRow().AddMergedCell(2, 1).Write("Col1").Write("Top2").Write("Top3")
+    .BeginRow().Write().Write("Col2").Write("Col3")
+    .SetDefaultStyle(XlsxStyle.Default)
+    .BeginRow().Write("Row3").Write(42).WriteFormula(
+        $"{xlsxWriter.GetRelativeColumnName(-1)}{xlsxWriter.CurrentRowNumber}*10", highlightStyle)
+    .BeginRow().Write("Row4").SkipColumns(1).Write(new DateTime(2020, 5, 6, 18, 27, 0), dateStyle)
+    .SkipRows(2)
+    .BeginRow().Write("Row7", borderedStyle, columnSpan: 2).Write(3.14159265359)
+    .SetAutoFilter(2, 1, xlsxWriter.CurrentRowNumber - 1, 3);
 ```
 
 The output is like:
@@ -78,6 +74,7 @@ The output is like:
 
 ## Changelog
 
+* 1.6: Opt-in shared string table (for memory vs. file size trade-off)
 * 1.5: Password protection of sheets
 * 1.4: Support for font underline, thanks to [Sergey Bochkin](https://github.com/sbochkin)
 * 1.3: Optional ZIP64 support for really huge files
@@ -96,8 +93,8 @@ The constructor allows you to create an XLSX writer. Please note that an `XlsxWr
 // class XlsxWriter
 public XlsxWriter(
     Stream stream,
-    SharpCompress.Compressors.Deflate.CompressionLevel compressionLevel = CompressionLevel.Level3,
-    bool uzeZip64 = false);
+    SharpCompress.Compressors.Deflate.CompressionLevel compressionLevel = CompressionLevel.Level3, // compressionLevel since version 1.2
+    bool uzeZip64 = false); // useZip64 since version 1.3
 ```
 
 The constructor accepts:
@@ -147,7 +144,7 @@ public XlsxWriter BeginWorksheet(
         string name,
         int splitRow = 0,
         int splitColumn = 0,
-        bool rightToLeft = false,
+        bool rightToLeft = false, // rightToLeft since version 1.2
         IEnumerable<XlsxColumn> columns = null);
 ```
 
@@ -203,15 +200,17 @@ public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 
 public XlsxWriter Write(int value, XlsxStyle style = null, int columnSpan = 1);
 public XlsxWriter Write(DateTime value, XlsxStyle style = null, int columnSpan = 1);
 public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, IConvertible result = null);
+public XlsxWriter WriteSharedString(string value, XlsxStyle style = null, int columnSpan = 1); // since version 1.6
 ```
 
  You may write one of the following:
 
   * **Nothing**: a cell containing no value, but styled nonetheless.
-  * **String**: a literal string of text; if the string is `null` the method falls back on the "nothing" case. (Note that only "inline strings" are supported, where each string is written into the cell. The XLSX file format also supports referencing strings from a global look-up table, but this functionality is not supported) 
+  * **String**: an inline literal string of text; if the string is `null` the method falls back on the "nothing" case. The value of an inline string is written into the cell, thus resulting in low memory consumption but possibly larger files (see, in contrast, shared strings).
   * **Number**: a numeric constant, that will be interpreted as a `double` value; convenience overloads accepting `int` and `decimal` are provided, but under the hood the value will be converted to `double` because it is the only numeric type truly supported by the XLSX file format.
   * **Date and time**: a `DateTime` value, that will be converted to its `double` representation (days since 1900-01-01). Note that you must style the cell using a date/time number format to have the value appear as a date.
   * **Formula**: a string that Excel or a compatible application will interpret as a formula to calculate. Note that, unless you provide a `result` calculated by yourself (either string or numeric), no result is saved into the XLSX file. However, a spreadsheet application will calculate the result as soon as the XLSX file is opened.
+  * **Shared string**: a shared literal string of text. Contrary to inline strings, shared strings are saved in a look-up table and deduplicated in constant time, and only a reference is written into the cell. This may help to produce smaller files, but, since the shared strings must be accumulated in RAM, **writing a large number of *different* shared strings may cause high memory consumption**. Keep this in mind when choosing between inline strings and shared strings.
 
 The `style` parameter specifies the style to use for the cell being written. If `null` (or omitted), the cell is styled using the current default style of the `XlsxWriter` (see Styling). Note that in no case the style of the column or the row, if any, is used for written cells.
 
@@ -338,7 +337,7 @@ Password protection of worksheets helps preventing accidental modification of da
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter SetSheetProtection(XlsxSheetProtection sheetProtection);
+public XlsxWriter SetSheetProtection(XlsxSheetProtection sheetProtection); // since version 1.5
 
 // class XlsxSheetProtection
 public XlsxSheetProtection(
@@ -422,14 +421,14 @@ public XlsxFont(
         bool bold = false,
         bool italic = false,
         bool strike = false,
-        XlsxFont.Underline underline = XlsxFont.Underline.None);
+        XlsxFont.Underline underline = XlsxFont.Underline.None); // underline since version 1.4
 public XlsxFont With(System.Drawing.Color color);
 public XlsxFont WithName(string name);
 public XlsxFont WithSize(double size);
 public XlsxFont WithBold(bool bold = true);
 public XlsxFont WithItalic(bool italic = true);
 public XlsxFont WithStrike(bool strike = true);
-public XlsxFont WithUnderline(XlsxFont.Underline underline = XlsxFont.Underline.None);
+public XlsxFont WithUnderline(XlsxFont.Underline underline = XlsxFont.Underline.None); // since version 1.4
 ```
 
 XlsxFont.Underline enum provides underline styles None, Single, Double, SingleAccounting and DoubleAccounting.
@@ -510,7 +509,7 @@ Excel defines and reserves many "magic" number formats, and this library exposes
 * `XlsxNumberFormat.Scientific`: scientific notation with two decimals and two-digit exponent, that is the format code `"0.00E+00"`.
 * `XlsxNumberFormat.ShortDate`: localized day, month and year as digits; for a European format the equivalent code would be `"dd/mm/yyyy"` but the actual code would be locale-dependent.
 * `XlsxNumberFormat.ShortDateTime`: localized day, month and year as digits with hours and minutes; for a European format the equivalent code would be `"dd/mm/yyyy hh:mm"` but the actual code would be locale-dependent.
-* `XlsxNumberFormat.Text`: treat newly inserted numbers as text, that is the format code `"@"`.
+* `XlsxNumberFormat.Text`: treat newly inserted numbers as text, that is the format code `"@"` (since version 1.1).
 
 
 #### Alignment

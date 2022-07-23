@@ -40,6 +40,7 @@ namespace LargeXlsx
         private readonly Stream _stream;
         private readonly StreamWriter _streamWriter;
         private readonly Stylesheet _stylesheet;
+        private readonly SharedStringTable _sharedStringTable;
         private readonly List<string> _mergedCellRefs;
         private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
         private string _autoFilterRef;
@@ -52,13 +53,14 @@ namespace LargeXlsx
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, IEnumerable<XlsxColumn> columns)
+        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns)
         {
             Id = id;
             Name = name;
             CurrentRowNumber = 0;
             CurrentColumnNumber = 0;
             _stylesheet = stylesheet;
+            _sharedStringTable = sharedStringTable;
             _mergedCellRefs = new List<string>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
@@ -133,7 +135,7 @@ namespace LargeXlsx
                 Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.EscapeXmlText(value));
             CurrentColumnNumber++;
         }
-
+        
         public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
@@ -149,6 +151,14 @@ namespace LargeXlsx
                 Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.EscapeXmlText(formula));
             if (result != null) _streamWriter.Write("<v>{0}</v>", Util.EscapeXmlText(result.ToString(CultureInfo.InvariantCulture)));
             _streamWriter.Write("</c>");
+            CurrentColumnNumber++;
+        }
+
+        public void WriteSharedString(string value, XlsxStyle style)
+        {
+            EnsureRow();
+            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"s\"><v>{3}</v></c>",
+                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), _sharedStringTable.ResolveStringId(value));
             CurrentColumnNumber++;
         }
 
