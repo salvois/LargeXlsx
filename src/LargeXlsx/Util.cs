@@ -85,7 +85,8 @@ namespace LargeXlsx
         {
             if (columnIndex < 1 || columnIndex > 16384)
                 throw new ArgumentOutOfRangeException();
-            var columnName = new StringBuilder(3);
+
+            var columnName = string.Empty;
             while (true)
             {
                 if (columnIndex > 26)
