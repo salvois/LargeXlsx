@@ -66,26 +66,26 @@ namespace LargeXlsx
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
-            _streamWriter.Write("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
+            _streamWriter.WriteLine("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
                                 + "<sheetViews>"
                                 + $"<sheetView workbookViewId=\"0\" rightToLeft=\"{(rightToLeft ? 1 : 0)}\">");
             if (splitRow > 0 && splitColumn > 0)
                 FreezePanes(splitRow, splitColumn);
-            _streamWriter.Write("</sheetView></sheetViews>");
+            _streamWriter.WriteLine("</sheetView></sheetViews>");
             if (columns.Any())
                 WriteColumns(columns);
-            _streamWriter.Write("<sheetData>");
+            _streamWriter.WriteLine("<sheetData>");
         }
 
         public void Dispose()
         {
             CloseLastRow();
-            _streamWriter.Write("</sheetData>");
+            _streamWriter.WriteLine("</sheetData>");
             WriteSheetProtection();
             WriteAutoFilter();
             WriteMergedCells();
             WriteDataValidations();
-            _streamWriter.Write("</worksheet>");
+            _streamWriter.WriteLine("</worksheet>");
             _streamWriter.Dispose();
             _stream.Dispose();
         }
@@ -99,7 +99,7 @@ namespace LargeXlsx
             if (height.HasValue) _streamWriter.Write(" ht=\"{0}\" customHeight=\"1\"", height);
             if (hidden) _streamWriter.Write(" hidden=\"1\"");
             if (style != null) _streamWriter.Write(" s=\"{0}\" customFormat=\"1\"", _stylesheet.ResolveStyleId(style));
-            _streamWriter.Write(">");
+            _streamWriter.WriteLine(">");
         }
 
         public void SkipRows(int rowCount)
@@ -119,7 +119,7 @@ namespace LargeXlsx
             EnsureRow();
             var resolveStyleId = _stylesheet.ResolveStyleId(style);
             for (var i = 0; i < repeatCount; i++) 
-                _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber++), CurrentRowNumber, resolveStyleId);
+                _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber++), CurrentRowNumber, resolveStyleId);
         }
 
         public void Write(string value, XlsxStyle style)
@@ -131,7 +131,7 @@ namespace LargeXlsx
             }
 
             EnsureRow();
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>",
+            _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>",
                 Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.EscapeXmlText(value));
             CurrentColumnNumber++;
         }
@@ -139,7 +139,7 @@ namespace LargeXlsx
         public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\"><v>{3}</v></c>",
+            _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\"><v>{3}</v></c>",
                 Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), value);
             CurrentColumnNumber++;
         }
@@ -147,7 +147,7 @@ namespace LargeXlsx
         public void WriteFormula(string formula, XlsxStyle style, IConvertible result)
         {
             EnsureRow();
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"str\"><f>{3}</f>",
+            _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\" t=\"str\"><f>{3}</f>",
                 Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.EscapeXmlText(formula));
             if (result != null) _streamWriter.Write("<v>{0}</v>", Util.EscapeXmlText(result.ToString(CultureInfo.InvariantCulture)));
             _streamWriter.Write("</c>");
@@ -157,7 +157,7 @@ namespace LargeXlsx
         public void WriteSharedString(string value, XlsxStyle style)
         {
             EnsureRow();
-            _streamWriter.Write("<c r=\"{0}{1}\" s=\"{2}\" t=\"s\"><v>{3}</v></c>",
+            _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\" t=\"s\"><v>{3}</v></c>",
                 Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), _sharedStringTable.ResolveStringId(value));
             CurrentColumnNumber++;
         }
@@ -215,7 +215,7 @@ namespace LargeXlsx
         {
             if (CurrentColumnNumber > 0)
             {
-                _streamWriter.Write("</row>");
+                _streamWriter.WriteLine("</row>");
                 CurrentColumnNumber = 0;
             }
         }
@@ -223,7 +223,7 @@ namespace LargeXlsx
         private void FreezePanes(int fromRow, int fromColumn)
         {
             var topLeftCell = $"{Util.GetColumnName(fromColumn + 1)}{fromRow + 1}";
-            _streamWriter.Write("<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>"
+            _streamWriter.WriteLine("<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>"
                                 + "<selection pane=\"bottomRight\" activeCell=\"{2}\" sqref=\"{2}\"/>",
                 fromColumn, fromRow, topLeftCell);
         }
@@ -241,34 +241,34 @@ namespace LargeXlsx
                     if (column.Hidden) _streamWriter.Write(" hidden=\"1\"");
                     if (column.Width.HasValue) _streamWriter.Write(" customWidth=\"1\"");
                     if (column.Style != null) _streamWriter.Write(" style=\"{0}\"", _stylesheet.ResolveStyleId(column.Style));
-                    _streamWriter.Write("/>");
+                    _streamWriter.WriteLine("/>");
                 }
                 columnIndex += column.Count;
             }
-            _streamWriter.Write("</cols>");
+            _streamWriter.WriteLine("</cols>");
         }
 
         private void WriteAutoFilter()
         {
             if (_autoFilterRef != null)
-                _streamWriter.Write("<autoFilter ref=\"{0}\"/>", _autoFilterRef);
+                _streamWriter.WriteLine("<autoFilter ref=\"{0}\"/>", _autoFilterRef);
         }
 
         private void WriteMergedCells()
         {
             if (!_mergedCellRefs.Any())
                 return;
-            _streamWriter.Write("<mergeCells count=\"{0}\">", _mergedCellRefs.Count);
+            _streamWriter.WriteLine("<mergeCells count=\"{0}\">", _mergedCellRefs.Count);
             foreach (var mergedCell in _mergedCellRefs)
-                _streamWriter.Write("<mergeCell ref=\"{0}\"/>", mergedCell);
-            _streamWriter.Write("</mergeCells>");
+                _streamWriter.WriteLine("<mergeCell ref=\"{0}\"/>", mergedCell);
+            _streamWriter.WriteLine("</mergeCells>");
         }
 
         private void WriteDataValidations()
         {
             if (!_cellRefsByDataValidation.Any())
                 return;
-            _streamWriter.Write("<dataValidations count=\"{0}\">", _cellRefsByDataValidation.Count);
+            _streamWriter.WriteLine("<dataValidations count=\"{0}\">", _cellRefsByDataValidation.Count);
             foreach (var kvp in _cellRefsByDataValidation)
             {
                 _streamWriter.Write("<dataValidation sqref=\"{0}\" allowBlank=\"{1}\"",
@@ -286,9 +286,9 @@ namespace LargeXlsx
                 _streamWriter.Write(">");
                 if (kvp.Key.Formula1 != null) _streamWriter.Write("<formula1>{0}</formula1>", Util.EscapeXmlText(kvp.Key.Formula1));
                 if (kvp.Key.Formula2 != null) _streamWriter.Write("<formula2>{0}</formula2>", Util.EscapeXmlText(kvp.Key.Formula2));
-                _streamWriter.Write("</dataValidation>");
+                _streamWriter.WriteLine("</dataValidation>");
             }
-            _streamWriter.Write("</dataValidations>");
+            _streamWriter.WriteLine("</dataValidations>");
         }
 
         private void WriteSheetProtection()
@@ -315,7 +315,7 @@ namespace LargeXlsx
             if (!_sheetProtection.AutoFilter) _streamWriter.Write(" autoFilter=\"0\"");
             if (!_sheetProtection.PivotTables) _streamWriter.Write(" pivotTables=\"0\"");
             if (_sheetProtection.SelectUnlockedCells) _streamWriter.Write(" selectUnlockedCells=\"1\"");
-            _streamWriter.Write("/>");
+            _streamWriter.WriteLine("/>");
         }
     }
 }
