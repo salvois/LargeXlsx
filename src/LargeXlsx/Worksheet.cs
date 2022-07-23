@@ -37,6 +37,7 @@ namespace LargeXlsx
     {
         private const int MinSheetProtectionPasswordLength = 1;
         private const int MaxSheetProtectionPasswordLength = 255;
+        private const int MaxRowNumbers = 1048576;
         private readonly Stream _stream;
         private readonly StreamWriter _streamWriter;
         private readonly Stylesheet _stylesheet;
@@ -93,6 +94,8 @@ namespace LargeXlsx
         public void BeginRow(double? height, bool hidden, XlsxStyle style)
         {
             CloseLastRow();
+            if (CurrentRowNumber == MaxRowNumbers)
+                throw new InvalidOperationException($"A worksheet can contain at most {MaxRowNumbers} rows ({CurrentRowNumber + 1} attempted)");
             CurrentRowNumber++;
             CurrentColumnNumber = 1;
             _streamWriter.Write("<row r=\"{0}\"", CurrentRowNumber);
@@ -105,6 +108,8 @@ namespace LargeXlsx
         public void SkipRows(int rowCount)
         {
             CloseLastRow();
+            if (CurrentRowNumber + rowCount > MaxRowNumbers)
+                throw new InvalidOperationException($"A worksheet can contain at most {MaxRowNumbers} rows ({CurrentRowNumber + rowCount} attempted)");
             CurrentRowNumber += rowCount;
         }
 
