@@ -42,6 +42,7 @@ public static class Program
         RightToLeft.Run();
         Zip64Small.Run();
         SheetProtection.Run();
+        SharedStrings.Run();
         Large.Run();
         StyledLarge.Run();
         StyledLargeCreateStyles.Run();

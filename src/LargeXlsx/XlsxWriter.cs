@@ -42,6 +42,7 @@ namespace LargeXlsx
         private readonly ZipWriter _zipWriter;
         private readonly List<Worksheet> _worksheets;
         private readonly Stylesheet _stylesheet;
+        private readonly SharedStringTable _sharedStringTable;
         private Worksheet _currentWorksheet;
         private bool _hasFormulasWithoutResult;
         private bool _disposed;
@@ -57,6 +58,7 @@ namespace LargeXlsx
         {
             _worksheets = new List<Worksheet>();
             _stylesheet = new Stylesheet();
+            _sharedStringTable = new SharedStringTable();
             DefaultStyle = XlsxStyle.Default;
 
             _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate) { DeflateCompressionLevel = compressionLevel, UseZip64 = useZip64 });
@@ -102,6 +104,7 @@ namespace LargeXlsx
                                    + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
                                    + worksheetTags
                                    + "<Override PartName=\"/xl/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/>"
+                                   + "<Override PartName=\"/xl/sharedStrings.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml\"/>"
                                    + "</Types>");
             }
 
@@ -146,7 +149,8 @@ namespace LargeXlsx
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
                                    + worksheetTags
-                                   + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"/xl/styles.xml\" Id=\"RidSS1\"/>"
+                                   + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"/xl/styles.xml\" Id=\"RidSt1\"/>"
+                                   + "<Relationship Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings\" Target=\"/xl/sharedStrings.xml\" Id=\"RidShS1\"/>"
                                    + "</Relationships>");
             }
         }
@@ -158,7 +162,7 @@ namespace LargeXlsx
             if (_worksheets.Any(ws => string.Equals(ws.Name, name, StringComparison.InvariantCultureIgnoreCase)))
                 throw new ArgumentException($"A worksheet named \"{name}\" has already been added");
             _currentWorksheet?.Dispose();
-            _currentWorksheet = new Worksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn, rightToLeft, _stylesheet, columns ?? Enumerable.Empty<XlsxColumn>());
+            _currentWorksheet = new Worksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn, rightToLeft, _stylesheet, _sharedStringTable, columns ?? Enumerable.Empty<XlsxColumn>());
             _worksheets.Add(_currentWorksheet);
             return this;
         }
@@ -194,7 +198,7 @@ namespace LargeXlsx
                 ? DoOnWorksheet(() => _currentWorksheet.Write(value, style ?? DefaultStyle))
                 : AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
-
+        
         public XlsxWriter Write(double value, XlsxStyle style = null, int columnSpan = 1)
         {
             return columnSpan == 1
@@ -226,6 +230,13 @@ namespace LargeXlsx
                     _currentWorksheet.WriteFormula(formula, style ?? DefaultStyle, result);
                 })
                 : AddMergedCell(1, columnSpan).WriteFormula(formula, style, 1, result).Write(style, repeatCount: columnSpan - 1);
+        }
+
+        public XlsxWriter WriteSharedString(string value, XlsxStyle style = null, int columnSpan = 1)
+        {
+            return columnSpan == 1
+                ? DoOnWorksheet(() => _currentWorksheet.WriteSharedString(value, style ?? DefaultStyle))
+                : AddMergedCell(1, columnSpan).WriteSharedString(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
 
         public XlsxWriter AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)

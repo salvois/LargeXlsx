@@ -371,4 +371,34 @@ public static class XlsxWriterTest
         Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in"));
         act.Should().Throw<ArgumentException>();
     }
+
+    [Test]
+    public static void SharedStrings()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+        {
+            xlsxWriter
+                .BeginWorksheet("Sheet1")
+                .BeginRow().Write("Lorem ipsum dolor sit amet")
+                .BeginRow().WriteSharedString("Lorem ipsum dolor sit amet")
+                .BeginRow().WriteSharedString("Lorem ipsum dolor sit amet")
+                .BeginRow().WriteSharedString("consectetur adipiscing elit")
+                .BeginRow().WriteSharedString("consectetur adipiscing elit")
+                .BeginRow().WriteSharedString("Lorem ipsum dolor sit amet");
+        }
+
+        using (var package = new ExcelPackage(stream))
+        {
+            package.Workbook.Worksheets.Count.Should().Be(1);
+            var sheet = package.Workbook.Worksheets[0];
+            sheet.Name.Should().Be("Sheet1");
+            sheet.Cells["A1"].Value.Should().Be("Lorem ipsum dolor sit amet");
+            sheet.Cells["A2"].Value.Should().Be("Lorem ipsum dolor sit amet");
+            sheet.Cells["A3"].Value.Should().Be("Lorem ipsum dolor sit amet");
+            sheet.Cells["A4"].Value.Should().Be("consectetur adipiscing elit");
+            sheet.Cells["A5"].Value.Should().Be("consectetur adipiscing elit");
+            sheet.Cells["A6"].Value.Should().Be("Lorem ipsum dolor sit amet");
+        }
+    }
 }

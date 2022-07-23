@@ -119,34 +119,34 @@ namespace LargeXlsx
             using (var stream = zipWriter.WriteToStream("xl/styles.xml", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
-                streamWriter.Write("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+                streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                                    + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
                 WriteNumberFormats(streamWriter);
                 WriteFonts(streamWriter);
                 WriteFills(streamWriter);
                 WriteBorders(streamWriter);
                 WriteCellFormats(streamWriter);
-                streamWriter.Write("</styleSheet>");
+                streamWriter.WriteLine("</styleSheet>");
             }
         }
 
         private void WriteNumberFormats(StreamWriter streamWriter)
         {
-            streamWriter.Write("<numFmts count=\"{0}\">", _numberFormats.Count(nf => nf.Value >= FirstCustomNumberFormatId));
+            streamWriter.WriteLine("<numFmts count=\"{0}\">", _numberFormats.Count(nf => nf.Value >= FirstCustomNumberFormatId));
             foreach (var numberFormat in _numberFormats.Where(nf => nf.Value >= FirstCustomNumberFormatId).OrderBy(nf => nf.Value))
             {
-                streamWriter.Write("<numFmt numFmtId=\"{0}\" formatCode=\"{1}\"/>",
+                streamWriter.WriteLine("<numFmt numFmtId=\"{0}\" formatCode=\"{1}\"/>",
                     numberFormat.Value, Util.EscapeXmlAttribute(numberFormat.Key.FormatCode));
             }
-            streamWriter.Write("</numFmts>");
+            streamWriter.WriteLine("</numFmts>");
         }
 
         private void WriteFonts(StreamWriter streamWriter)
         {
-            streamWriter.Write("<fonts count=\"{0}\">", _fonts.Count);
+            streamWriter.WriteLine("<fonts count=\"{0}\">", _fonts.Count);
             foreach (var font in _fonts.OrderBy(f => f.Value))
             {
-                streamWriter.Write("<font>"
+                streamWriter.WriteLine("<font>"
                                    + "<sz val=\"{0}\"/>"
                                    + "<color rgb=\"{1}\"/>"
                                    + "<name val=\"{2}\"/>"
@@ -157,7 +157,7 @@ namespace LargeXlsx
                     font.Key.Bold ? "<b/>" : "", font.Key.Italic ? "<i/>" : "", font.Key.Strike ? "<strike/>" : "",
                     GetUnderline(font.Key.UnderlineType));
             }
-            streamWriter.Write("</fonts>");
+            streamWriter.WriteLine("</fonts>");
         }
 
         private static string GetUnderline(XlsxFont.Underline underline)
@@ -175,10 +175,10 @@ namespace LargeXlsx
 
         private void WriteFills(StreamWriter streamWriter)
         {
-            streamWriter.Write("<fills count=\"{0}\">", _fills.Count);
+            streamWriter.WriteLine("<fills count=\"{0}\">", _fills.Count);
             foreach (var fill in _fills.OrderBy(f => f.Value))
             {
-                streamWriter.Write("<fill>"
+                streamWriter.WriteLine("<fill>"
                                    + "<patternFill patternType=\"{0}\">"
                                    + "<fgColor rgb=\"{1}\"/>"
                                    + "<bgColor rgb=\"{1}\"/>"
@@ -186,23 +186,23 @@ namespace LargeXlsx
                                    + "</fill>",
                     Util.EnumToAttributeValue(fill.Key.PatternType), GetColorString(fill.Key.Color));
             }
-            streamWriter.Write("</fills>");
+            streamWriter.WriteLine("</fills>");
         }
 
         private void WriteBorders(StreamWriter streamWriter)
         {
-            streamWriter.Write($"<borders count=\"{_borders.Count}\">");
+            streamWriter.WriteLine($"<borders count=\"{_borders.Count}\">");
             foreach (var border in _borders.OrderBy(b => b.Value))
             {
-                streamWriter.Write($"<border diagonalDown=\"{Util.BoolToInt(border.Key.DiagonalDown)}\" diagonalUp=\"{Util.BoolToInt(border.Key.DiagonalUp)}\">");
+                streamWriter.WriteLine($"<border diagonalDown=\"{Util.BoolToInt(border.Key.DiagonalDown)}\" diagonalUp=\"{Util.BoolToInt(border.Key.DiagonalUp)}\">");
                 WriteBorderLine(streamWriter, "left", border.Key.Left);
                 WriteBorderLine(streamWriter, "right", border.Key.Right);
                 WriteBorderLine(streamWriter, "top", border.Key.Top);
                 WriteBorderLine(streamWriter, "bottom", border.Key.Bottom);
                 WriteBorderLine(streamWriter, "diagonal", border.Key.Diagonal);
-                streamWriter.Write("</border>");
+                streamWriter.WriteLine("</border>");
             }
-            streamWriter.Write("</borders>");
+            streamWriter.WriteLine("</borders>");
         }
 
         private static void WriteBorderLine(StreamWriter streamWriter, string elementName, XlsxBorder.Line line)
@@ -212,17 +212,17 @@ namespace LargeXlsx
                 streamWriter.Write($"<{elementName} style=\"{Util.EnumToAttributeValue(line.Style)}\">");
                 if (line.Color != Color.Transparent)
                     streamWriter.Write($"<color rgb=\"{GetColorString(line.Color)}\"/>");
-                streamWriter.Write($"</{elementName}>");
+                streamWriter.WriteLine($"</{elementName}>");
             }
             else
             {
-                streamWriter.Write($"<{elementName}/>");
+                streamWriter.WriteLine($"<{elementName}/>");
             }
         }
 
         private void WriteCellFormats(StreamWriter streamWriter)
         {
-            streamWriter.Write("<cellXfs count=\"{0}\">", _styles.Count);
+            streamWriter.WriteLine("<cellXfs count=\"{0}\">", _styles.Count);
             foreach (var style in _styles.OrderBy(s => s.Value))
             {
                 streamWriter.Write("<xf numFmtId=\"{0}\" fontId=\"{1}\" fillId=\"{2}\" borderId=\"{3}\""
@@ -241,14 +241,14 @@ namespace LargeXlsx
                     if (a.ShrinkToFit) streamWriter.Write(" shrinkToFit=\"1\"");
                     if (a.TextRotation != 0) streamWriter.Write(" textRotation=\"{0}\"", a.TextRotation);
                     if (a.WrapText) streamWriter.Write(" wrapText=\"1\"");
-                    streamWriter.Write("/></xf>");
+                    streamWriter.WriteLine("/></xf>");
                 }
                 else
                 {
-                    streamWriter.Write("/>");
+                    streamWriter.WriteLine("/>");
                 }
             }
-            streamWriter.Write("</cellXfs>");
+            streamWriter.WriteLine("</cellXfs>");
         }
 
         private static string GetColorString(Color color) => $"{color.R:x2}{color.G:x2}{color.B:x2}";
