@@ -40,7 +40,8 @@ namespace LargeXlsx
 
         public static string EscapeXmlText(string value)
         {
-            var sb = new StringBuilder(value.Length);
+            var sb = CachedStringBuilder.Get(value.Length);
+
             foreach (var c in value)
             {
                 if (c == '<') sb.Append("&lt;");
@@ -54,7 +55,8 @@ namespace LargeXlsx
 
         public static string EscapeXmlAttribute(string value)
         {
-            var sb = new StringBuilder(value.Length);
+            var sb = CachedStringBuilder.Get(value.Length);
+
             foreach (var c in value)
             {
                 if (c == '<') sb.Append("&lt;");
@@ -83,9 +85,7 @@ namespace LargeXlsx
         {
             if (columnIndex < 1 || columnIndex > 16384)
                 throw new ArgumentOutOfRangeException();
-
-            var columnName = string.Empty;
-
+            var columnName = new StringBuilder(3);
             while (true)
             {
                 if (columnIndex > 26)
