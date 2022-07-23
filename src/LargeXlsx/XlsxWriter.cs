@@ -83,6 +83,7 @@ namespace LargeXlsx
             {
                 _currentWorksheet?.Dispose();
                 _stylesheet.Save(_zipWriter);
+                _sharedStringTable.Save(_zipWriter);
                 Save();
                 _zipWriter.Dispose();
             }
