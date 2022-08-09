@@ -70,7 +70,7 @@ namespace LargeXlsx
             _streamWriter.WriteLine("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
                                 + "<sheetViews>"
                                 + $"<sheetView workbookViewId=\"0\" rightToLeft=\"{(rightToLeft ? 1 : 0)}\">");
-            if (splitRow > 0 && splitColumn > 0)
+            if (splitRow > 0 || splitColumn > 0)
                 FreezePanes(splitRow, splitColumn);
             _streamWriter.WriteLine("</sheetView></sheetViews>");
             if (columns.Any())
@@ -228,9 +228,22 @@ namespace LargeXlsx
         private void FreezePanes(int fromRow, int fromColumn)
         {
             var topLeftCell = $"{Util.GetColumnName(fromColumn + 1)}{fromRow + 1}";
-            _streamWriter.WriteLine("<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>"
-                                + "<selection pane=\"bottomRight\" activeCell=\"{2}\" sqref=\"{2}\"/>",
-                fromColumn, fromRow, topLeftCell);
+
+            if (fromRow > 0 && fromColumn > 0)
+            {
+                _streamWriter.Write("<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>",
+                    fromColumn, fromRow, topLeftCell);
+            }
+            else if (fromRow > 0)
+            {
+                _streamWriter.Write("<pane ySplit=\"{0}\" topLeftCell=\"{1}\" activePane=\"bottomRight\" state=\"frozen\"/>",
+                    fromRow, topLeftCell);
+            }
+            else if (fromColumn > 0)
+            {
+                _streamWriter.Write("<pane xSplit=\"{0}\" topLeftCell=\"{1}\" activePane=\"bottomRight\" state=\"frozen\"/>",
+                    fromColumn, topLeftCell);
+            }
         }
 
         private void WriteColumns(IEnumerable<XlsxColumn> columns)
