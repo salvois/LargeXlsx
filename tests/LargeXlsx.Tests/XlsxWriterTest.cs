@@ -247,13 +247,17 @@ public static class XlsxWriterTest
         {
             xlsxWriter
                 .BeginWorksheet("Sheet1", splitRow: 1, splitColumn: 2)
-                .BeginWorksheet("Sheet2", splitRow: 2, splitColumn: 1);
+                .BeginWorksheet("Sheet2", splitRow: 2, splitColumn: 1)
+                .BeginWorksheet("OnlyRows", splitRow: 1)
+                .BeginWorksheet("OnlyCols", splitColumn: 1);
         }
 
         using (var package = new ExcelPackage(stream))
         {
             package.Workbook.Worksheets[0].View.ActiveCell.Should().Be("C2");
             package.Workbook.Worksheets[1].View.ActiveCell.Should().Be("B3");
+            package.Workbook.Worksheets[2].View.ActiveCell.Should().Be("A2");
+            package.Workbook.Worksheets[3].View.ActiveCell.Should().Be("B1");
         }
     }
 

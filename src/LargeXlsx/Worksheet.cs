@@ -123,7 +123,7 @@ namespace LargeXlsx
         {
             EnsureRow();
             var resolveStyleId = _stylesheet.ResolveStyleId(style);
-            for (var i = 0; i < repeatCount; i++) 
+            for (var i = 0; i < repeatCount; i++)
                 _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber++), CurrentRowNumber, resolveStyleId);
         }
 
@@ -140,7 +140,7 @@ namespace LargeXlsx
                 Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.EscapeXmlText(value));
             CurrentColumnNumber++;
         }
-        
+
         public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
@@ -228,20 +228,22 @@ namespace LargeXlsx
         private void FreezePanes(int fromRow, int fromColumn)
         {
             var topLeftCell = $"{Util.GetColumnName(fromColumn + 1)}{fromRow + 1}";
-
             if (fromRow > 0 && fromColumn > 0)
             {
-                _streamWriter.Write("<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>",
+                _streamWriter.WriteLine("<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>"
+                                        + "<selection pane=\"bottomRight\" activeCell=\"{2}\" sqref=\"{2}\"/>",
                     fromColumn, fromRow, topLeftCell);
             }
             else if (fromRow > 0)
             {
-                _streamWriter.Write("<pane ySplit=\"{0}\" topLeftCell=\"{1}\" activePane=\"bottomRight\" state=\"frozen\"/>",
+                _streamWriter.WriteLine("<pane ySplit=\"{0}\" topLeftCell=\"{1}\" activePane=\"bottomLeft\" state=\"frozen\"/>"
+                                    + "<selection pane=\"bottomLeft\" activeCell=\"{1}\" sqref=\"{1}\"/>",
                     fromRow, topLeftCell);
             }
             else if (fromColumn > 0)
             {
-                _streamWriter.Write("<pane xSplit=\"{0}\" topLeftCell=\"{1}\" activePane=\"bottomRight\" state=\"frozen\"/>",
+                _streamWriter.WriteLine("<pane xSplit=\"{0}\" topLeftCell=\"{1}\" activePane=\"topRight\" state=\"frozen\"/>"
+                                    + "<selection pane=\"topRight\" activeCell=\"{1}\" sqref=\"{1}\"/>",
                     fromColumn, topLeftCell);
             }
         }
