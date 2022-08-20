@@ -36,7 +36,7 @@ using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
-    public class XlsxWriter : IDisposable
+    public sealed class XlsxWriter : IDisposable
     {
         private const int MaxSheetNameLength = 31;
         private readonly ZipWriter _zipWriter;
@@ -66,29 +66,15 @@ namespace LargeXlsx
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this); // just in case we add a finalizer later.
-        }
-
-        public bool IsDisposed => _disposed;
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed)
-            {
-                return;
-            }
-
-            if (disposing)
+            if (!_disposed)
             {
                 _currentWorksheet?.Dispose();
                 _stylesheet.Save(_zipWriter);
                 _sharedStringTable.Save(_zipWriter);
                 Save();
                 _zipWriter.Dispose();
+                _disposed = true;
             }
-
-            _disposed = true;
         }
 
         private void Save()

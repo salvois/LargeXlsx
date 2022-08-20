@@ -38,6 +38,18 @@ namespace LargeXlsx.Tests;
 public static class XlsxWriterTest
 {
     [Test]
+    public static void DisposeWriterTwice()
+    {
+        using var stream = new MemoryStream();
+        var xlsxWriter = new XlsxWriter(stream);
+        xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().Write("Hello World!");
+        xlsxWriter.Dispose();
+
+        var act = () => xlsxWriter.Dispose();
+        act.Should().NotThrow();
+    }
+
+    [Test]
     public static void InsertionPoint()
     {
         using var stream = new MemoryStream();
