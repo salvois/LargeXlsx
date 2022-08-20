@@ -25,7 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -34,9 +33,10 @@ namespace LargeXlsx
 {
     internal static class Util
     {
+        private const int MaxColumnCount = 16384;
         private static readonly DateTime ExcelEpoch = new DateTime(1900, 1, 1);
         private static readonly DateTime Date19000301 = new DateTime(1900, 3, 1);
-        private static readonly Dictionary<int, string> _columnNames = new Dictionary<int, string>();
+        private static readonly string[] CachedColumnNames = new string[MaxColumnCount];
 
         public static string EscapeXmlText(string value)
         {
@@ -70,32 +70,31 @@ namespace LargeXlsx
 
         public static string GetColumnName(int columnIndex)
         {
-            if (!_columnNames.TryGetValue(columnIndex, out var columnName))
+            if (columnIndex < 1 || columnIndex > MaxColumnCount)
+                throw new InvalidOperationException($"A worksheet can contain at most {MaxColumnCount} columns ({columnIndex} attempted)");
+            var columnName = CachedColumnNames[columnIndex - 1];
+            if (columnName == null)
             {
                 columnName = GetColumnNameInternal(columnIndex);
-                _columnNames.Add(columnIndex, columnName);
+                CachedColumnNames[columnIndex - 1] = columnName;
             }
-
             return columnName;
         }
 
         private static string GetColumnNameInternal(int columnIndex)
         {
-            if (columnIndex < 1 || columnIndex > 16384)
-                throw new ArgumentOutOfRangeException();
-
-            var columnName = string.Empty;
-
+            var columnName = new StringBuilder(3); // This has been measured to be faster than string concatenation
             while (true)
             {
                 if (columnIndex > 26)
                 {
                     columnIndex = Math.DivRem(columnIndex - 1, 26, out var rem);
-                    columnName = (char) ('A' + rem) + columnName;
+                    columnName.Insert(0, (char)('A' + rem));
                 }
                 else
                 {
-                    return (char) ('A' + columnIndex - 1) + columnName;
+                    columnName.Insert(0, (char)('A' + columnIndex - 1));
+                    return columnName.ToString();
                 }
             }
         }

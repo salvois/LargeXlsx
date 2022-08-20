@@ -73,7 +73,7 @@ public static class UtilTest
     public static void GetColumnNameOutOfRange(int index)
     {
         Func<string> act = () => Util.GetColumnName(index);
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        act.Should().Throw<InvalidOperationException>();
     }
 
     [TestCase("2020-05-06T18:27:00", 43957.76875)]
