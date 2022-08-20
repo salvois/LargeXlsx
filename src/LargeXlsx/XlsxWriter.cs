@@ -45,6 +45,7 @@ namespace LargeXlsx
         private readonly SharedStringTable _sharedStringTable;
         private Worksheet _currentWorksheet;
         private bool _hasFormulasWithoutResult;
+        private bool _disposed;
 
         public XlsxStyle DefaultStyle { get; private set; }
         public int CurrentRowNumber => _currentWorksheet.CurrentRowNumber;
@@ -65,11 +66,29 @@ namespace LargeXlsx
 
         public void Dispose()
         {
-            _currentWorksheet?.Dispose();
-            _stylesheet.Save(_zipWriter);
-            _sharedStringTable.Save(_zipWriter);
-            Save();
-            _zipWriter.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this); // just in case we add a finalizer later.
+        }
+
+        public bool IsDisposed => _disposed;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                _currentWorksheet?.Dispose();
+                _stylesheet.Save(_zipWriter);
+                _sharedStringTable.Save(_zipWriter);
+                Save();
+                _zipWriter.Dispose();
+            }
+
+            _disposed = true;
         }
 
         private void Save()
