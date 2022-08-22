@@ -86,6 +86,11 @@ namespace LargeXlsx
 
         public int ResolveStyleId(XlsxStyle style)
         {
+            if (ReferenceEquals(style, XlsxStyle.Default))
+            {
+                return 0;
+            }
+
             if (_styles.TryGetValue(style, out var id))
                 return id;
 
