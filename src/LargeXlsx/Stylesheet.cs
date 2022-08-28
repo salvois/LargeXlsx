@@ -52,6 +52,8 @@ namespace LargeXlsx
         private int _nextFillId;
         private int _nextNumberFormatId;
         private int _nextStyleId;
+        private XlsxStyle _lastUsedStyle;
+        private int _lastUsedStyleId;
 
         public Stylesheet()
         {
@@ -91,8 +93,16 @@ namespace LargeXlsx
                 return 0;
             }
 
+            if (ReferenceEquals(style, _lastUsedStyle))
+            {
+                return _lastUsedStyleId;
+            }
+
             if (_styles.TryGetValue(style, out var id))
+            {
+                SetLastUsedStyle(style, id);
                 return id;
+            }
 
             if (!_fonts.TryGetValue(style.Font, out var fontId))
             {
@@ -114,8 +124,12 @@ namespace LargeXlsx
                 numberFormatId = _nextNumberFormatId++;
                 _numberFormats.Add(style.NumberFormat, numberFormatId);
             }
+
             id = _nextStyleId++;
             _styles.Add(style, id);
+
+            SetLastUsedStyle(style, id);
+
             return id;
         }
 
@@ -133,6 +147,12 @@ namespace LargeXlsx
                 WriteCellFormats(streamWriter);
                 streamWriter.WriteLine("</styleSheet>");
             }
+        }
+
+        private void SetLastUsedStyle(XlsxStyle style, int styleId)
+        {
+            _lastUsedStyle = style;
+            _lastUsedStyleId = styleId;
         }
 
         private void WriteNumberFormats(StreamWriter streamWriter)
