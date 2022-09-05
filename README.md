@@ -218,6 +218,23 @@ When writing empty cells you can also specify a `repeatCount` parameter, to writ
 
 The `columnSpan` parameter can be used to let the cell span multiple columns. When greater than 1, a merged range of such cells is created (see Merged cells), content is written to the first cell of the range and the insertion point is advanced after the merged cells. Note that `xlsxWriter.Write(value, columnSpan: count)` is actually a shortcut for `xlsxWriter.AddMergedCells(1, count).Write(value).Write(repeatCount: count - 1)`. Since a merged cell is created, **writing a large number of cells with columnSpan greater than 1 may cause high memory consumption**.
 
+#### Writing hyperlinks
+
+The XLSX file format provides two ways to insert hyperlinks (either to a web site or cells perhaps in a differet workbook): using a specific "hyperlinks" section in the worksheet and using the `HYPERLINK` formula in a cell.
+
+The former, which is the one used by the "Insert hyperlink" command in Excel, is not used by this library, because it would require to accumulate all hyperlinks in RAM until the worksheet is complete.
+
+The latter can be used with `WriteFormula` while streaming content into the worksheet, thus is more appropriate for the use case of this library, for example:
+
+```csharp
+xlsxWriter.WriteFormula(
+    "HYPERLINK(\"https://github.com/salvois/LargeXlsx\", \"LargeXlsx on GitHub\")",
+    XlsxStyle.Default.With(XlsxFont.Default.WithUnderline().With(Color.Blue));
+```
+
+where the first parameter of the `HYPERLINK` formula is the link location and the second parameter, which is optional, is a friendly name to display into the cell. Styling may be used to show the cell contains a link.
+
+#### Skipping columns
 
 Like rows, cells can be skipped using the `SkipColumns` method, to move the insertion point to the right by the specified count of cells, that will be left empty and unstyled (unless column or row styles are in place).
 

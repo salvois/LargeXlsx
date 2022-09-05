@@ -46,6 +46,7 @@ public static class Simple
         var highlightStyle = XlsxStyle.Default.With(new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88)));
         var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
         var borderedStyle = highlightStyle.With(XlsxBorder.Around(new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Dashed)));
+        var hyperlinkStyle = XlsxStyle.Default.With(XlsxFont.Default.WithUnderline().With(Color.Blue));
 
         xlsxWriter
             .BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Unformatted(count: 2), XlsxColumn.Formatted(width: 20) })
@@ -65,6 +66,8 @@ public static class Simple
             .BeginRow().Write("Underline").Write().Write("Double", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.Double)))
             .BeginRow().Write("Underline").Write().Write("SingleAccounting", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.SingleAccounting)))
             .BeginRow().Write("Underline").Write().Write("DoubleAccounting", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.DoubleAccounting)))
+            .BeginRow().Write("Hyperlink").Write().WriteFormula("HYPERLINK(\"https://github.com/salvois/LargeXlsx\")", hyperlinkStyle)
+            .BeginRow().Write("Hyperlink w/alias").Write().WriteFormula("HYPERLINK(\"https://github.com/salvois/LargeXlsx\", \"LargeXlsx on GitHub\")", hyperlinkStyle)
             .SetAutoFilter(2, 1, xlsxWriter.CurrentRowNumber - 1, 3);
     }
 }

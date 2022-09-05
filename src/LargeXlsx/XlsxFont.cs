@@ -63,12 +63,12 @@ namespace LargeXlsx
             UnderlineType = underline;
         }
 
-        public XlsxFont With(Color color) => new XlsxFont(Name, Size, color, Bold, Italic, Strike);
-        public XlsxFont WithName(string name) => new XlsxFont(name, Size, Color, Bold, Italic, Strike);
-        public XlsxFont WithSize(double size) => new XlsxFont(Name, size, Color, Bold, Italic, Strike);
-        public XlsxFont WithBold(bool bold = true) => new XlsxFont(Name, Size, Color, bold, Italic, Strike);
-        public XlsxFont WithItalic(bool italic = true) => new XlsxFont(Name, Size, Color, Bold, italic, Strike);
-        public XlsxFont WithStrike(bool strike = true) => new XlsxFont(Name, Size, Color, Bold, Italic, strike);
+        public XlsxFont With(Color color) => new XlsxFont(Name, Size, color, Bold, Italic, Strike, UnderlineType);
+        public XlsxFont WithName(string name) => new XlsxFont(name, Size, Color, Bold, Italic, Strike, UnderlineType);
+        public XlsxFont WithSize(double size) => new XlsxFont(Name, size, Color, Bold, Italic, Strike, UnderlineType);
+        public XlsxFont WithBold(bool bold = true) => new XlsxFont(Name, Size, Color, bold, Italic, Strike, UnderlineType);
+        public XlsxFont WithItalic(bool italic = true) => new XlsxFont(Name, Size, Color, Bold, italic, Strike, UnderlineType);
+        public XlsxFont WithStrike(bool strike = true) => new XlsxFont(Name, Size, Color, Bold, Italic, strike, UnderlineType);
         public XlsxFont WithUnderline(Underline underline = Underline.Single) => new XlsxFont(Name, Size, Color, Bold, Italic, Strike, underline);
 
         public override bool Equals(object obj)
