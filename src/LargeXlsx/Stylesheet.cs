@@ -1,7 +1,7 @@
 ﻿/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020 Salvatore ISAJA. All rights reserved.
+Copyright 2020-2022 Salvatore ISAJA. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -84,52 +84,28 @@ namespace LargeXlsx
 
             _styles = new Dictionary<XlsxStyle, int> { [XlsxStyle.Default] = 0 };
             _nextStyleId = 1;
+            _lastUsedStyle = XlsxStyle.Default;
+            _lastUsedStyleId = 0;
         }
 
         public int ResolveStyleId(XlsxStyle style)
         {
-            if (ReferenceEquals(style, XlsxStyle.Default))
-            {
-                return 0;
-            }
-
             if (ReferenceEquals(style, _lastUsedStyle))
-            {
                 return _lastUsedStyleId;
-            }
-
-            if (_styles.TryGetValue(style, out var id))
+            if (!_styles.TryGetValue(style, out var id))
             {
-                SetLastUsedStyle(style, id);
-                return id;
+                if (!_fonts.ContainsKey(style.Font))
+                    _fonts.Add(style.Font, _nextFontId++);
+                if (!_fills.ContainsKey(style.Fill))
+                    _fills.Add(style.Fill, _nextFillId++);
+                if (!_borders.ContainsKey(style.Border))
+                    _borders.Add(style.Border, _nextBorderId++);
+                if (!_numberFormats.ContainsKey(style.NumberFormat))
+                    _numberFormats.Add(style.NumberFormat, _nextNumberFormatId++);
+                id = _nextStyleId++;
+                _styles.Add(style, id);
             }
-
-            if (!_fonts.TryGetValue(style.Font, out var fontId))
-            {
-                fontId = _nextFontId++;
-                _fonts.Add(style.Font, fontId);
-            }
-            if (!_fills.TryGetValue(style.Fill, out var fillId))
-            {
-                fillId = _nextFillId++;
-                _fills.Add(style.Fill, fillId);
-            }
-            if (!_borders.TryGetValue(style.Border, out var borderId))
-            {
-                borderId = _nextBorderId++;
-                _borders.Add(style.Border, borderId);
-            }
-            if (!_numberFormats.TryGetValue(style.NumberFormat, out var numberFormatId))
-            {
-                numberFormatId = _nextNumberFormatId++;
-                _numberFormats.Add(style.NumberFormat, numberFormatId);
-            }
-
-            id = _nextStyleId++;
-            _styles.Add(style, id);
-
             SetLastUsedStyle(style, id);
-
             return id;
         }
 
