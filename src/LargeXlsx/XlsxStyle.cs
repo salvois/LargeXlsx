@@ -38,6 +38,7 @@ namespace LargeXlsx
         public XlsxBorder Border { get; }
         public XlsxNumberFormat NumberFormat { get; }
         public XlsxAlignment Alignment { get; }
+        private int? _hashCode;
 
         public XlsxStyle(XlsxFont font, XlsxFill fill, XlsxBorder border, XlsxNumberFormat numberFormat, XlsxAlignment alignment)
         {
@@ -62,18 +63,30 @@ namespace LargeXlsx
 
         public bool Equals(XlsxStyle other)
         {
-            return other != null && Font.Equals(other.Font) && Fill.Equals(other.Fill) && Border.Equals(other.Border) && NumberFormat.Equals(other.NumberFormat)
-                   && Alignment == other.Alignment;
+            return ReferenceEquals(this, other)
+                || other != null
+                && Font.Equals(other.Font)
+                && Fill.Equals(other.Fill)
+                && Border.Equals(other.Border)
+                && NumberFormat.Equals(other.NumberFormat)
+                && Alignment.Equals(other.Alignment);
         }
 
         public override int GetHashCode()
+        {
+            if (!_hashCode.HasValue)
+                _hashCode = DoGetHashCode();
+            return _hashCode.Value;
+        }
+
+        private int DoGetHashCode()
         {
             var hashCode = 428549002;
             hashCode = hashCode * -1521134295 + Font.GetHashCode();
             hashCode = hashCode * -1521134295 + Fill.GetHashCode();
             hashCode = hashCode * -1521134295 + Border.GetHashCode();
             hashCode = hashCode * -1521134295 + NumberFormat.GetHashCode();
-            if (Alignment != null) hashCode = hashCode * -1521134295 + Alignment.GetHashCode();
+            hashCode = hashCode * -1521134295 + Alignment.GetHashCode();
             return hashCode;
         }
 
