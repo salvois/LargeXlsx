@@ -58,7 +58,7 @@ namespace LargeXlsx
             using (var stream = zipWriter.WriteToStream("xl/sharedStrings.xml", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
-                streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+                streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
                 foreach (var si in _stringItems.OrderBy(s => s.Value))
                     streamWriter.WriteLine("<si><t>{0}</t></si>", Util.EscapeXmlText(si.Key));

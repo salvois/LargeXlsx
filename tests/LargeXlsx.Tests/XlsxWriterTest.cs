@@ -147,17 +147,17 @@ public static class XlsxWriterTest
             foreach (var cell in new[] { "A1", "B1", "C1", "A2", "B2", "C2" })
             {
                 sheet.Cells[cell].Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-                sheet.Cells[cell].Style.Fill.BackgroundColor.Rgb.Should().Be("004586");
+                sheet.Cells[cell].Style.Fill.BackgroundColor.Rgb.Should().Be("FF004586");
                 sheet.Cells[cell].Style.Font.Bold.Should().BeTrue();
-                sheet.Cells[cell].Style.Font.Color.Rgb.Should().Be("ffffff");
+                sheet.Cells[cell].Style.Font.Color.Rgb.Should().Be("FFFFFFFF");
                 sheet.Cells[cell].Style.Font.Name.Should().Be("Segoe UI");
                 sheet.Cells[cell].Style.Font.Size.Should().Be(9);
             }
 
             sheet.Cells["C3"].Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-            sheet.Cells["C3"].Style.Fill.BackgroundColor.Rgb.Should().Be("ffff88");
+            sheet.Cells["C3"].Style.Fill.BackgroundColor.Rgb.Should().Be("FFFFFF88");
             sheet.Cells["C3"].Style.Font.Bold.Should().BeFalse();
-            sheet.Cells["C3"].Style.Font.Color.Rgb.Should().Be("000000");
+            sheet.Cells["C3"].Style.Font.Color.Rgb.Should().Be("FF000000");
             sheet.Cells["C3"].Style.Font.Name.Should().Be("Calibri");
             sheet.Cells["C3"].Style.Font.Size.Should().Be(11);
 
@@ -165,7 +165,7 @@ public static class XlsxWriterTest
             {
                 sheet.Cells[cell].Style.Fill.PatternType.Should().Be(ExcelFillStyle.None);
                 sheet.Cells[cell].Style.Font.Bold.Should().BeFalse();
-                sheet.Cells[cell].Style.Font.Color.Rgb.Should().Be("000000");
+                sheet.Cells[cell].Style.Font.Color.Rgb.Should().Be("FF000000");
                 sheet.Cells[cell].Style.Font.Name.Should().Be("Calibri");
                 sheet.Cells[cell].Style.Font.Size.Should().Be(11);
             }

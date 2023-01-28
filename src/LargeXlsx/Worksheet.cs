@@ -67,9 +67,10 @@ namespace LargeXlsx
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
-            _streamWriter.WriteLine("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
+            _streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                                + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
                                 + "<sheetViews>"
-                                + $"<sheetView workbookViewId=\"0\" rightToLeft=\"{(rightToLeft ? 1 : 0)}\">");
+                                + $"<sheetView workbookViewId=\"0\" rightToLeft=\"{Util.BoolToInt(rightToLeft)}\">");
             if (splitRow > 0 || splitColumn > 0)
                 FreezePanes(splitRow, splitColumn);
             _streamWriter.WriteLine("</sheetView></sheetViews>");
@@ -153,7 +154,7 @@ namespace LargeXlsx
         {
             EnsureRow();
             _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\" t=\"b\"><v>{3}</v></c>",
-                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), value ? 1 : 0);
+                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.BoolToInt(value));
             CurrentColumnNumber++;
         }
 

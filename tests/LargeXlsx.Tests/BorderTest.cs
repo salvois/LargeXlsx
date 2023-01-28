@@ -57,7 +57,7 @@ public static class BorderTest
                 .Write("Test", XlsxStyle.Default.With(new XlsxBorder(top: new XlsxBorder.Line(Color.DeepPink, borderStyle))));
         using var package = new ExcelPackage(stream);
         var border = package.Workbook.Worksheets[0].Cells["A1"].Style.Border;
-        border.Top.Color.Rgb.Should().Be("ff1493");
+        border.Top.Color.Rgb.Should().Be("FFFF1493");
         border.Top.Style.Should().Be(expected);
     }
 

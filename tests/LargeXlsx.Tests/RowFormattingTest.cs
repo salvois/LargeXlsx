@@ -71,7 +71,7 @@ public static class RowFormattingTest
         using var package = new ExcelPackage(stream);
         var row = package.Workbook.Worksheets[0].Row(1);
         row.Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-        row.Style.Fill.BackgroundColor.Rgb.Should().Be("004586");
-        row.Style.Font.Color.Rgb.Should().Be("ffffff");
+        row.Style.Fill.BackgroundColor.Rgb.Should().Be("FF004586");
+        row.Style.Font.Color.Rgb.Should().Be("FFFFFFFF");
     }
 }

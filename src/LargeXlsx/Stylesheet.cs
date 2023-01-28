@@ -114,7 +114,7 @@ namespace LargeXlsx
             using (var stream = zipWriter.WriteToStream("xl/styles.xml", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
-                streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+                streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
                 WriteNumberFormats(streamWriter);
                 WriteFonts(streamWriter);
@@ -154,8 +154,12 @@ namespace LargeXlsx
                                    + "<family val=\"2\"/>"
                                    + "{3}{4}{5}{6}"
                                    + "</font>",
-                    font.Key.Size, GetColorString(font.Key.Color), Util.EscapeXmlAttribute(font.Key.Name),
-                    font.Key.Bold ? "<b/>" : "", font.Key.Italic ? "<i/>" : "", font.Key.Strike ? "<strike/>" : "",
+                    font.Key.Size,
+                    GetColorString(font.Key.Color),
+                    Util.EscapeXmlAttribute(font.Key.Name),
+                    font.Key.Bold ? "<b val=\"true\"/>" : "",
+                    font.Key.Italic ? "<i val=\"true\"/>" : "",
+                    font.Key.Strike ? "<strike val=\"true\"/>" : "",
                     GetUnderline(font.Key.UnderlineType));
             }
             streamWriter.WriteLine("</fonts>");
@@ -252,6 +256,6 @@ namespace LargeXlsx
             streamWriter.WriteLine("</cellXfs>");
         }
 
-        private static string GetColorString(Color color) => $"{color.R:x2}{color.G:x2}{color.B:x2}";
+        private static string GetColorString(Color color) => $"{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
     }
 }

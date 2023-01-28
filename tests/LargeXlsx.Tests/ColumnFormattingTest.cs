@@ -56,8 +56,8 @@ public static class ColumnFormattingTest
         using var package = new ExcelPackage(stream);
         var style = package.Workbook.Worksheets[0].Column(1).Style;
         style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-        style.Fill.BackgroundColor.Rgb.Should().Be("004586");
-        style.Font.Color.Rgb.Should().Be("ffffff");
+        style.Fill.BackgroundColor.Rgb.Should().Be("FF004586");
+        style.Font.Color.Rgb.Should().Be("FFFFFFFF");
     }
 
     [Test]
