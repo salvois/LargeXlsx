@@ -110,7 +110,8 @@ public static class XlsxWriterTest
                 .BeginRow().Write("Row3").Write(42).Write(-1, highlightStyle)
                 .BeginRow().Write("Row4").SkipColumns(1).Write(new DateTime(2020, 5, 6, 18, 27, 0), dateStyle)
                 .SkipRows(2)
-                .BeginRow().Write("Row7", columnSpan: 2).Write(3.14159265359);
+                .BeginRow().Write("Row7", columnSpan: 2).Write(3.14159265359)
+                .BeginRow().Write("Row8").Write(false).Write(true);
         }
 
         using (var package = new ExcelPackage(stream))
@@ -137,6 +138,9 @@ public static class XlsxWriterTest
             sheet.Cells["A7"].Value.Should().Be("Row7");
             sheet.Cells["B7"].Value.Should().BeNull();
             sheet.Cells["C7"].Value.Should().Be(3.14159265359);
+            sheet.Cells["A8"].Value.Should().Be("Row8");
+            sheet.Cells["B8"].Value.Should().Be(false);
+            sheet.Cells["C8"].Value.Should().Be(true);
 
             sheet.Cells["A7:B7"].Merge.Should().BeTrue();
 

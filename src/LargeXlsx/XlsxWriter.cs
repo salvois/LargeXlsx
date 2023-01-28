@@ -208,6 +208,13 @@ namespace LargeXlsx
             return Write(Util.DateToDouble(value), style, columnSpan);
         }
 
+        public XlsxWriter Write(bool value, XlsxStyle style = null, int columnSpan = 1)
+        {
+            return columnSpan == 1
+                ? DoOnWorksheet(() => _currentWorksheet.Write(value, style ?? DefaultStyle))
+                : AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
+        }
+
         public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, IConvertible result = null)
         {
             return columnSpan == 1

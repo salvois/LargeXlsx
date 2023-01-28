@@ -74,6 +74,7 @@ The output is like:
 
 ## Changelog
 
+* 1.7: Write overload for booleans
 * 1.6: Opt-in shared string table (for memory vs. file size trade-off)
 * 1.5: Password protection of sheets
 * 1.4: Support for font underline, thanks to [Sergey Bochkin](https://github.com/sbochkin)
@@ -199,6 +200,7 @@ public XlsxWriter Write(double value, XlsxStyle style = null, int columnSpan = 1
 public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 1);
 public XlsxWriter Write(int value, XlsxStyle style = null, int columnSpan = 1);
 public XlsxWriter Write(DateTime value, XlsxStyle style = null, int columnSpan = 1);
+public XlsxWriter Write(bool value, XlsxStyle style = null, int columnSpan = 1); // since version 1.7
 public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, IConvertible result = null);
 public XlsxWriter WriteSharedString(string value, XlsxStyle style = null, int columnSpan = 1); // since version 1.6
 ```
@@ -209,6 +211,7 @@ public XlsxWriter WriteSharedString(string value, XlsxStyle style = null, int co
   * **String**: an inline literal string of text; if the string is `null` the method falls back on the "nothing" case. The value of an inline string is written into the cell, thus resulting in low memory consumption but possibly larger files (see, in contrast, shared strings).
   * **Number**: a numeric constant, that will be interpreted as a `double` value; convenience overloads accepting `int` and `decimal` are provided, but under the hood the value will be converted to `double` because it is the only numeric type truly supported by the XLSX file format.
   * **Date and time**: a `DateTime` value, that will be converted to its `double` representation (days since 1900-01-01). Note that you must style the cell using a date/time number format to have the value appear as a date.
+  * **Boolean**: a `bool` value, that will appear either as `TRUE` or `FALSE`
   * **Formula**: a string that Excel or a compatible application will interpret as a formula to calculate. Note that, unless you provide a `result` calculated by yourself (either string or numeric), no result is saved into the XLSX file. However, a spreadsheet application will calculate the result as soon as the XLSX file is opened.
   * **Shared string**: a shared literal string of text. Contrary to inline strings, shared strings are saved in a look-up table and deduplicated in constant time, and only a reference is written into the cell. This may help to produce smaller files, but, since the shared strings must be accumulated in RAM, **writing a large number of *different* shared strings may cause high memory consumption**. Keep this in mind when choosing between inline strings and shared strings.
 

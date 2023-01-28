@@ -149,6 +149,14 @@ namespace LargeXlsx
             CurrentColumnNumber++;
         }
 
+        public void Write(bool value, XlsxStyle style)
+        {
+            EnsureRow();
+            _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\" t=\"b\"><v>{3}</v></c>",
+                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), value ? 1 : 0);
+            CurrentColumnNumber++;
+        }
+
         public void WriteFormula(string formula, XlsxStyle style, IConvertible result)
         {
             EnsureRow();

@@ -68,6 +68,7 @@ public static class Simple
             .BeginRow().Write("Underline").Write().Write("DoubleAccounting", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.DoubleAccounting)))
             .BeginRow().Write("Hyperlink").Write().WriteFormula("HYPERLINK(\"https://github.com/salvois/LargeXlsx\")", hyperlinkStyle)
             .BeginRow().Write("Hyperlink w/alias").Write().WriteFormula("HYPERLINK(\"https://github.com/salvois/LargeXlsx\", \"LargeXlsx on GitHub\")", hyperlinkStyle)
+            .BeginRow().Write("Boolean").Write(false).Write(true)
             .SetAutoFilter(2, 1, xlsxWriter.CurrentRowNumber - 1, 3);
     }
 }
