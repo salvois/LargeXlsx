@@ -145,8 +145,27 @@ namespace LargeXlsx
         public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
-            _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\"><v>{3}</v></c>",
-                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), value);
+
+            _streamWriter.Write("<c r=\"");
+            _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
+            _streamWriter.Write(CurrentRowNumber);
+            _streamWriter.Write("\" s=\"");
+            _streamWriter.Write(_stylesheet.ResolveStyleId(style));
+            _streamWriter.Write("\"><v>");
+            _streamWriter.Write(value);
+            _streamWriter.WriteLine("</v></c>");
+
+            // the following commented-out code is more intuitive than that above, but the
+            // additional string allocations put pressure on the small object heap because
+            // the code is in a hot path (at least in the Zip64Huge examples which write
+            // numbers to the cells).
+            //
+            //_streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\"><v>{3}</v></c>",
+            //    Util.GetColumnName(CurrentColumnNumber),
+            //    CurrentRowNumber,
+            //    _stylesheet.ResolveStyleId(style),
+            //    value);
+
             CurrentColumnNumber++;
         }
 
