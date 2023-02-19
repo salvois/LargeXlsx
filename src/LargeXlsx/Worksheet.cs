@@ -123,9 +123,18 @@ namespace LargeXlsx
         public void Write(XlsxStyle style, int repeatCount)
         {
             EnsureRow();
-            var resolveStyleId = _stylesheet.ResolveStyleId(style);
+            var styleId = _stylesheet.ResolveStyleId(style);
             for (var i = 0; i < repeatCount; i++)
-                _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\"/>", Util.GetColumnName(CurrentColumnNumber++), CurrentRowNumber, resolveStyleId);
+            {
+                // <c r="{0}{1}" s="{2}"/>
+                _streamWriter.Write("<c r=\"");
+                _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
+                _streamWriter.Write(CurrentRowNumber);
+                _streamWriter.Write("\" s=\"");
+                _streamWriter.Write(styleId);
+                _streamWriter.WriteLine("\"/>");
+                CurrentColumnNumber++;
+            }
         }
 
         public void Write(string value, XlsxStyle style)
@@ -137,15 +146,22 @@ namespace LargeXlsx
             }
 
             EnsureRow();
-            _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\" t=\"inlineStr\"><is><t>{3}</t></is></c>",
-                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.EscapeXmlText(value));
+            // <c r="{0}{1}" s="{2}" t="inlineStr"><is><t>{3}</t></is></c>
+            _streamWriter.Write("<c r=\"");
+            _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
+            _streamWriter.Write(CurrentRowNumber);
+            _streamWriter.Write("\" s=\"");
+            _streamWriter.Write(_stylesheet.ResolveStyleId(style));
+            _streamWriter.Write("\" t=\"inlineStr\"><is><t>");
+            _streamWriter.Write(Util.EscapeXmlText(value));
+            _streamWriter.WriteLine("</t></is></c>");
             CurrentColumnNumber++;
         }
 
         public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
-
+            // <c r="{0}{1}" s="{2}"><v>{3}</v></c>
             _streamWriter.Write("<c r=\"");
             _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
             _streamWriter.Write(CurrentRowNumber);
@@ -154,44 +170,58 @@ namespace LargeXlsx
             _streamWriter.Write("\"><v>");
             _streamWriter.Write(value);
             _streamWriter.WriteLine("</v></c>");
-
-            // the following commented-out code is more intuitive than that above, but the
-            // additional string allocations put pressure on the small object heap because
-            // the code is in a hot path (at least in the Zip64Huge examples which write
-            // numbers to the cells).
-            //
-            //_streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\"><v>{3}</v></c>",
-            //    Util.GetColumnName(CurrentColumnNumber),
-            //    CurrentRowNumber,
-            //    _stylesheet.ResolveStyleId(style),
-            //    value);
-
             CurrentColumnNumber++;
         }
 
         public void Write(bool value, XlsxStyle style)
         {
             EnsureRow();
-            _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\" t=\"b\"><v>{3}</v></c>",
-                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.BoolToInt(value));
+            // <c r="{0}{1}" s="{2}" t="b"><v>{3}</v></c>
+            _streamWriter.Write("<c r=\"");
+            _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
+            _streamWriter.Write(CurrentRowNumber);
+            _streamWriter.Write("\" s=\"");
+            _streamWriter.Write(_stylesheet.ResolveStyleId(style));
+            _streamWriter.Write("\" t=\"b\"><v>");
+            _streamWriter.Write(Util.BoolToInt(value));
+            _streamWriter.WriteLine("</v></c>");
             CurrentColumnNumber++;
         }
 
         public void WriteFormula(string formula, XlsxStyle style, IConvertible result)
         {
+            // <c r="{0}{1}" s="{2}" t="str"><f>{3}</f><v>{4}</v></c>
             EnsureRow();
-            _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\" t=\"str\"><f>{3}</f>",
-                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), Util.EscapeXmlText(formula));
-            if (result != null) _streamWriter.Write("<v>{0}</v>", Util.EscapeXmlText(result.ToString(CultureInfo.InvariantCulture)));
-            _streamWriter.Write("</c>");
+            _streamWriter.Write("<c r=\"");
+            _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
+            _streamWriter.Write(CurrentRowNumber);
+            _streamWriter.Write("\" s=\"");
+            _streamWriter.Write(_stylesheet.ResolveStyleId(style));
+            _streamWriter.Write("\" t=\"str\"><f>");
+            _streamWriter.Write(Util.EscapeXmlText(formula));
+            _streamWriter.WriteLine("</f>");
+            if (result != null)
+            {
+                _streamWriter.Write("<v>");
+                _streamWriter.Write(Util.EscapeXmlText(result.ToString(CultureInfo.InvariantCulture)));
+                _streamWriter.Write("</v>");
+            }
+            _streamWriter.WriteLine("</c>");
             CurrentColumnNumber++;
         }
 
         public void WriteSharedString(string value, XlsxStyle style)
         {
             EnsureRow();
-            _streamWriter.WriteLine("<c r=\"{0}{1}\" s=\"{2}\" t=\"s\"><v>{3}</v></c>",
-                Util.GetColumnName(CurrentColumnNumber), CurrentRowNumber, _stylesheet.ResolveStyleId(style), _sharedStringTable.ResolveStringId(value));
+            // <c r="{0}{1}" s="{2}" t="s"><v>{3}</v></c>
+            _streamWriter.Write("<c r=\"");
+            _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
+            _streamWriter.Write(CurrentRowNumber);
+            _streamWriter.Write("\" s=\"");
+            _streamWriter.Write(_stylesheet.ResolveStyleId(style));
+            _streamWriter.Write("\" t=\"s\"><v>");
+            _streamWriter.Write(_sharedStringTable.ResolveStringId(value));
+            _streamWriter.WriteLine("</v></c>");
             CurrentColumnNumber++;
         }
 
