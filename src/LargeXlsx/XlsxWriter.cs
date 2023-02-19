@@ -159,23 +159,33 @@ namespace LargeXlsx
 
         public XlsxWriter SkipRows(int rowCount)
         {
-            return DoOnWorksheet(() => _currentWorksheet.SkipRows(rowCount));
+            CheckInWorksheet();
+            _currentWorksheet.SkipRows(rowCount);
+            return this;
         }
 
         public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null)
         {
-            return DoOnWorksheet(() => _currentWorksheet.BeginRow(height, hidden, style));
+            CheckInWorksheet();
+            _currentWorksheet.BeginRow(height, hidden, style);
+            return this;
         }
 
         public XlsxWriter SkipColumns(int columnCount)
         {
-            return DoOnWorksheet(() => _currentWorksheet.SkipColumns(columnCount));
+            CheckInWorksheet();
+            _currentWorksheet.SkipColumns(columnCount);
+            return this;
         }
 
         public XlsxWriter Write(XlsxStyle style = null, int columnSpan = 1, int repeatCount = 1)
         {
             if (columnSpan == 1)
-                return DoOnWorksheet(() => _currentWorksheet.Write(style ?? DefaultStyle, repeatCount));
+            {
+                CheckInWorksheet();
+                _currentWorksheet.Write(style ?? DefaultStyle, repeatCount);
+                return this;
+            }
 
             for (var i = 0; i < repeatCount; i++)
                 AddMergedCell(1, columnSpan).Write(style, 1).Write(style, repeatCount: columnSpan - 1);
@@ -184,16 +194,26 @@ namespace LargeXlsx
 
         public XlsxWriter Write(string value, XlsxStyle style = null, int columnSpan = 1)
         {
-            return columnSpan == 1
-                ? DoOnWorksheet(() => _currentWorksheet.Write(value, style ?? DefaultStyle))
-                : AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
+            if (columnSpan == 1)
+            {
+                CheckInWorksheet();
+                _currentWorksheet.Write(value, style ?? DefaultStyle);
+                return this;
+            }
+
+            return AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
-        
+
         public XlsxWriter Write(double value, XlsxStyle style = null, int columnSpan = 1)
         {
-            return columnSpan == 1
-                ? DoOnWorksheet(() => _currentWorksheet.Write(value, style ?? DefaultStyle))
-                : AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
+            if (columnSpan == 1)
+            {
+                CheckInWorksheet();
+                _currentWorksheet.Write(value, style ?? DefaultStyle);
+                return this;
+            }
+
+            return AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
 
         public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 1)
@@ -213,32 +233,46 @@ namespace LargeXlsx
 
         public XlsxWriter Write(bool value, XlsxStyle style = null, int columnSpan = 1)
         {
-            return columnSpan == 1
-                ? DoOnWorksheet(() => _currentWorksheet.Write(value, style ?? DefaultStyle))
-                : AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
+            if (columnSpan == 1)
+            {
+                CheckInWorksheet();
+                _currentWorksheet.Write(value, style ?? DefaultStyle);
+                return this;
+            }
+
+            return AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
 
         public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, IConvertible result = null)
         {
-            return columnSpan == 1
-                ? DoOnWorksheet(() =>
-                {
-                    if (result == null) _hasFormulasWithoutResult = true;
-                    _currentWorksheet.WriteFormula(formula, style ?? DefaultStyle, result);
-                })
-                : AddMergedCell(1, columnSpan).WriteFormula(formula, style, 1, result).Write(style, repeatCount: columnSpan - 1);
+            if (columnSpan == 1)
+            {
+                CheckInWorksheet();
+                if (result == null) _hasFormulasWithoutResult = true;
+                _currentWorksheet.WriteFormula(formula, style ?? DefaultStyle, result);
+                return this;
+            }
+
+            return AddMergedCell(1, columnSpan).WriteFormula(formula, style, 1, result).Write(style, repeatCount: columnSpan - 1);
         }
 
         public XlsxWriter WriteSharedString(string value, XlsxStyle style = null, int columnSpan = 1)
         {
-            return columnSpan == 1
-                ? DoOnWorksheet(() => _currentWorksheet.WriteSharedString(value, style ?? DefaultStyle))
-                : AddMergedCell(1, columnSpan).WriteSharedString(value, style, 1).Write(style, repeatCount: columnSpan - 1);
+            if (columnSpan == 1)
+            {
+                CheckInWorksheet();
+                _currentWorksheet.WriteSharedString(value, style ?? DefaultStyle);
+                return this;
+            }
+
+            return AddMergedCell(1, columnSpan).WriteSharedString(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
 
         public XlsxWriter AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)
         {
-            return DoOnWorksheet(() => _currentWorksheet.AddMergedCell(fromRow, fromColumn, rowCount, columnCount));
+            CheckInWorksheet();
+            _currentWorksheet.AddMergedCell(fromRow, fromColumn, rowCount, columnCount);
+            return this;
         }
 
         public XlsxWriter AddMergedCell(int rowCount, int columnCount)
@@ -248,12 +282,16 @@ namespace LargeXlsx
 
         public XlsxWriter SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount)
         {
-            return DoOnWorksheet(() => _currentWorksheet.SetAutoFilter(fromRow, fromColumn, rowCount, columnCount));
+            CheckInWorksheet();
+            _currentWorksheet.SetAutoFilter(fromRow, fromColumn, rowCount, columnCount);
+            return this;
         }
 
         public XlsxWriter AddDataValidation(int fromRow, int fromColumn, int rowCount, int columnCount, XlsxDataValidation dataValidation)
         {
-            return DoOnWorksheet(() => _currentWorksheet.AddDataValidation(fromRow, fromColumn, rowCount, columnCount, dataValidation));
+            CheckInWorksheet();
+            _currentWorksheet.AddDataValidation(fromRow, fromColumn, rowCount, columnCount, dataValidation);
+            return this;
         }
 
         public XlsxWriter AddDataValidation(int rowCount, int columnCount, XlsxDataValidation dataValidation)
@@ -274,15 +312,15 @@ namespace LargeXlsx
 
         public XlsxWriter SetSheetProtection(XlsxSheetProtection sheetProtection)
         {
-            return DoOnWorksheet(() => _currentWorksheet.SetSheetProtection(sheetProtection));
+            CheckInWorksheet();
+            _currentWorksheet.SetSheetProtection(sheetProtection);
+            return this;
         }
 
-        private XlsxWriter DoOnWorksheet(Action action)
+        private void CheckInWorksheet()
         {
             if (_currentWorksheet == null)
                 throw new InvalidOperationException($"{nameof(BeginWorksheet)} not called");
-            action();
-            return this;
         }
     }
 }
