@@ -28,7 +28,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Xml.Xsl;
+using System.Xml;
 using SharpCompress.Common;
 using SharpCompress.Compressors.Deflate;
 using SharpCompress.Writers;
@@ -71,9 +74,32 @@ namespace LargeXlsx
                 _currentWorksheet?.Dispose();
                 _stylesheet.Save(_zipWriter);
                 _sharedStringTable.Save(_zipWriter);
+                WriteAppProps();
                 Save();
                 _zipWriter.Dispose();
                 _disposed = true;
+            }
+        }
+
+        const string PropNS = "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties";
+
+        void WriteAppProps()
+        {
+            // write the assembly name and version to the app.xml.
+            using (var appStream = _zipWriter.WriteToStream("docProps/app.xml", new ZipWriterEntryOptions()))
+            using (var xw = XmlWriter.Create(appStream)) {
+                xw.WriteStartElement("Properties", PropNS);
+                var asmName = Assembly.GetExecutingAssembly().GetName();
+                xw.WriteStartElement("Application", PropNS);
+                xw.WriteValue(asmName.Name);
+                xw.WriteEndElement();
+                xw.WriteStartElement("AppVersion", PropNS);
+                var v = asmName.Version;
+                // AppVersion must be of the format XX.YYYY
+                var ver = $"{v.Major:00}.{v.Minor:00}{v.Build:00}";
+                xw.WriteValue(ver);
+                xw.WriteEndElement();
+                xw.WriteEndElement();
             }
         }
 
@@ -95,6 +121,7 @@ namespace LargeXlsx
                                    + worksheetTags
                                    + "<Override PartName=\"/xl/sharedStrings.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml\"/>"
                                    + "<Override PartName=\"/xl/_rels/workbook.xml.rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+                                   + "<Override PartName=\"/docProps/app.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/>"
                                    + "</Types>");
             }
 
@@ -104,6 +131,7 @@ namespace LargeXlsx
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
                                    + "<Relationship Id=\"rIdWb1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/>"
+                                   + "<Relationship Id=\"app\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties\" Target=\"docProps/app.xml\"/>"
                                    + "</Relationships>");
             }
 
