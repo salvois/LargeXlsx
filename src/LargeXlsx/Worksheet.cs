@@ -47,6 +47,8 @@ namespace LargeXlsx
         private string _autoFilterRef;
         private string _autoFilterAbsoluteRef;
         private XlsxSheetProtection _sheetProtection;
+        private bool _needsCellRef;
+        private bool _needsRowRef;
 
         public int Id { get; }
         public string Name { get; }
@@ -67,27 +69,27 @@ namespace LargeXlsx
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
-            _streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+            _streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                 + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
                                 + "<sheetViews>"
                                 + $"<sheetView workbookViewId=\"0\" rightToLeft=\"{Util.BoolToInt(rightToLeft)}\">");
             if (splitRow > 0 || splitColumn > 0)
                 FreezePanes(splitRow, splitColumn);
-            _streamWriter.WriteLine("</sheetView></sheetViews>");
+            _streamWriter.Write("</sheetView></sheetViews>");
             if (columns.Any())
                 WriteColumns(columns);
-            _streamWriter.WriteLine("<sheetData>");
+            _streamWriter.Write("<sheetData>");
         }
 
         public void Dispose()
         {
             CloseLastRow();
-            _streamWriter.WriteLine("</sheetData>");
+            _streamWriter.Write("</sheetData>");
             WriteSheetProtection();
             WriteAutoFilter();
             WriteMergedCells();
             WriteDataValidations();
-            _streamWriter.WriteLine("</worksheet>");
+            _streamWriter.Write("</worksheet>");
             _streamWriter.Dispose();
             _stream.Dispose();
         }
@@ -99,16 +101,18 @@ namespace LargeXlsx
                 throw new InvalidOperationException($"A worksheet can contain at most {MaxRowNumbers} rows ({CurrentRowNumber + 1} attempted)");
             CurrentRowNumber++;
             CurrentColumnNumber = 1;
-            _streamWriter.Write("<row r=\"{0}\"", CurrentRowNumber);
+            _streamWriter.Write("<row");
+            WriteRowRef();
             if (height.HasValue) _streamWriter.Write(" ht=\"{0}\" customHeight=\"1\"", height);
             if (hidden) _streamWriter.Write(" hidden=\"1\"");
             if (style != null) _streamWriter.Write(" s=\"{0}\" customFormat=\"1\"", _stylesheet.ResolveStyleId(style));
-            _streamWriter.WriteLine(">");
+            _streamWriter.Write(">");
         }
 
         public void SkipRows(int rowCount)
         {
             CloseLastRow();
+            _needsRowRef = true;
             if (CurrentRowNumber + rowCount > MaxRowNumbers)
                 throw new InvalidOperationException($"A worksheet can contain at most {MaxRowNumbers} rows ({CurrentRowNumber + rowCount} attempted)");
             CurrentRowNumber += rowCount;
@@ -117,7 +121,49 @@ namespace LargeXlsx
         public void SkipColumns(int columnCount)
         {
             EnsureRow();
+            // after skipping columns a cell ref is needed
+            _needsCellRef = true;
             CurrentColumnNumber += columnCount;
+        }
+
+        void WriteRowRef()
+        {
+            if (_needsRowRef)
+            {
+                _streamWriter.Write(" r =\"");
+                _streamWriter.Write(CurrentRowNumber);
+                _streamWriter.Write("\"");
+                _needsRowRef = false;
+            }
+        }
+
+        void WriteCellRef()
+        {
+            if (_needsCellRef)
+            {
+                _streamWriter.Write(" r =\"");
+                _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
+                _streamWriter.Write(CurrentRowNumber);
+                _streamWriter.Write("\"");
+                _needsCellRef = false;
+            }
+        }
+
+        void WriteStyle(int styleId)
+        {
+            // style 0 is the default, and doesn't need to be explicitly written
+            if (styleId != 0)
+            {
+                _streamWriter.Write(" s=\"");
+                _streamWriter.Write(styleId);
+                _streamWriter.Write("\"");
+            }
+        }
+
+        void WriteStyle(XlsxStyle style)
+        {
+            int styleId = _stylesheet.ResolveStyleId(style);
+            WriteStyle(styleId);
         }
 
         public void Write(XlsxStyle style, int repeatCount)
@@ -127,14 +173,12 @@ namespace LargeXlsx
             for (var i = 0; i < repeatCount; i++)
             {
                 // <c r="{0}{1}" s="{2}"/>
-                _streamWriter.Write("<c r=\"");
-                _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
-                _streamWriter.Write(CurrentRowNumber);
-                _streamWriter.Write("\" s=\"");
-                _streamWriter.Write(styleId);
-                _streamWriter.WriteLine("\"/>");
-                CurrentColumnNumber++;
+                _streamWriter.Write("<c");
+                WriteCellRef();
+                WriteStyle(styleId);
+                _streamWriter.Write("/>");
             }
+            CurrentColumnNumber++;
         }
 
         public void Write(string value, XlsxStyle style)
@@ -144,17 +188,14 @@ namespace LargeXlsx
                 Write(style, 1);
                 return;
             }
-
             EnsureRow();
             // <c r="{0}{1}" s="{2}" t="inlineStr"><is><t>{3}</t></is></c>
-            _streamWriter.Write("<c r=\"");
-            _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
-            _streamWriter.Write(CurrentRowNumber);
-            _streamWriter.Write("\" s=\"");
-            _streamWriter.Write(_stylesheet.ResolveStyleId(style));
-            _streamWriter.Write("\" t=\"inlineStr\"><is><t>");
+            _streamWriter.Write("<c");
+            WriteCellRef();
+            WriteStyle(style);
+            _streamWriter.Write(" t=\"inlineStr\"><is><t>");
             _streamWriter.Write(Util.EscapeXmlText(value));
-            _streamWriter.WriteLine("</t></is></c>");
+            _streamWriter.Write("</t></is></c>");
             CurrentColumnNumber++;
         }
 
@@ -162,14 +203,12 @@ namespace LargeXlsx
         {
             EnsureRow();
             // <c r="{0}{1}" s="{2}"><v>{3}</v></c>
-            _streamWriter.Write("<c r=\"");
-            _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
-            _streamWriter.Write(CurrentRowNumber);
-            _streamWriter.Write("\" s=\"");
-            _streamWriter.Write(_stylesheet.ResolveStyleId(style));
-            _streamWriter.Write("\"><v>");
+            _streamWriter.Write("<c");
+            WriteCellRef();
+            WriteStyle(style);
+            _streamWriter.Write("><v>");
             _streamWriter.Write(value);
-            _streamWriter.WriteLine("</v></c>");
+            _streamWriter.Write("</v></c>");
             CurrentColumnNumber++;
         }
 
@@ -177,14 +216,12 @@ namespace LargeXlsx
         {
             EnsureRow();
             // <c r="{0}{1}" s="{2}" t="b"><v>{3}</v></c>
-            _streamWriter.Write("<c r=\"");
-            _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
-            _streamWriter.Write(CurrentRowNumber);
-            _streamWriter.Write("\" s=\"");
-            _streamWriter.Write(_stylesheet.ResolveStyleId(style));
-            _streamWriter.Write("\" t=\"b\"><v>");
+            _streamWriter.Write("<c");
+            WriteCellRef();
+            WriteStyle(style);
+            _streamWriter.Write(" t=\"b\"><v>");
             _streamWriter.Write(Util.BoolToInt(value));
-            _streamWriter.WriteLine("</v></c>");
+            _streamWriter.Write("</v></c>");
             CurrentColumnNumber++;
         }
 
@@ -192,21 +229,19 @@ namespace LargeXlsx
         {
             // <c r="{0}{1}" s="{2}" t="str"><f>{3}</f><v>{4}</v></c>
             EnsureRow();
-            _streamWriter.Write("<c r=\"");
-            _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
-            _streamWriter.Write(CurrentRowNumber);
-            _streamWriter.Write("\" s=\"");
-            _streamWriter.Write(_stylesheet.ResolveStyleId(style));
-            _streamWriter.Write("\" t=\"str\"><f>");
+            _streamWriter.Write("<c");
+            WriteCellRef();
+            WriteStyle(style);
+            _streamWriter.Write(" t=\"str\"><f>");
             _streamWriter.Write(Util.EscapeXmlText(formula));
-            _streamWriter.WriteLine("</f>");
+            _streamWriter.Write("</f>");
             if (result != null)
             {
                 _streamWriter.Write("<v>");
                 _streamWriter.Write(Util.EscapeXmlText(result.ToString(CultureInfo.InvariantCulture)));
                 _streamWriter.Write("</v>");
             }
-            _streamWriter.WriteLine("</c>");
+            _streamWriter.Write("</c>");
             CurrentColumnNumber++;
         }
 
@@ -214,14 +249,12 @@ namespace LargeXlsx
         {
             EnsureRow();
             // <c r="{0}{1}" s="{2}" t="s"><v>{3}</v></c>
-            _streamWriter.Write("<c r=\"");
-            _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
-            _streamWriter.Write(CurrentRowNumber);
-            _streamWriter.Write("\" s=\"");
-            _streamWriter.Write(_stylesheet.ResolveStyleId(style));
-            _streamWriter.Write("\" t=\"s\"><v>");
+            _streamWriter.Write("<c");
+            WriteCellRef();
+            WriteStyle(style);
+            _streamWriter.Write(" t=\"s\"><v>");
             _streamWriter.Write(_sharedStringTable.ResolveStringId(value));
-            _streamWriter.WriteLine("</v></c>");
+            _streamWriter.Write("</v></c>");
             CurrentColumnNumber++;
         }
 
@@ -278,7 +311,7 @@ namespace LargeXlsx
         {
             if (CurrentColumnNumber > 0)
             {
-                _streamWriter.WriteLine("</row>");
+                _streamWriter.Write("</row>");
                 CurrentColumnNumber = 0;
             }
         }
@@ -288,19 +321,19 @@ namespace LargeXlsx
             var topLeftCell = $"{Util.GetColumnName(fromColumn + 1)}{fromRow + 1}";
             if (fromRow > 0 && fromColumn > 0)
             {
-                _streamWriter.WriteLine("<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>"
+                _streamWriter.Write("<pane xSplit=\"{0}\" ySplit=\"{1}\" topLeftCell=\"{2}\" activePane=\"bottomRight\" state=\"frozen\"/>"
                                         + "<selection pane=\"bottomRight\" activeCell=\"{2}\" sqref=\"{2}\"/>",
                     fromColumn, fromRow, topLeftCell);
             }
             else if (fromRow > 0)
             {
-                _streamWriter.WriteLine("<pane ySplit=\"{0}\" topLeftCell=\"{1}\" activePane=\"bottomLeft\" state=\"frozen\"/>"
+                _streamWriter.Write("<pane ySplit=\"{0}\" topLeftCell=\"{1}\" activePane=\"bottomLeft\" state=\"frozen\"/>"
                                     + "<selection pane=\"bottomLeft\" activeCell=\"{1}\" sqref=\"{1}\"/>",
                     fromRow, topLeftCell);
             }
             else if (fromColumn > 0)
             {
-                _streamWriter.WriteLine("<pane xSplit=\"{0}\" topLeftCell=\"{1}\" activePane=\"topRight\" state=\"frozen\"/>"
+                _streamWriter.Write("<pane xSplit=\"{0}\" topLeftCell=\"{1}\" activePane=\"topRight\" state=\"frozen\"/>"
                                     + "<selection pane=\"topRight\" activeCell=\"{1}\" sqref=\"{1}\"/>",
                     fromColumn, topLeftCell);
             }
@@ -319,34 +352,34 @@ namespace LargeXlsx
                     if (column.Hidden) _streamWriter.Write(" hidden=\"1\"");
                     if (column.Width.HasValue) _streamWriter.Write(" customWidth=\"1\"");
                     if (column.Style != null) _streamWriter.Write(" style=\"{0}\"", _stylesheet.ResolveStyleId(column.Style));
-                    _streamWriter.WriteLine("/>");
+                    _streamWriter.Write("/>");
                 }
                 columnIndex += column.Count;
             }
-            _streamWriter.WriteLine("</cols>");
+            _streamWriter.Write("</cols>");
         }
 
         private void WriteAutoFilter()
         {
             if (_autoFilterRef != null)
-                _streamWriter.WriteLine("<autoFilter ref=\"{0}\"/>", _autoFilterRef);
+                _streamWriter.Write("<autoFilter ref=\"{0}\"/>", _autoFilterRef);
         }
 
         private void WriteMergedCells()
         {
             if (!_mergedCellRefs.Any())
                 return;
-            _streamWriter.WriteLine("<mergeCells count=\"{0}\">", _mergedCellRefs.Count);
+            _streamWriter.Write("<mergeCells count=\"{0}\">", _mergedCellRefs.Count);
             foreach (var mergedCell in _mergedCellRefs)
-                _streamWriter.WriteLine("<mergeCell ref=\"{0}\"/>", mergedCell);
-            _streamWriter.WriteLine("</mergeCells>");
+                _streamWriter.Write("<mergeCell ref=\"{0}\"/>", mergedCell);
+            _streamWriter.Write("</mergeCells>");
         }
 
         private void WriteDataValidations()
         {
             if (!_cellRefsByDataValidation.Any())
                 return;
-            _streamWriter.WriteLine("<dataValidations count=\"{0}\">", _cellRefsByDataValidation.Count);
+            _streamWriter.Write("<dataValidations count=\"{0}\">", _cellRefsByDataValidation.Count);
             foreach (var kvp in _cellRefsByDataValidation)
             {
                 _streamWriter.Write("<dataValidation sqref=\"{0}\" allowBlank=\"{1}\"",
@@ -364,9 +397,9 @@ namespace LargeXlsx
                 _streamWriter.Write(">");
                 if (kvp.Key.Formula1 != null) _streamWriter.Write("<formula1>{0}</formula1>", Util.EscapeXmlText(kvp.Key.Formula1));
                 if (kvp.Key.Formula2 != null) _streamWriter.Write("<formula2>{0}</formula2>", Util.EscapeXmlText(kvp.Key.Formula2));
-                _streamWriter.WriteLine("</dataValidation>");
+                _streamWriter.Write("</dataValidation>");
             }
-            _streamWriter.WriteLine("</dataValidations>");
+            _streamWriter.Write("</dataValidations>");
         }
 
         private void WriteSheetProtection()
@@ -393,7 +426,7 @@ namespace LargeXlsx
             if (!_sheetProtection.AutoFilter) _streamWriter.Write(" autoFilter=\"0\"");
             if (!_sheetProtection.PivotTables) _streamWriter.Write(" pivotTables=\"0\"");
             if (_sheetProtection.SelectUnlockedCells) _streamWriter.Write(" selectUnlockedCells=\"1\"");
-            _streamWriter.WriteLine("/>");
+            _streamWriter.Write("/>");
         }
     }
 }
