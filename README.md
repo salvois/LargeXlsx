@@ -74,7 +74,7 @@ The output is like:
 
 ## Changelog
 
-* 1.7: Write overload for booleans, more performance improvements thanks to [Antony Corbett](https://github.com/AntonyCorbett)
+* 1.7: Write overload for booleans, more performance improvements thanks to [Antony Corbett](https://github.com/AntonyCorbett) and [Mark Pflug](https://github.com/MarkPflug)
 * 1.6: Opt-in shared string table (for memory vs. file size trade-off)
 * 1.5: Password protection of sheets
 * 1.4: Support for font underline, thanks to [Sergey Bochkin](https://github.com/sbochkin)

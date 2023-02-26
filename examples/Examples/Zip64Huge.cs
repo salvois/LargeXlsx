@@ -35,7 +35,7 @@ namespace Examples;
 public static class Zip64Huge
 {
     private const int RowCount = 1000000;
-    private const int ColumnCount = 180;
+    private const int ColumnCount = 200;
 
     public static void Run()
     {
