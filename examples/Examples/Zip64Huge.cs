@@ -28,7 +28,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using LargeXlsx;
-using SharpCompress.Compressors.Deflate;
 
 namespace Examples;
 
@@ -41,7 +40,7 @@ public static class Zip64Huge
     {
         var stopwatch = Stopwatch.StartNew();
         using (var stream = new FileStream($"{nameof(Zip64Huge)}.xlsx", FileMode.Create, FileAccess.Write))
-        using (var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.BestSpeed, useZip64: true))
+        using (var xlsxWriter = new XlsxWriter(stream, compressionLevel: XlsxCompressionLevel.Level1, useZip64: true))
         {
             xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
             xlsxWriter.BeginRow();

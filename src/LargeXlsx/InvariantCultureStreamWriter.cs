@@ -33,7 +33,7 @@ namespace LargeXlsx
 {
     internal class InvariantCultureStreamWriter : StreamWriter
     {
-        public InvariantCultureStreamWriter(Stream stream) : base(stream, Encoding.UTF8) { }
+        public InvariantCultureStreamWriter(Stream stream) : base(stream, Encoding.UTF8, bufferSize: 1048576, leaveOpen: true) { }
         public override IFormatProvider FormatProvider => CultureInfo.InvariantCulture;
     }
 }

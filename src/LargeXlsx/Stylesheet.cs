@@ -28,8 +28,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using SharpCompress.Writers.Zip;
+using ICSharpCode.SharpZipLib.Zip;
 
 namespace LargeXlsx
 {
@@ -109,10 +108,10 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipWriter zipWriter)
+        public void Save(ZipOutputStream zipOutputStream)
         {
-            using (var stream = zipWriter.WriteToStream("xl/styles.xml", new ZipWriterEntryOptions()))
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+            zipOutputStream.PutNextEntry(new ZipEntry("xl/styles.xml"));
+            using (var streamWriter = new InvariantCultureStreamWriter(zipOutputStream))
             {
                 streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");

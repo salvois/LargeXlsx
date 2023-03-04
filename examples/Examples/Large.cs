@@ -29,7 +29,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using LargeXlsx;
-using SharpCompress.Compressors.Deflate;
 
 namespace Examples;
 
@@ -49,7 +48,7 @@ public static class Large
     private static void DoRun()
     {
         using var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, CompressionLevel.Level3);
+        using var xlsxWriter = new XlsxWriter(stream, XlsxCompressionLevel.Level2);
         var whiteFont = new XlsxFont("Calibri", 11, Color.White, bold: true);
         var blueFill = new XlsxFill(Color.FromArgb(0, 0x45, 0x86));
         var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);

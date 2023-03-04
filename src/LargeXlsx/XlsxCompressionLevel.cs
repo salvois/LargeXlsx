@@ -24,17 +24,19 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-using System.IO;
-using LargeXlsx;
-
-namespace Examples;
-
-public static class Zip64Small
+namespace LargeXlsx
 {
-    public static void Run()
+    public enum XlsxCompressionLevel
     {
-        using var stream = new FileStream($"{nameof(Zip64Small)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, useZip64: true);
-        xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("A1").Write("B1").BeginRow().Write("A2").Write("B2");
+        Level0,
+        Level1,
+        Level2,
+        Level3,
+        Level4,
+        Level5,
+        Level6,
+        Level7,
+        Level8,
+        Level9
     }
 }

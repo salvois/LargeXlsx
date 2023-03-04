@@ -29,17 +29,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using SharpCompress.Common;
-using SharpCompress.Compressors.Deflate;
-using SharpCompress.Writers;
-using SharpCompress.Writers.Zip;
+using ICSharpCode.SharpZipLib.Zip;
 
 namespace LargeXlsx
 {
     public sealed class XlsxWriter : IDisposable
     {
         private const int MaxSheetNameLength = 31;
-        private readonly ZipWriter _zipWriter;
+        private readonly ZipOutputStream _zipOutputStream;
         private readonly List<Worksheet> _worksheets;
         private readonly Stylesheet _stylesheet;
         private readonly SharedStringTable _sharedStringTable;
@@ -54,14 +51,16 @@ namespace LargeXlsx
         public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
         public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
 
-        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3, bool useZip64 = false)
+        public XlsxWriter(Stream stream, XlsxCompressionLevel compressionLevel = XlsxCompressionLevel.Level2, bool useZip64 = false)
         {
             _worksheets = new List<Worksheet>();
             _stylesheet = new Stylesheet();
             _sharedStringTable = new SharedStringTable();
             DefaultStyle = XlsxStyle.Default;
-
-            _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate) { DeflateCompressionLevel = compressionLevel, UseZip64 = useZip64 });
+            _zipOutputStream = new ZipOutputStream(stream);
+            _zipOutputStream.UseZip64 = useZip64 ? UseZip64.Dynamic : UseZip64.Off;
+            _zipOutputStream.IsStreamOwner = false;
+            _zipOutputStream.SetLevel((int)compressionLevel);
         }
 
         public void Dispose()
@@ -69,18 +68,18 @@ namespace LargeXlsx
             if (!_disposed)
             {
                 _currentWorksheet?.Dispose();
-                _stylesheet.Save(_zipWriter);
-                _sharedStringTable.Save(_zipWriter);
+                _stylesheet.Save(_zipOutputStream);
+                _sharedStringTable.Save(_zipOutputStream);
                 Save();
-                _zipWriter.Dispose();
+                _zipOutputStream.Dispose();
                 _disposed = true;
             }
         }
 
         private void Save()
         {
-            using (var stream = _zipWriter.WriteToStream("[Content_Types].xml", new ZipWriterEntryOptions()))
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+            _zipOutputStream.PutNextEntry(new ZipEntry("[Content_Types].xml"));
+            using (var streamWriter = new InvariantCultureStreamWriter(_zipOutputStream))
             {
                 var worksheetTags = new StringBuilder();
                 foreach (var worksheet in _worksheets)
@@ -98,8 +97,8 @@ namespace LargeXlsx
                                    + "</Types>");
             }
 
-            using (var stream = _zipWriter.WriteToStream("_rels/.rels", new ZipWriterEntryOptions()))
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+            _zipOutputStream.PutNextEntry(new ZipEntry("_rels/.rels"));
+            using (var streamWriter = new InvariantCultureStreamWriter(_zipOutputStream))
             {
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
@@ -107,8 +106,8 @@ namespace LargeXlsx
                                    + "</Relationships>");
             }
 
-            using (var stream = _zipWriter.WriteToStream("xl/workbook.xml", new ZipWriterEntryOptions()))
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+            _zipOutputStream.PutNextEntry(new ZipEntry("xl/workbook.xml"));
+            using (var streamWriter = new InvariantCultureStreamWriter(_zipOutputStream))
             {
                 var worksheetTags = new StringBuilder();
                 var definedNames = new StringBuilder();
@@ -130,8 +129,8 @@ namespace LargeXlsx
                 streamWriter.Write("</workbook>");
             }
 
-            using (var stream = _zipWriter.WriteToStream("xl/_rels/workbook.xml.rels", new ZipWriterEntryOptions()))
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+            _zipOutputStream.PutNextEntry(new ZipEntry("xl/_rels/workbook.xml.rels"));
+            using (var streamWriter = new InvariantCultureStreamWriter(_zipOutputStream))
             {
                 var worksheetTags = new StringBuilder();
                 foreach (var worksheet in _worksheets)
@@ -145,14 +144,14 @@ namespace LargeXlsx
             }
         }
 
-        public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0, bool rightToLeft = false, IEnumerable<XlsxColumn> columns = null)
+        public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0, bool rightToLeft = false, IReadOnlyCollection<XlsxColumn> columns = null)
         {
             if (name.Length > MaxSheetNameLength)
                 throw new ArgumentException($"The name \"{name}\" exceeds the maximum length of {MaxSheetNameLength} characters supported by Excel");
             if (_worksheets.Any(ws => string.Equals(ws.Name, name, StringComparison.InvariantCultureIgnoreCase)))
                 throw new ArgumentException($"A worksheet named \"{name}\" has already been added");
             _currentWorksheet?.Dispose();
-            _currentWorksheet = new Worksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn, rightToLeft, _stylesheet, _sharedStringTable, columns ?? Enumerable.Empty<XlsxColumn>());
+            _currentWorksheet = new Worksheet(_zipOutputStream, _worksheets.Count + 1, name, splitRow, splitColumn, rightToLeft, _stylesheet, _sharedStringTable, columns ?? Array.Empty<XlsxColumn>());
             _worksheets.Add(_currentWorksheet);
             return this;
         }

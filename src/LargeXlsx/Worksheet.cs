@@ -29,7 +29,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using SharpCompress.Writers.Zip;
+using ICSharpCode.SharpZipLib.Zip;
 
 namespace LargeXlsx
 {
@@ -38,7 +38,6 @@ namespace LargeXlsx
         private const int MinSheetProtectionPasswordLength = 1;
         private const int MaxSheetProtectionPasswordLength = 255;
         private const int MaxRowNumbers = 1048576;
-        private readonly Stream _stream;
         private readonly StreamWriter _streamWriter;
         private readonly Stylesheet _stylesheet;
         private readonly SharedStringTable _sharedStringTable;
@@ -55,7 +54,7 @@ namespace LargeXlsx
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns)
+        public Worksheet(ZipOutputStream zipOutputStream, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IReadOnlyCollection<XlsxColumn> columns)
         {
             Id = id;
             Name = name;
@@ -65,8 +64,8 @@ namespace LargeXlsx
             _sharedStringTable = sharedStringTable;
             _mergedCellRefs = new List<string>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
-            _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
-            _streamWriter = new InvariantCultureStreamWriter(_stream);
+            zipOutputStream.PutNextEntry(new ZipEntry($"xl/worksheets/sheet{id}.xml"));
+            _streamWriter = new InvariantCultureStreamWriter(zipOutputStream);
 
             _streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                 + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
@@ -90,7 +89,6 @@ namespace LargeXlsx
             WriteDataValidations();
             _streamWriter.Write("</worksheet>\n");
             _streamWriter.Dispose();
-            _stream.Dispose();
         }
 
         public void BeginRow(double? height, bool hidden, XlsxStyle style)

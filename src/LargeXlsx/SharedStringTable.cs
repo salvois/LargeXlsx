@@ -25,10 +25,8 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using SharpCompress.Writers.Zip;
+using ICSharpCode.SharpZipLib.Zip;
 
 namespace LargeXlsx
 {
@@ -53,10 +51,10 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipWriter zipWriter)
+        public void Save(ZipOutputStream zipOutputStream)
         {
-            using (var stream = zipWriter.WriteToStream("xl/sharedStrings.xml", new ZipWriterEntryOptions()))
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+            zipOutputStream.PutNextEntry(new ZipEntry("xl/sharedStrings.xml"));
+            using (var streamWriter = new InvariantCultureStreamWriter(zipOutputStream))
             {
                 streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
