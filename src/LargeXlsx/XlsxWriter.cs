@@ -30,8 +30,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Xml.Xsl;
-using System.Xml;
 using SharpCompress.Common;
 using SharpCompress.Compressors.Deflate;
 using SharpCompress.Writers;
@@ -74,36 +72,34 @@ namespace LargeXlsx
                 _currentWorksheet?.Dispose();
                 _stylesheet.Save(_zipWriter);
                 _sharedStringTable.Save(_zipWriter);
-                WriteAppProps();
-                Save();
+                SaveDocProps();
+                SaveContentTypes();
+                SaveRels();
+                SaveWorkbook();
+                SaveWorkbookRels();
                 _zipWriter.Dispose();
                 _disposed = true;
             }
         }
 
-        const string PropNS = "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties";
-
-        void WriteAppProps()
+        private void SaveDocProps()
         {
-            // write the assembly name and version to the app.xml.
-            using (var appStream = _zipWriter.WriteToStream("docProps/app.xml", new ZipWriterEntryOptions()))
-            using (var xw = XmlWriter.Create(appStream)) {
-                xw.WriteStartElement("Properties", PropNS);
-                var asmName = Assembly.GetExecutingAssembly().GetName();
-                xw.WriteStartElement("Application", PropNS);
-                xw.WriteValue(asmName.Name);
-                xw.WriteEndElement();
-                xw.WriteStartElement("AppVersion", PropNS);
-                var v = asmName.Version;
-                // AppVersion must be of the format XX.YYYY
-                var ver = $"{v.Major:00}.{v.Minor:00}{v.Build:00}";
-                xw.WriteValue(ver);
-                xw.WriteEndElement();
-                xw.WriteEndElement();
+            var assemblyName = Assembly.GetExecutingAssembly().GetName();
+            using (var stream = _zipWriter.WriteToStream("docProps/app.xml", new ZipWriterEntryOptions()))
+            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+            {
+                // Looks some applications (e.g. Microsoft's) may consider a file invalid if a specific version number is not found.
+                // Thus, pretend being version 15.0 like LibreOffice Calc does.
+                // https://bugs.documentfoundation.org/show_bug.cgi?id=91064
+                streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                                   + "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\">"
+                                   + $"<Application>{Util.EscapeXmlText(assemblyName.Name)}/{assemblyName.Version.Major}.{assemblyName.Version.Minor}.{assemblyName.Version.Build}</Application>"
+                                   + "<AppVersion>15.0000</AppVersion>"
+                                   + "</Properties>");
             }
         }
 
-        private void Save()
+        private void SaveContentTypes()
         {
             using (var stream = _zipWriter.WriteToStream("[Content_Types].xml", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
@@ -124,7 +120,10 @@ namespace LargeXlsx
                                    + "<Override PartName=\"/docProps/app.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/>"
                                    + "</Types>");
             }
+        }
 
+        private void SaveRels()
+        {
             using (var stream = _zipWriter.WriteToStream("_rels/.rels", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
@@ -134,7 +133,10 @@ namespace LargeXlsx
                                    + "<Relationship Id=\"app\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties\" Target=\"docProps/app.xml\"/>"
                                    + "</Relationships>");
             }
+        }
 
+        private void SaveWorkbook()
+        {
             using (var stream = _zipWriter.WriteToStream("xl/workbook.xml", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
@@ -157,7 +159,10 @@ namespace LargeXlsx
                 if (_hasFormulasWithoutResult) streamWriter.Write("<calcPr calcCompleted=\"0\" fullCalcOnLoad=\"1\"/>");
                 streamWriter.Write("</workbook>");
             }
+        }
 
+        private void SaveWorkbookRels()
+        {
             using (var stream = _zipWriter.WriteToStream("xl/_rels/workbook.xml.rels", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
