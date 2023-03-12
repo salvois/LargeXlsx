@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using ICSharpCode.SharpZipLib.Zip;
 
@@ -70,13 +71,34 @@ namespace LargeXlsx
                 _currentWorksheet?.Dispose();
                 _stylesheet.Save(_zipOutputStream);
                 _sharedStringTable.Save(_zipOutputStream);
-                Save();
+                SaveDocProps();
+                SaveContentTypes();
+                SaveRels();
+                SaveWorkbook();
+                SaveWorkbookRels();
                 _zipOutputStream.Dispose();
                 _disposed = true;
             }
         }
 
-        private void Save()
+        private void SaveDocProps()
+        {
+            var assemblyName = Assembly.GetExecutingAssembly().GetName();
+            _zipOutputStream.PutNextEntry(new ZipEntry("docProps/app.xml"));
+            using (var streamWriter = new InvariantCultureStreamWriter(_zipOutputStream))
+            {
+                // Looks some applications (e.g. Microsoft's) may consider a file invalid if a specific version number is not found.
+                // Thus, pretend being version 15.0 like LibreOffice Calc does.
+                // https://bugs.documentfoundation.org/show_bug.cgi?id=91064
+                streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                                   + "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\">"
+                                   + $"<Application>{Util.EscapeXmlText(assemblyName.Name)}/{assemblyName.Version.Major}.{assemblyName.Version.Minor}.{assemblyName.Version.Build}</Application>"
+                                   + "<AppVersion>15.0000</AppVersion>"
+                                   + "</Properties>");
+            }
+        }
+
+        private void SaveContentTypes()
         {
             _zipOutputStream.PutNextEntry(new ZipEntry("[Content_Types].xml"));
             using (var streamWriter = new InvariantCultureStreamWriter(_zipOutputStream))
@@ -86,7 +108,7 @@ namespace LargeXlsx
                     worksheetTags.Append($"<Override PartName=\"/xl/worksheets/sheet{worksheet.Id}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>");
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
-                                   + "<Default Extension=\"xml\" ContentType=\"xml\"/>"
+                                   + "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
                                    + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
                                    + "<Override PartName=\"/_rels/.rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
                                    + "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>"
@@ -94,18 +116,26 @@ namespace LargeXlsx
                                    + worksheetTags
                                    + "<Override PartName=\"/xl/sharedStrings.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml\"/>"
                                    + "<Override PartName=\"/xl/_rels/workbook.xml.rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+                                   + "<Override PartName=\"/docProps/app.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/>"
                                    + "</Types>");
             }
+        }
 
+        private void SaveRels()
+        {
             _zipOutputStream.PutNextEntry(new ZipEntry("_rels/.rels"));
             using (var streamWriter = new InvariantCultureStreamWriter(_zipOutputStream))
             {
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
                                    + "<Relationship Id=\"rIdWb1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/>"
+                                   + "<Relationship Id=\"app\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties\" Target=\"docProps/app.xml\"/>"
                                    + "</Relationships>");
             }
+        }
 
+        private void SaveWorkbook()
+        {
             _zipOutputStream.PutNextEntry(new ZipEntry("xl/workbook.xml"));
             using (var streamWriter = new InvariantCultureStreamWriter(_zipOutputStream))
             {
@@ -128,7 +158,10 @@ namespace LargeXlsx
                 if (_hasFormulasWithoutResult) streamWriter.Write("<calcPr calcCompleted=\"0\" fullCalcOnLoad=\"1\"/>");
                 streamWriter.Write("</workbook>");
             }
+        }
 
+        private void SaveWorkbookRels()
+        {
             _zipOutputStream.PutNextEntry(new ZipEntry("xl/_rels/workbook.xml.rels"));
             using (var streamWriter = new InvariantCultureStreamWriter(_zipOutputStream))
             {
