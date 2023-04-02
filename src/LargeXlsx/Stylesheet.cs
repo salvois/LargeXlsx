@@ -112,7 +112,7 @@ namespace LargeXlsx
         public void Save(ZipWriter zipWriter)
         {
             using (var stream = zipWriter.WriteToStream("xl/styles.xml", new ZipWriterEntryOptions()))
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+            using (var streamWriter = new InvariantCultureStreamWriter(stream))
             {
                 streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");

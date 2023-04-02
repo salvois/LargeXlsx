@@ -54,7 +54,7 @@ public static class StyledLargeCreateStyles
         using var xlsxWriter = new XlsxWriter(stream);
         var colors = Enumerable.Repeat(0, 100).Select(_ => Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256))).ToList();
         var headerStyle = new XlsxStyle(
-            new XlsxFont("Calibri", 11, Color.White, bold: true),
+            new XlsxFont("Calibri", 10.5, Color.White, bold: true),
             new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
             XlsxBorder.None,
             XlsxNumberFormat.General,
