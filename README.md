@@ -136,7 +136,7 @@ The first version returns the column name for the column at the insertion point.
 
 ### Creating a new worksheet
 
-Call `BeginWorksheet` passing the sheet name and, optionally, the one-based indexes of the row and column where to place a split to create frozen panes. Setting `rightToLeft` to `true` switches the worksheet to right-to-left mode (to support languages such as Arabic and Hebrew). Finally, the `columns` parameter can be used to specify optional column formatting.\
+Call `BeginWorksheet` passing the sheet name and, optionally, the one-based indexes of the row and column where to place a split to create frozen panes. Setting `rightToLeft` to `true` switches the worksheet to right-to-left mode (to support languages such as Arabic and Hebrew), the `columns` parameter can be used to specify optional column formatting, setting `showGridLines` to `false` will hide gridlines in the sheet and finally, setting `showHeaders` to `false` will hide row and column headers in the sheet.\
 A call to `BeginWorksheet` finalizes the last worksheet being written, if any, and sets up a new one, so that rows can be added.
 
 ```csharp
@@ -146,7 +146,9 @@ public XlsxWriter BeginWorksheet(
         int splitRow = 0,
         int splitColumn = 0,
         bool rightToLeft = false, // rightToLeft since version 1.2
-        IEnumerable<XlsxColumn> columns = null);
+        IEnumerable<XlsxColumn> columns = null,
+        bool showGridLines = true,
+        bool showHeaders = true);
 ```
 
 Note that, for compatibility with a restriction of the Excel application, names are restricted to a maximum of 31 character. An `ArgumentException` is thrown if a longer name is passed.

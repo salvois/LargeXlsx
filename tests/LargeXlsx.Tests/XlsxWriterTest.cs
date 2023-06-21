@@ -316,6 +316,32 @@ public static class XlsxWriterTest
     }
 
     [Theory]
+    public static void ShowGridlinesWorksheet(bool showGridLines)
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter
+                .BeginWorksheet("Sheet 1", showGridLines: showGridLines)
+                .BeginRow().Write(@"Gridlines are hidden in this sheet.");
+
+        using (var package = new ExcelPackage(stream))
+            package.Workbook.Worksheets[0].View.ShowGridLines.Should().Be(showGridLines);
+    }
+
+    [Theory]
+    public static void ShowHeadersWorksheet(bool showHeaders)
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter
+                .BeginWorksheet("Sheet 1", showHeaders: showHeaders)
+                .BeginRow().Write(@"Row and column headers are hidden in this sheet.");
+
+        using (var package = new ExcelPackage(stream))
+            package.Workbook.Worksheets[0].View.ShowHeaders.Should().Be(showHeaders);
+    }
+
+    [Theory]
     public static void Zip64(bool useZip64)
     {
         using var stream = new MemoryStream();
