@@ -447,4 +447,36 @@ public static class XlsxWriterTest
             sheet.Cells["A6"].Value.Should().Be("Lorem ipsum dolor sit amet");
         }
     }
+
+    [Test]
+    public static void HeaderFooter()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+        {
+            var headerFooter = 
+                new XlsxHeaderFooter(
+                    alignWithMargins: true,
+                    differentFirst: false,
+                    differentOddEven: false,
+                    scaleWithDoc: false,
+                    evenHeader: "&LLeftHeader&CCenterHeader&RRightHeader"
+                    );
+            xlsxWriter
+                .BeginWorksheet("HeaderFooterTest")
+                .SetHeaderFooter(headerFooter);
+        }
+
+        using (var package = new ExcelPackage(stream))
+        {
+            var sheet = package.Workbook.Worksheets[0];
+            sheet.HeaderFooter.AlignWithMargins.Should().BeTrue();
+            sheet.HeaderFooter.differentFirst.Should().BeFalse();
+            sheet.HeaderFooter.differentOddEven.Should().BeFalse();
+            sheet.HeaderFooter.ScaleWithDocument.Should().BeFalse();
+            sheet.HeaderFooter.EvenHeader.LeftAlignedText.Should().Be("LeftHeader");
+            sheet.HeaderFooter.EvenHeader.CenteredText.Should().Be("CenterHeader");
+            sheet.HeaderFooter.EvenHeader.RightAlignedText.Should().Be("RightHeader");
+        }
+    }
 }

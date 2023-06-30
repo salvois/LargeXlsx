@@ -47,6 +47,7 @@ namespace LargeXlsx
         private string _autoFilterRef;
         private string _autoFilterAbsoluteRef;
         private XlsxSheetProtection _sheetProtection;
+        private XlsxHeaderFooter _headerFooter;
         private bool _needsRef;
 
         public int Id { get; }
@@ -90,6 +91,7 @@ namespace LargeXlsx
             WriteAutoFilter();
             WriteMergedCells();
             WriteDataValidations();
+            WriteHeaderFooter();
             _streamWriter.Write("</worksheet>\n");
             _streamWriter.Dispose();
             _stream.Dispose();
@@ -271,6 +273,11 @@ namespace LargeXlsx
             _sheetProtection = sheetProtection;
         }
 
+        public void SetHeaderFooter(XlsxHeaderFooter headerFooter)
+        {
+            _headerFooter = headerFooter;
+        }
+        
         private void WriteCellRef()
         {
             if (_needsRef)
@@ -424,6 +431,20 @@ namespace LargeXlsx
             if (!_sheetProtection.PivotTables) _streamWriter.Write(" pivotTables=\"0\"");
             if (_sheetProtection.SelectUnlockedCells) _streamWriter.Write(" selectUnlockedCells=\"1\"");
             _streamWriter.Write("/>\n");
+        }
+
+        private void WriteHeaderFooter()
+        {
+            if (_headerFooter == null)
+                return;
+            _streamWriter.Write("<headerFooter alignWithMargins=\"{0}\" differentFirst=\"{1}\" differentOddEven=\"{2}\" scaleWithDoc=\"{3}\">", Util.BoolToInt(_headerFooter.AlignWithMargins), Util.BoolToInt(_headerFooter.DifferentFirst), Util.BoolToInt(_headerFooter.DifferentOddEven), Util.BoolToInt(_headerFooter.ScaleWithDoc));
+            if (_headerFooter.EvenHeader != null) _streamWriter.Write("<evenHeader>{0}</evenHeader>", Util.EscapeXmlText(_headerFooter.EvenHeader));
+            if (_headerFooter.EvenFooter != null) _streamWriter.Write("<evenFooter>{0}</evenFooter>", Util.EscapeXmlText(_headerFooter.EvenFooter));
+            if (_headerFooter.OddHeader != null) _streamWriter.Write("<oddHeader>{0}</oddHeader>", Util.EscapeXmlText(_headerFooter.OddHeader));
+            if (_headerFooter.OddFooter != null) _streamWriter.Write("<oddFooter>{0}</oddFooter>", Util.EscapeXmlText(_headerFooter.OddFooter));
+            if (_headerFooter.FirstHeader != null) _streamWriter.Write("<firstHeader>{0}</firstHeader>", Util.EscapeXmlText(_headerFooter.FirstHeader));
+            if (_headerFooter.FirstFooter != null) _streamWriter.Write("<firstFooter>{0}</firstFooter>", Util.EscapeXmlText(_headerFooter.FirstFooter));
+            _streamWriter.Write("</headerFooter>");
         }
     }
 }
