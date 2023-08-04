@@ -349,6 +349,13 @@ namespace LargeXlsx
             _currentWorksheet.SetSheetProtection(sheetProtection);
             return this;
         }
+        
+        public XlsxWriter AddIgnoreError(int fromRow, int fromColumn, int rowCount, int columnCount, XlsxDataIgnoreError.ErrorType errorType)
+        {
+            CheckInWorksheet();
+            _currentWorksheet.AddIgnoreError(fromRow, fromColumn, rowCount, columnCount, errorType);
+            return this;
+        }
 
         private void CheckInWorksheet()
         {

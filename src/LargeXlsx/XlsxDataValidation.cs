@@ -24,6 +24,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,9 +47,36 @@ namespace LargeXlsx
         public string Formula1 { get; }
         public string Formula2 { get; }
 
-        public enum ErrorStyle { Information, Stop, Warning }
-        public enum Operator { Between, Equal, GreaterThan, GreaterThanOrEqual, LessThan, LessThanOrEqual, NotBetween, NotEqual }
-        public enum ValidationType { Custom, Date, Decimal, List, None, TextLength, Time, Whole }
+        public enum ErrorStyle
+        {
+            Information,
+            Stop,
+            Warning
+        }
+
+        public enum Operator
+        {
+            Between,
+            Equal,
+            GreaterThan,
+            GreaterThanOrEqual,
+            LessThan,
+            LessThanOrEqual,
+            NotBetween,
+            NotEqual
+        }
+
+        public enum ValidationType
+        {
+            Custom,
+            Date,
+            Decimal,
+            List,
+            None,
+            TextLength,
+            Time,
+            Whole
+        }
 
         public XlsxDataValidation(
             bool allowBlank = false,
@@ -92,11 +120,13 @@ namespace LargeXlsx
             bool showErrorMessage = false,
             bool showInputMessage = false)
         {
-            return new XlsxDataValidation(allowBlank, error, errorTitle, errorStyle, null, prompt, promptTitle, showDropDown, showErrorMessage, showInputMessage,
-                ValidationType.List, '"'+ string.Join(",", choices.Select(c => c.Replace("\"", "\"\""))) + '"');
+            return new XlsxDataValidation(allowBlank, error, errorTitle, errorStyle, null, prompt, promptTitle,
+                showDropDown, showErrorMessage, showInputMessage,
+                ValidationType.List, '"' + string.Join(",", choices.Select(c => c.Replace("\"", "\"\""))) + '"');
         }
 
         #region Equality members
+
         public bool Equals(XlsxDataValidation other)
         {
             if (ReferenceEquals(null, other)) return false;
@@ -114,7 +144,7 @@ namespace LargeXlsx
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((XlsxDataValidation)obj);
+            return Equals((XlsxDataValidation) obj);
         }
 
         public override int GetHashCode()
@@ -147,6 +177,7 @@ namespace LargeXlsx
         {
             return !Equals(left, right);
         }
+
         #endregion
     }
 }

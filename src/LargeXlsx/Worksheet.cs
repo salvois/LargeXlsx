@@ -48,6 +48,7 @@ namespace LargeXlsx
         private string _autoFilterAbsoluteRef;
         private XlsxSheetProtection _sheetProtection;
         private bool _needsRef;
+        private LinkedList<XlsxDataIgnoreError> _ignoreErrors;
 
         public int Id { get; }
         public string Name { get; }
@@ -65,6 +66,7 @@ namespace LargeXlsx
             _sharedStringTable = sharedStringTable;
             _mergedCellRefs = new List<string>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
+            _ignoreErrors = new LinkedList<XlsxDataIgnoreError>();
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
@@ -90,6 +92,7 @@ namespace LargeXlsx
             WriteAutoFilter();
             WriteMergedCells();
             WriteDataValidations();
+            WriteIgnoreErrors();
             _streamWriter.Write("</worksheet>\n");
             _streamWriter.Dispose();
             _stream.Dispose();
@@ -253,9 +256,7 @@ namespace LargeXlsx
         {
             if (rowCount < 1 || columnCount < 1)
                 throw new ArgumentOutOfRangeException();
-            var cellRef = rowCount > 1 || columnCount > 1
-                ? $"{Util.GetColumnName(fromColumn)}{fromRow}:{Util.GetColumnName(fromColumn + columnCount - 1)}{fromRow + rowCount - 1}"
-                : $"{Util.GetColumnName(fromColumn)}{fromRow}";
+            var cellRef = GetCellRef(fromRow, fromColumn, rowCount, columnCount);
             if (!_cellRefsByDataValidation.TryGetValue(dataValidation, out var cellRefs))
             {
                 cellRefs = new List<string>();
@@ -269,6 +270,11 @@ namespace LargeXlsx
             if (sheetProtection.Password.Length < MinSheetProtectionPasswordLength || sheetProtection.Password.Length > MaxSheetProtectionPasswordLength)
                 throw new ArgumentException("Invalid password length");
             _sheetProtection = sheetProtection;
+        }
+        
+        public void AddIgnoreError(int fromRow, int fromColumn, int rowCount, int columnCount, XlsxDataIgnoreError.ErrorType errorType)
+        {
+            _ignoreErrors.AddLast(new XlsxDataIgnoreError(GetCellRef(fromRow, fromColumn, rowCount, columnCount), errorType));
         }
 
         private void WriteCellRef()
@@ -398,6 +404,30 @@ namespace LargeXlsx
             }
             _streamWriter.Write("</dataValidations>\n");
         }
+        
+        private void WriteIgnoreErrors()
+        {
+            if (_ignoreErrors.Count == 0)
+            {
+                return;
+            }
+            
+            _streamWriter.Write("<ignoredErrors>\n");
+            
+            foreach (var xlsxDataIgnoreError in _ignoreErrors)
+            {
+                switch (xlsxDataIgnoreError.IgnoreErrorType)
+                {
+                    case XlsxDataIgnoreError.ErrorType.NumberStoredAsText:
+                        _streamWriter.Write($"<ignoredError sqref=\"{xlsxDataIgnoreError.Address}\" numberStoredAsText=\"1\"  />\n");
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+            
+            _streamWriter.Write("</ignoredErrors>\n");
+        }
 
         private void WriteSheetProtection()
         {
@@ -424,6 +454,14 @@ namespace LargeXlsx
             if (!_sheetProtection.PivotTables) _streamWriter.Write(" pivotTables=\"0\"");
             if (_sheetProtection.SelectUnlockedCells) _streamWriter.Write(" selectUnlockedCells=\"1\"");
             _streamWriter.Write("/>\n");
+        }
+        
+        private string GetCellRef(int fromRow, int fromColumn, int rowCount, int columnCount)
+        {
+            var cellRef = rowCount > 1 || columnCount > 1
+                ? $"{Util.GetColumnName(fromColumn)}{fromRow}:{Util.GetColumnName(fromColumn + columnCount - 1)}{fromRow + rowCount - 1}"
+                : $"{Util.GetColumnName(fromColumn)}{fromRow}";
+            return cellRef;
         }
     }
 }
