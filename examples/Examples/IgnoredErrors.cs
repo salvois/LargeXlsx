@@ -24,30 +24,28 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+using System.IO;
+using LargeXlsx;
+
 namespace Examples;
 
-public static class Program
+public static class IgnoredError
 {
-    public static void Main(string[] _)
+    public static void Run()
     {
-        Simple.Run();
-        MultipleSheet.Run();
-        FrozenPanes.Run();
-        HideGridlines.Run();
-        NumberFormats.Run();
-        ColumnFormatting.Run();
-        RowFormatting.Run();
-        Alignment.Run();
-        Border.Run();
-        DataValidation.Run();
-        RightToLeft.Run();
-        Zip64Small.Run();
-        SheetProtection.Run();
-        SharedStrings.Run();
-        Large.Run();
-        StyledLarge.Run();
-        StyledLargeCreateStyles.Run();
-        Zip64Huge.Run();
-        IgnoredError.Run();
+        using var stream = new FileStream($"{nameof(IgnoredError)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream);
+        xlsxWriter.BeginWorksheet("Sheet 1")
+            .BeginRow()
+            .BeginRow()
+            .Write()
+            .Write("1234567891011121314")
+            .Write()
+            .BeginRow()
+            .BeginRow()
+            .Write()
+            .Write("1234567891011121314")
+            .AddIgnoreError(2, 2, 1, 1, XlsxDataIgnoreError.ErrorType.NumberStoredAsText);
     }
 }
