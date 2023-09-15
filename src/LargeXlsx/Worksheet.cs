@@ -442,12 +442,12 @@ namespace LargeXlsx
             if (_headerFooter == null)
                 return;
             _streamWriter.Write("<headerFooter alignWithMargins=\"{0}\" differentFirst=\"{1}\" differentOddEven=\"{2}\" scaleWithDoc=\"{3}\">", Util.BoolToInt(_headerFooter.AlignWithMargins), Util.BoolToInt(_headerFooter.DifferentFirst), Util.BoolToInt(_headerFooter.DifferentOddEven), Util.BoolToInt(_headerFooter.ScaleWithDoc));
-            if (_headerFooter.OddHeader != null) _streamWriter.Write("<oddHeader>{0}</oddHeader>", Util.EscapeXmlText(_headerFooter.OddHeader));
-            if (_headerFooter.OddFooter != null) _streamWriter.Write("<oddFooter>{0}</oddFooter>", Util.EscapeXmlText(_headerFooter.OddFooter));
-            if (_headerFooter.EvenHeader != null) _streamWriter.Write("<evenHeader>{0}</evenHeader>", Util.EscapeXmlText(_headerFooter.EvenHeader));
-            if (_headerFooter.EvenFooter != null) _streamWriter.Write("<evenFooter>{0}</evenFooter>", Util.EscapeXmlText(_headerFooter.EvenFooter));
-            if (_headerFooter.FirstHeader != null) _streamWriter.Write("<firstHeader>{0}</firstHeader>", Util.EscapeXmlText(_headerFooter.FirstHeader));
-            if (_headerFooter.FirstFooter != null) _streamWriter.Write("<firstFooter>{0}</firstFooter>", Util.EscapeXmlText(_headerFooter.FirstFooter));
+            if (_headerFooter.OddHeader != null) _streamWriter.Write("<oddHeader>{0}</oddHeader>", Util.EscapeXmlText(_headerFooter.OddHeader.WriteText()));
+            if (_headerFooter.OddFooter != null) _streamWriter.Write("<oddFooter>{0}</oddFooter>", Util.EscapeXmlText(_headerFooter.OddFooter.WriteText()));
+            if (_headerFooter.EvenHeader != null) _streamWriter.Write("<evenHeader>{0}</evenHeader>", Util.EscapeXmlText(_headerFooter.EvenHeader.WriteText()));
+            if (_headerFooter.EvenFooter != null) _streamWriter.Write("<evenFooter>{0}</evenFooter>", Util.EscapeXmlText(_headerFooter.EvenFooter.WriteText()));
+            if (_headerFooter.FirstHeader != null) _streamWriter.Write("<firstHeader>{0}</firstHeader>", Util.EscapeXmlText(_headerFooter.FirstHeader.WriteText()));
+            if (_headerFooter.FirstFooter != null) _streamWriter.Write("<firstFooter>{0}</firstFooter>", Util.EscapeXmlText(_headerFooter.FirstFooter.WriteText()));
             _streamWriter.Write("</headerFooter>");
         }
     }

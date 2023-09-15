@@ -460,9 +460,12 @@ public static class XlsxWriterTest
                     differentFirst: true,
                     differentOddEven: false,
                     scaleWithDoc: false,
-                    firstHeader: "&LFirstHeader",
-                    oddHeader: "&LLeftHeader&CCenterHeader&RRightHeader",
-                    oddFooter: "&LLeftFooter&CCenterFooter&RRightFooter"
+                    firstHeader: new XlsxHeaderFooterText($"{XlsxHeaderFooter.Bold}FirstHeader"),
+                    oddHeader: new XlsxHeaderFooterText(
+                        $"{XlsxHeaderFooter.Bold}LeftHeader", 
+                        $"{XlsxHeaderFooter.Underline}CenterHeader", 
+                        $"{XlsxHeaderFooter.Strikethrough}RightHeader"),
+                    oddFooter: new XlsxHeaderFooterText("LeftFooter", "CenterFooter", "RightFooter")
                     );
             xlsxWriter
                 .BeginWorksheet("HeaderFooterTest")
@@ -476,9 +479,9 @@ public static class XlsxWriterTest
             sheet.HeaderFooter.differentFirst.Should().BeTrue();
             sheet.HeaderFooter.differentOddEven.Should().BeFalse();
             sheet.HeaderFooter.ScaleWithDocument.Should().BeFalse();
-            sheet.HeaderFooter.OddHeader.LeftAlignedText.Should().Be("LeftHeader");
-            sheet.HeaderFooter.OddHeader.CenteredText.Should().Be("CenterHeader");
-            sheet.HeaderFooter.OddHeader.RightAlignedText.Should().Be("RightHeader");
+            sheet.HeaderFooter.OddHeader.LeftAlignedText.Should().Be("&BLeftHeader");
+            sheet.HeaderFooter.OddHeader.CenteredText.Should().Be("&UCenterHeader");
+            sheet.HeaderFooter.OddHeader.RightAlignedText.Should().Be("&SRightHeader");
             sheet.HeaderFooter.OddFooter.LeftAlignedText.Should().Be("LeftFooter");
             sheet.HeaderFooter.OddFooter.CenteredText.Should().Be("CenterFooter");
             sheet.HeaderFooter.OddFooter.RightAlignedText.Should().Be("RightFooter");
