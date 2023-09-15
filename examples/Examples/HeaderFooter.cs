@@ -24,15 +24,15 @@ public static class HeaderFooter
 
         var headerFooter = 
             new XlsxHeaderFooter(
-                oddHeader: new XlsxHeaderFooterText($"{XlsxHeaderFooter.Bold}{nameof(HeaderFooter)} Example"),
-                oddFooter: new XlsxHeaderFooterText(
+                new XlsxHeaderFooterText($"{XlsxHeaderFooter.Bold}{nameof(HeaderFooter)} Example"),
+                new XlsxHeaderFooterText(
                     $"Page {XlsxHeaderFooter.PageNumber} of {XlsxHeaderFooter.NumberOfPages}",
                     XlsxHeaderFooter.SheetName,
                     XlsxHeaderFooter.FileName));
         
         xlsxWriter
             .BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Unformatted(count: 2), XlsxColumn.Formatted(width: 20) })
-            .SetHeaderFooter(headerFooter)
+            .SetHeaderFooter(headerFooter.WithFirstHeader(new XlsxHeaderFooterText($"{XlsxHeaderFooter.Bold}FirstHeader")))
             .SetDefaultStyle(headerStyle)
             .BeginRow().AddMergedCell(2, 1).Write("Col1").Write("Top2").Write("Top3")
             .BeginRow().Write().Write("Col2").Write("Col3")

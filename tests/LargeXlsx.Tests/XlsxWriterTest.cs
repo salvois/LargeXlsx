@@ -456,20 +456,15 @@ public static class XlsxWriterTest
         {
             var headerFooter = 
                 new XlsxHeaderFooter(
-                    alignWithMargins: true,
-                    differentFirst: true,
-                    differentOddEven: false,
-                    scaleWithDoc: false,
-                    firstHeader: new XlsxHeaderFooterText($"{XlsxHeaderFooter.Bold}FirstHeader"),
-                    oddHeader: new XlsxHeaderFooterText(
+                    new XlsxHeaderFooterText(
                         $"{XlsxHeaderFooter.Bold}LeftHeader", 
                         $"{XlsxHeaderFooter.Underline}CenterHeader", 
                         $"{XlsxHeaderFooter.Strikethrough}RightHeader"),
-                    oddFooter: new XlsxHeaderFooterText("LeftFooter", "CenterFooter", "RightFooter")
-                    );
+                    new XlsxHeaderFooterText("LeftFooter", "CenterFooter", "RightFooter"));
             xlsxWriter
                 .BeginWorksheet("HeaderFooterTest")
-                .SetHeaderFooter(headerFooter);
+                .SetHeaderFooter(headerFooter
+                    .WithFirstHeader(new XlsxHeaderFooterText($"{XlsxHeaderFooter.Bold}FirstHeader")));
         }
 
         using (var package = new ExcelPackage(stream))
@@ -477,6 +472,7 @@ public static class XlsxWriterTest
             var sheet = package.Workbook.Worksheets[0];
             sheet.HeaderFooter.AlignWithMargins.Should().BeTrue();
             sheet.HeaderFooter.differentFirst.Should().BeTrue();
+            sheet.HeaderFooter.FirstHeader.LeftAlignedText.Should().Be("&BFirstHeader");
             sheet.HeaderFooter.differentOddEven.Should().BeFalse();
             sheet.HeaderFooter.ScaleWithDocument.Should().BeFalse();
             sheet.HeaderFooter.OddHeader.LeftAlignedText.Should().Be("&BLeftHeader");

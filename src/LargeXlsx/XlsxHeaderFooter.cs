@@ -32,6 +32,34 @@ namespace LargeXlsx
         }
     }
     
+    public class XlsxHeaderFooterSettings
+    {
+        public static readonly XlsxHeaderFooterSettings Default = new XlsxHeaderFooterSettings(true, false);
+
+        public XlsxHeaderFooterSettings(bool alignWithMargins, bool scaleWithDoc)
+        {
+            AlignWithMargins = alignWithMargins;
+            ScaleWithDoc = scaleWithDoc;
+        }
+
+        /// <summary>
+        /// Align header footer margins with page margins.
+        /// </summary>
+        public bool AlignWithMargins { get; }
+        /// <summary>
+        /// Different first page header and footer.
+        /// </summary>
+        public bool DifferentFirst { get; set; }
+        /// <summary>
+        /// Different odd and even page headers and footers.
+        /// </summary>
+        public bool DifferentOddEven { get; set; }
+        /// <summary>
+        /// Scale header and footer with document scaling.
+        /// </summary>
+        public bool ScaleWithDoc { get; }
+    }
+    
     public class XlsxHeaderFooter
     {
         /// <summary>
@@ -91,51 +119,45 @@ namespace LargeXlsx
         /// </summary>
         public const string Superscript = "&X";
         
-        /// <summary>
-        /// Align header footer margins with page margins.
-        /// </summary>
-        public bool AlignWithMargins { get; }
-        /// <summary>
-        /// Different first page header and footer.
-        /// </summary>
-        public bool DifferentFirst { get; }
-        /// <summary>
-        /// Different odd and even page headers and footers.
-        /// </summary>
-        public bool DifferentOddEven { get; }
-        /// <summary>
-        /// Scale header and footer with document scaling.
-        /// </summary>
-        public bool ScaleWithDoc { get; }
         public XlsxHeaderFooterText EvenFooter { get; }
         public XlsxHeaderFooterText EvenHeader { get; }
         public XlsxHeaderFooterText FirstFooter { get; }
         public XlsxHeaderFooterText FirstHeader { get; }
         public XlsxHeaderFooterText OddFooter { get; }
         public XlsxHeaderFooterText OddHeader { get; }
+        public XlsxHeaderFooterSettings Settings { get; }
         
         public XlsxHeaderFooter(
-            bool alignWithMargins = true, 
-            bool differentFirst = false, 
-            bool differentOddEven = false, 
-            bool scaleWithDoc = false, 
+            XlsxHeaderFooterText header,
+            XlsxHeaderFooterText footer,
+            XlsxHeaderFooterText firstHeader = null,
+            XlsxHeaderFooterText firstFooter = null,
+            XlsxHeaderFooterText evenHeader = null,
             XlsxHeaderFooterText evenFooter = null, 
-            XlsxHeaderFooterText evenHeader = null, 
-            XlsxHeaderFooterText firstFooter = null, 
-            XlsxHeaderFooterText firstHeader = null, 
-            XlsxHeaderFooterText oddFooter = null, 
-            XlsxHeaderFooterText oddHeader = null)
+            XlsxHeaderFooterSettings settings = null)
         {
-            AlignWithMargins = alignWithMargins;
-            DifferentFirst = differentFirst;
-            DifferentOddEven = differentOddEven;
-            ScaleWithDoc = scaleWithDoc;
             EvenFooter = evenFooter;
             EvenHeader = evenHeader;
             FirstFooter = firstFooter;
             FirstHeader = firstHeader;
-            OddFooter = oddFooter;
-            OddHeader = oddHeader;
+            OddFooter = footer;
+            OddHeader = header;
+            
+            if (settings == null)
+                settings = XlsxHeaderFooterSettings.Default;
+
+            Settings = settings;
+            Settings.DifferentFirst = FirstHeader != null || FirstFooter != null;
+            Settings.DifferentOddEven = EvenHeader != null || EvenFooter != null;
         }
+
+        public XlsxHeaderFooter WithFirstHeader(XlsxHeaderFooterText firstHeader) =>
+            new XlsxHeaderFooter(OddHeader, OddFooter, firstHeader, FirstFooter, EvenHeader, EvenFooter, Settings);
+        public XlsxHeaderFooter WithFirstFooter(XlsxHeaderFooterText firstFooter) =>
+            new XlsxHeaderFooter(OddHeader, OddFooter, FirstHeader, firstFooter, EvenHeader, EvenFooter, Settings);
+        public XlsxHeaderFooter WithEvenHeader(XlsxHeaderFooterText evenHeader) =>
+            new XlsxHeaderFooter(OddHeader, OddFooter, FirstHeader, FirstFooter, evenHeader, EvenFooter, Settings);
+        public XlsxHeaderFooter WithEvenFooter(XlsxHeaderFooterText evenFooter) =>
+            new XlsxHeaderFooter(OddHeader, OddFooter, FirstHeader, FirstFooter, EvenHeader, evenFooter, Settings);
     }
 }

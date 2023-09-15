@@ -275,10 +275,10 @@ namespace LargeXlsx
 
         public void SetHeaderFooter(XlsxHeaderFooter headerFooter)
         {
-            if (!headerFooter.DifferentOddEven && headerFooter.OddHeader == null)
-                throw new ArgumentException("When different header for odd and even pages is not used OddHeader value must be set");
-            if (!headerFooter.DifferentOddEven && headerFooter.OddFooter == null)
-                throw new ArgumentException("When different footer for odd and even pages is not used OddFooter value must be set");
+            if (!headerFooter.Settings.DifferentOddEven && headerFooter.OddHeader == null)
+                throw new ArgumentException("When different header for odd and even pages is not used Header value must be set");
+            if (!headerFooter.Settings.DifferentOddEven && headerFooter.OddFooter == null)
+                throw new ArgumentException("When different footer for odd and even pages is not used Footer value must be set");
             _headerFooter = headerFooter;
         }
         
@@ -441,7 +441,7 @@ namespace LargeXlsx
         {
             if (_headerFooter == null)
                 return;
-            _streamWriter.Write("<headerFooter alignWithMargins=\"{0}\" differentFirst=\"{1}\" differentOddEven=\"{2}\" scaleWithDoc=\"{3}\">", Util.BoolToInt(_headerFooter.AlignWithMargins), Util.BoolToInt(_headerFooter.DifferentFirst), Util.BoolToInt(_headerFooter.DifferentOddEven), Util.BoolToInt(_headerFooter.ScaleWithDoc));
+            _streamWriter.Write("<headerFooter alignWithMargins=\"{0}\" differentFirst=\"{1}\" differentOddEven=\"{2}\" scaleWithDoc=\"{3}\">", Util.BoolToInt(_headerFooter.Settings.AlignWithMargins), Util.BoolToInt(_headerFooter.Settings.DifferentFirst), Util.BoolToInt(_headerFooter.Settings.DifferentOddEven), Util.BoolToInt(_headerFooter.Settings.ScaleWithDoc));
             if (_headerFooter.OddHeader != null) _streamWriter.Write("<oddHeader>{0}</oddHeader>", Util.EscapeXmlText(_headerFooter.OddHeader.WriteText()));
             if (_headerFooter.OddFooter != null) _streamWriter.Write("<oddFooter>{0}</oddFooter>", Util.EscapeXmlText(_headerFooter.OddFooter.WriteText()));
             if (_headerFooter.EvenHeader != null) _streamWriter.Write("<evenHeader>{0}</evenHeader>", Util.EscapeXmlText(_headerFooter.EvenHeader.WriteText()));
