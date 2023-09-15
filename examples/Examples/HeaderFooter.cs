@@ -32,7 +32,7 @@ public static class HeaderFooter
         
         xlsxWriter
             .BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Unformatted(count: 2), XlsxColumn.Formatted(width: 20) })
-            .SetHeaderFooter(headerFooter.WithFirstHeader(new XlsxHeaderFooterText($"{XlsxHeaderFooter.Bold}FirstHeader")))
+            .SetHeaderFooter(headerFooter)
             .SetDefaultStyle(headerStyle)
             .BeginRow().AddMergedCell(2, 1).Write("Col1").Write("Top2").Write("Top3")
             .BeginRow().Write().Write("Col2").Write("Col3")
