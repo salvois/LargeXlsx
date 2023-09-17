@@ -47,14 +47,6 @@ namespace LargeXlsx
         /// </summary>
         public bool AlignWithMargins { get; }
         /// <summary>
-        /// Different first page header and footer.
-        /// </summary>
-        public bool DifferentFirst { get; set; }
-        /// <summary>
-        /// Different odd and even page headers and footers.
-        /// </summary>
-        public bool DifferentOddEven { get; set; }
-        /// <summary>
         /// Scale header and footer with document scaling.
         /// </summary>
         public bool ScaleWithDoc { get; }
@@ -143,12 +135,7 @@ namespace LargeXlsx
             OddFooter = footer;
             OddHeader = header;
             
-            if (settings == null)
-                settings = XlsxHeaderFooterSettings.Default;
-
-            Settings = settings;
-            Settings.DifferentFirst = FirstHeader != null || FirstFooter != null;
-            Settings.DifferentOddEven = EvenHeader != null || EvenFooter != null;
+            Settings = settings ?? XlsxHeaderFooterSettings.Default;
         }
 
         public XlsxHeaderFooter WithHeader(XlsxHeaderFooterText header) =>

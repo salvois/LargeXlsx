@@ -19,6 +19,7 @@ Currently the library supports:
 * cell validation, such as dropdown list of allowed values
 * right-to-left worksheets, to support languages such as Arabic and Hebrew
 * password protection of sheets against accidental modification
+* add plain text headers and footers to worksheet printout
 
 
 ## Example
@@ -181,6 +182,7 @@ public static XlsxColumn Formatted(double width, int count = 1, bool hidden = fa
 `Unformatted` creates a column description that is used basically to skip one or more unformatted columns.
 
 `Formatted` creates a column description to specify the mandatory witdh, optional hidden state, and optional style of one or more contiguous columns. The width is expressed (simplyfing) in approximate number of characters. The column style represents how to style all *empty* cells of a column. Cells that are explicitly written always use the cell style instead.
+
 
 ### Adding or skipping rows
 
@@ -398,6 +400,68 @@ You can call `SetSheetProtection` at any moment while writing a worksheet (that 
 
 **Note:** password protection of sheets is not to be confused with workbook encryption and is not meant to be secure. File contents are still written in clear text and may be changed by deliberately editing the file. The password is not written into the file but a hash of the password is.
 
+### Adding headers and footers to worksheet printout
+
+Call `SetHeaderFooter` when you want to add headers and footers to worksheet printout.
+
+```csharp
+//class XlsxWriter
+public XlsxWriter SetHeaderFooter(XlsxHeaderFooter headerFooter);
+
+//class XlsxHeaderFooter
+public XlsxHeaderFooter(
+        XlsxHeaderFooterText header = null,
+        XlsxHeaderFooterText footer = null,
+        XlsxHeaderFooterText firstHeader = null,
+        XlsxHeaderFooterText firstFooter = null,
+        XlsxHeaderFooterText evenHeader = null,
+        XlsxHeaderFooterText evenFooter = null, 
+        XlsxHeaderFooterSettings settings = null);
+
+//class XlsxHeaderFooterText
+public XlsxHeaderFooterText(
+    string leftAlignedText = null,
+    string centeredText = null, 
+    string rightAlignedText = null);
+```
+
+`XlsxHeaderFooter` takes several properties to control the content of headers or footers.
+- `header` object sets header to use on every page. When `evenHeader` is also set then
+  `header` values will be used only for odd pages.
+- `footer` object sets footer to use on every page. When `evenFooter` is also set then
+  `footer` values will be used only for odd pages.
+- `firstHeader` object sets header to be used only on first page.
+- `firstFooter` object sets footer to be used only on first page.
+- `evenHeader` object sets header to be used only on even pages. When set then
+  `header` values will be used only for odd pages.
+- `evenFooter` object sets footer to be used only on even pages. When set then
+  `footer` values will be used only for odd pages.
+- `settings` takes `XlsxHeaderFooterSettings` object what can be used to set header and footer settings:
+  - `AlignWithMargins`: Align header footer margins with page margins. When true, as left/right margins grow and shrink, the header and footer edges stay aligned with the margins. When false, headers and footers are aligned on the paper edges, regardless of margins. (**Default: `true`**)
+  - `ScaleWithDoc`: Scale header and footer with document scaling. (**Default: `false`**)
+
+`XlsxHeaderFooterText` lets you specify the text that will be displayed in left, center and right section of the header
+or footer.
+
+#### Header and footer codes
+OpenXML standard (ISO/IEC 29500-1) specifies [specific codes](https://learn.microsoft.com/en-us/openspecs/office_standards/ms-oi29500/c167a243-45ad-4def-816e-7032fb1adf5c) what can be used to format header and footer text
+and add dynamic info (For example date time, filename, page number etc.)
+
+`XlsxHeaderFooter` class contains some more common codes as constants:
+- `XlsxHeaderFooter.CurrentDate` "&D": Inserts the current date.
+- `XlsxHeaderFooter.CurrentTime` "&T": Inserts the current time.
+- `XlsxHeaderFooter.FileName` "&F": Inserts the name of workbook file.
+- `XlsxHeaderFooter.FilePath` "&Z": Inserts the workbook file path.
+- `XlsxHeaderFooter.NumberOfPages` "&N": Inserts the total number of pages in a workbook.
+- `XlsxHeaderFooter.PageNumber` "&P": Inserts the current page number.
+- `XlsxHeaderFooter.SheetName` "&A": Inserts the name of a worksheet.
+- `XlsxHeaderFooter.Bold` "&B": Turns bold on or off for the characters that follow.
+- `XlsxHeaderFooter.Italic` "&I": Turns italic on or off for the characters that follow.
+- `XlsxHeaderFooter.Underline` "&U": Turns underline on or off for the characters that follow.
+- `XlsxHeaderFooter.DoubleUnderline` "&E": Turns double underline on or off for the characters that follow.
+- `XlsxHeaderFooter.Strikethrough` "&S": Turns strikethrough on or off for the characters that follow.
+- `XlsxHeaderFooter.Subscript` "&Y": Turns subscript on or off for the characters that follow.
+- `XlsxHeaderFooter.Superscript` "&X": Turns superscript on or off for the characters that follow.
 
 ### Styling
 
