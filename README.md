@@ -407,7 +407,11 @@ Call `SetHeaderFooter` when you want to add headers and footers to worksheet pri
 ```csharp
 //class XlsxWriter
 public XlsxWriter SetHeaderFooter(XlsxHeaderFooter headerFooter);
+```
+Create `XlsxHeaderFooter` using constructor and define header/footer as parameters or clone an existing
+one replacing a property with a `With` method.
 
+```csharp
 //class XlsxHeaderFooter
 public XlsxHeaderFooter(
         XlsxHeaderFooterText header = null,
@@ -415,16 +419,16 @@ public XlsxHeaderFooter(
         XlsxHeaderFooterText firstHeader = null,
         XlsxHeaderFooterText firstFooter = null,
         XlsxHeaderFooterText evenHeader = null,
-        XlsxHeaderFooterText evenFooter = null, 
+        XlsxHeaderFooterText evenFooter = null,
         XlsxHeaderFooterSettings settings = null);
 
-//class XlsxHeaderFooterText
-public XlsxHeaderFooterText(
-        string leftAlignedText = null,
-        string centeredText = null, 
-        string rightAlignedText = null);
+public XlsxHeaderFooter WithHeader(XlsxHeaderFooterText header);
+public XlsxHeaderFooter WithFooter(XlsxHeaderFooterText footer);
+public XlsxHeaderFooter WithFirstHeader(XlsxHeaderFooterText firstHeader);
+public XlsxHeaderFooter WithFirstFooter(XlsxHeaderFooterText firstFooter);
+public XlsxHeaderFooter WithEvenHeader(XlsxHeaderFooterText evenHeader);
+public XlsxHeaderFooter WithEvenFooter(XlsxHeaderFooterText evenFooter);
 ```
-
 `XlsxHeaderFooter` takes several properties to control the content of headers or footers.
 - `header` object sets header to use on every page. When `evenHeader` is also set then
   `header` values will be used only for odd pages.
@@ -443,25 +447,36 @@ public XlsxHeaderFooterText(
 `XlsxHeaderFooterText` lets you specify the text that will be displayed in left, center and right section of the header
 or footer.
 
+```csharp
+//class XlsxHeaderFooterText
+public XlsxHeaderFooterText(
+        string leftAlignedText = null,
+        string centeredText = null, 
+        string rightAlignedText = null);
+```
+
 #### Header and footer codes
 OpenXML standard (ISO/IEC 29500-1) specifies [specific codes](https://learn.microsoft.com/en-us/openspecs/office_standards/ms-oi29500/c167a243-45ad-4def-816e-7032fb1adf5c) what can be used to format header and footer text
 and add dynamic info (For example date time, filename, page number etc.)
 
 `XlsxHeaderFooter` class contains some more common codes as constants:
-- `XlsxHeaderFooter.CurrentDate` "&D": Inserts the current date.
-- `XlsxHeaderFooter.CurrentTime` "&T": Inserts the current time.
-- `XlsxHeaderFooter.FileName` "&F": Inserts the name of workbook file.
-- `XlsxHeaderFooter.FilePath` "&Z": Inserts the workbook file path.
-- `XlsxHeaderFooter.NumberOfPages` "&N": Inserts the total number of pages in a workbook.
-- `XlsxHeaderFooter.PageNumber` "&P": Inserts the current page number.
-- `XlsxHeaderFooter.SheetName` "&A": Inserts the name of a worksheet.
-- `XlsxHeaderFooter.Bold` "&B": Turns bold on or off for the characters that follow.
-- `XlsxHeaderFooter.Italic` "&I": Turns italic on or off for the characters that follow.
-- `XlsxHeaderFooter.Underline` "&U": Turns underline on or off for the characters that follow.
-- `XlsxHeaderFooter.DoubleUnderline` "&E": Turns double underline on or off for the characters that follow.
-- `XlsxHeaderFooter.Strikethrough` "&S": Turns strikethrough on or off for the characters that follow.
-- `XlsxHeaderFooter.Subscript` "&Y": Turns subscript on or off for the characters that follow.
-- `XlsxHeaderFooter.Superscript` "&X": Turns superscript on or off for the characters that follow.
+
+| Constant | Code | Description |
+| --- |:----:| --- |
+| `XlsxHeaderFooter.CurrentDate` |  &D  | Inserts the current date. |
+| `XlsxHeaderFooter.CurrentTime` |  &T  | Inserts the current time. |
+| `XlsxHeaderFooter.FileName` |  &F  | Inserts the name of workbook file. |
+| `XlsxHeaderFooter.FilePath` |  &Z  | Inserts the workbook file path. |
+| `XlsxHeaderFooter.NumberOfPages` |  &N  | Inserts the total number of pages in a workbook. |
+| `XlsxHeaderFooter.PageNumber` |  &P  | Inserts the current page number. |
+| `XlsxHeaderFooter.SheetName` |  &A  | Inserts the name of a worksheet. |
+| `XlsxHeaderFooter.Bold` |  &B  | Turns bold on or off for the characters that follow. |
+| `XlsxHeaderFooter.Italic` |  &I  | Turns italic on or off for the characters that follow. |
+| `XlsxHeaderFooter.Underline` |  &U  | Turns underline on or off for the characters that follow. |
+| `XlsxHeaderFooter.DoubleUnderline` |  &E  | Turns double underline on or off for the characters that follow. |
+| `XlsxHeaderFooter.Strikethrough` |  &S  | Turns strikethrough on or off for the characters that follow. |
+| `XlsxHeaderFooter.Subscript` |  &Y  | Turns subscript on or off for the characters that follow. |
+| `XlsxHeaderFooter.Superscript` |  &X  | Turns superscript on or off for the characters that follow. |
 
 ### Styling
 
