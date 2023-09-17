@@ -420,9 +420,9 @@ public XlsxHeaderFooter(
 
 //class XlsxHeaderFooterText
 public XlsxHeaderFooterText(
-    string leftAlignedText = null,
-    string centeredText = null, 
-    string rightAlignedText = null);
+        string leftAlignedText = null,
+        string centeredText = null, 
+        string rightAlignedText = null);
 ```
 
 `XlsxHeaderFooter` takes several properties to control the content of headers or footers.
