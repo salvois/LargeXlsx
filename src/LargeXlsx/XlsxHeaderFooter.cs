@@ -128,8 +128,8 @@ namespace LargeXlsx
         public XlsxHeaderFooterSettings Settings { get; }
         
         public XlsxHeaderFooter(
-            XlsxHeaderFooterText header,
-            XlsxHeaderFooterText footer,
+            XlsxHeaderFooterText header = null,
+            XlsxHeaderFooterText footer = null,
             XlsxHeaderFooterText firstHeader = null,
             XlsxHeaderFooterText firstFooter = null,
             XlsxHeaderFooterText evenHeader = null,
@@ -151,6 +151,10 @@ namespace LargeXlsx
             Settings.DifferentOddEven = EvenHeader != null || EvenFooter != null;
         }
 
+        public XlsxHeaderFooter WithHeader(XlsxHeaderFooterText header) =>
+            new XlsxHeaderFooter(header, OddFooter, FirstHeader, FirstFooter, EvenHeader, EvenFooter, Settings);
+        public XlsxHeaderFooter WithFooter(XlsxHeaderFooterText footer) =>
+            new XlsxHeaderFooter(OddHeader, footer, FirstHeader, FirstFooter, EvenHeader, EvenFooter, Settings);
         public XlsxHeaderFooter WithFirstHeader(XlsxHeaderFooterText firstHeader) =>
             new XlsxHeaderFooter(OddHeader, OddFooter, firstHeader, FirstFooter, EvenHeader, EvenFooter, Settings);
         public XlsxHeaderFooter WithFirstFooter(XlsxHeaderFooterText firstFooter) =>
