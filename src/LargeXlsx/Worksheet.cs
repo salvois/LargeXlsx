@@ -275,10 +275,6 @@ namespace LargeXlsx
 
         public void SetHeaderFooter(XlsxHeaderFooter headerFooter)
         {
-            if (!headerFooter.Settings.DifferentOddEven && headerFooter.OddHeader == null)
-                throw new ArgumentException("When different header for odd and even pages is not used Header value must be set");
-            if (!headerFooter.Settings.DifferentOddEven && headerFooter.OddFooter == null)
-                throw new ArgumentException("When different footer for odd and even pages is not used Footer value must be set");
             _headerFooter = headerFooter;
         }
         
