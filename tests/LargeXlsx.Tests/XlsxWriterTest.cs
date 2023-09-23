@@ -27,14 +27,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.IO;
 using System.Linq;
-
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
-
 using FluentAssertions;
-
 using NUnit.Framework;
-
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 
@@ -175,47 +171,6 @@ public static class XlsxWriterTest
                 sheet.Cells[cell].Style.Font.Name.Should().Be("Calibri");
                 sheet.Cells[cell].Style.Font.Size.Should().Be(11);
             }
-        }
-    }
-
-    [Test]
-    [TestCase(true)] // Writes Cell Reference
-    [TestCase(false)] // Do not writes Cell Reference
-    public static void LineAndCellReference(bool needsSheetRef)
-    {
-        var sheetName = "Sheet&'<1>\"";
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-        {
-            xlsxWriter
-                .BeginWorksheet("Sheet&'<1>\"", needsSheetRef: needsSheetRef)
-                .BeginRow().Write("Col<1>").Write("Col2").Write("Col&3")
-                .SetDefaultStyle(XlsxStyle.Default);
-        }
-
-        var spreadsheetDocument = SpreadsheetDocument.Open(stream, false);
-        var sheet = spreadsheetDocument.WorkbookPart?.Workbook.Sheets?.Elements<Sheet>().Single(s => s.Name == sheetName);
-
-        sheet.Should().NotBeNull();
-
-        var sheetId = sheet?.Id?.ToString() ?? string.Empty;
-        var wsPart = (WorksheetPart)spreadsheetDocument.WorkbookPart?.GetPartById(sheetId)!;
-
-        var row = wsPart.Worksheet.Descendants<Row>().Single();
-        row.Should().NotBeNull();
-        var cells = row.Elements<Cell>().ToArray();
-        cells.Should().NotBeNull();
-
-        foreach (var cellReference in new[] { "A1", "B1", "C1" })
-        {
-            var cell = cells.SingleOrDefault(cell => cell.CellReference == cellReference);
-
-            // If cell reference are written, cell should be found
-            if (needsSheetRef)
-                cell.Should().NotBeNull();
-            // Else cell should not be found
-            else
-                cell.Should().BeNull();
         }
     }
 
@@ -452,7 +407,7 @@ public static class XlsxWriterTest
     {
         using var stream = new MemoryStream();
         using var xlsxWriter = new XlsxWriter(stream);
-        Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection(""));
+        var act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection(""));
         act.Should().Throw<ArgumentException>();
     }
 
@@ -461,7 +416,7 @@ public static class XlsxWriterTest
     {
         using var stream = new MemoryStream();
         using var xlsxWriter = new XlsxWriter(stream);
-        Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in"));
+        var act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in"));
         act.Should().Throw<ArgumentException>();
     }
 
@@ -492,6 +447,26 @@ public static class XlsxWriterTest
             sheet.Cells["A4"].Value.Should().Be("consectetur adipiscing elit");
             sheet.Cells["A5"].Value.Should().Be("consectetur adipiscing elit");
             sheet.Cells["A6"].Value.Should().Be("Lorem ipsum dolor sit amet");
+        }
+    }
+
+    [Theory]
+    public static void RequireCellReferences(bool requireCellReferences)
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream, requireCellReferences: requireCellReferences))
+        {
+            xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("Lorem").Write("ipsum");
+        }
+
+        using (var spreadsheetDocument = SpreadsheetDocument.Open(stream, false))
+        {
+            var sheetId = spreadsheetDocument.WorkbookPart!.Workbook.Sheets!.Elements<Sheet>().Single(s => s.Name == "Sheet1").Id!.ToString()!;
+            var worksheetPart = (WorksheetPart)spreadsheetDocument.WorkbookPart!.GetPartById(sheetId);
+            worksheetPart.Worksheet
+                .Descendants<Row>().Single()
+                .Descendants<Cell>().Any(c => c.CellReference == "B1")
+                .Should().Be(requireCellReferences);
         }
     }
 }

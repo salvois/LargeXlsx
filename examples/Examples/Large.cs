@@ -41,15 +41,20 @@ public static class Large
     public static void Run()
     {
         var stopwatch = Stopwatch.StartNew();
-        DoRun();
+        DoRun(requireCellReferences: true);
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(Large)} completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(Large)} requiring references completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
+
+        stopwatch.Restart();
+        DoRun(requireCellReferences: false);
+        stopwatch.Stop();
+        Console.WriteLine($"{nameof(Large)} omitting references completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
     }
 
-    private static void DoRun()
+    private static void DoRun(bool requireCellReferences)
     {
         using var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, CompressionLevel.Level3);
+        using var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.Level3, requireCellReferences: requireCellReferences);
         var whiteFont = new XlsxFont("Calibri", 11, Color.White, bold: true);
         var blueFill = new XlsxFill(Color.FromArgb(0, 0x45, 0x86));
         var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);

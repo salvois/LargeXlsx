@@ -43,16 +43,21 @@ public static class StyledLarge
     public static void Run()
     {
         var stopwatch = Stopwatch.StartNew();
-        DoRun();
+        DoRun(requireCellReferences: true);
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(StyledLarge)} completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(StyledLarge)} requiring references completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+
+        stopwatch.Restart();
+        DoRun(requireCellReferences: false);
+        stopwatch.Stop();
+        Console.WriteLine($"{nameof(StyledLarge)} omitting references completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
     }
 
-    private static void DoRun()
+    private static void DoRun(bool requireCellReferences)
     {
         var rnd = new Random();
         using var stream = new FileStream($"{nameof(StyledLarge)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, CompressionLevel.Level3);
+        using var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.Level3, requireCellReferences: requireCellReferences);
         var headerStyle = new XlsxStyle(
             new XlsxFont("Calibri", 11, Color.White, bold: true),
             new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),

@@ -74,6 +74,7 @@ The output is like:
 
 ## Changelog
 
+* 1.9: Optionally force writing cell references for compatibility with some readers, thanks to [Mikk182](https://github.com/Mikk182)
 * 1.8: Ability to hide grid lines and row and column headers from worksheets, thanks to [Rajeev Datta](https://github.com/rajeevdatta)
 * 1.7: Write overload for booleans, more performance improvements thanks to [Antony Corbett](https://github.com/AntonyCorbett) and [Mark Pflug](https://github.com/MarkPflug)
 * 1.6: Opt-in shared string table (for memory vs. file size trade-off)
@@ -96,13 +97,15 @@ The constructor allows you to create an XLSX writer. Please note that an `XlsxWr
 public XlsxWriter(
     Stream stream,
     SharpCompress.Compressors.Deflate.CompressionLevel compressionLevel = CompressionLevel.Level3, // compressionLevel since version 1.2
-    bool uzeZip64 = false); // useZip64 since version 1.3
+    bool uzeZip64 = false, // useZip64 since version 1.3
+    bool requireCellReferences = false); // requireCellReferences since version 1.9
 ```
 
 The constructor accepts:
 * A writeable `Stream` to save the Excel file into
 * An optional desired compression level of the underlying zip stream. The default `CompressionLevel.Level3` roughly matches file sizes produced by Excel. Higher compression levels may result in lower speed.
 * An optional flag indicating whether to use ZIP64 compression to support content larger than 4 GiB uncompressed. Recent versions of XLSX-enabled applications such as Excel or LibreOffice should be able to read any file compressd using ZIP64, even small ones, thus, if you don't know the file size in advance and you target recent software, you could just set it to `true`.
+* An optional flag indicating whether row numbers and cell references (such as "A1") are to be included in the XLSX file even when redundant. Row numbers and cell references are optional according to the specification, and omitting them (which the default) provides a notable performance boost when writing XLSX files (as much as 40%). Unfortunately, some non-compliant readers consider files without row and cell references as invalid, thus you can set this flag to `true` if you want to make them happy.
 
 The recipe is adding a worksheet with `BeginWorksheet`, adding a row with `BeginRow`, writing cells to that row with `Write`, and repeating as required. Rows and worksheets are implicitly finalized as soon as new rows or worksheets are added, or the `XlsxWriter` is disposed.
 

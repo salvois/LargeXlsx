@@ -29,7 +29,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-
 using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
@@ -43,13 +42,13 @@ namespace LargeXlsx
         private readonly StreamWriter _streamWriter;
         private readonly Stylesheet _stylesheet;
         private readonly SharedStringTable _sharedStringTable;
+        private readonly bool _requireCellReferences;
         private readonly List<string> _mergedCellRefs;
         private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
         private string _autoFilterRef;
         private string _autoFilterAbsoluteRef;
         private XlsxSheetProtection _sheetProtection;
         private bool _needsRef;
-        private readonly bool _needsSheetRef;
 
         public int Id { get; }
         public string Name { get; }
@@ -57,15 +56,15 @@ namespace LargeXlsx
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool needsSheetRef)
+        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool requireCellReferences)
         {
             Id = id;
             Name = name;
             CurrentRowNumber = 0;
             CurrentColumnNumber = 0;
-            _needsSheetRef = needsSheetRef;
             _stylesheet = stylesheet;
             _sharedStringTable = sharedStringTable;
+            _requireCellReferences = requireCellReferences;
             _mergedCellRefs = new List<string>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
@@ -106,7 +105,7 @@ namespace LargeXlsx
             CurrentRowNumber++;
             CurrentColumnNumber = 1;
             _streamWriter.Write("<row");
-            if (_needsSheetRef || _needsRef)
+            if (_requireCellReferences || _needsRef)
             {
                 _streamWriter.Write(" r =\"");
                 _streamWriter.Write(CurrentRowNumber);
@@ -276,7 +275,7 @@ namespace LargeXlsx
 
         private void WriteCellRef()
         {
-            if (_needsSheetRef || _needsRef)
+            if (_requireCellReferences || _needsRef)
             {
                 _streamWriter.Write(" r=\"");
                 _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
