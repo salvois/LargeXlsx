@@ -25,10 +25,16 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
-using System.Drawing;
 using System.IO;
+using System.Linq;
+
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+
 using FluentAssertions;
+
 using NUnit.Framework;
+
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 
@@ -94,9 +100,9 @@ public static class XlsxWriterTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
         {
-            var whiteFont = new XlsxFont("Segoe UI", 9, Color.White, bold: true);
-            var blueFill = new XlsxFill(Color.FromArgb(0, 0x45, 0x86));
-            var yellowFill = new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88));
+            var whiteFont = new XlsxFont("Segoe UI", 9, System.Drawing.Color.White, bold: true);
+            var blueFill = new XlsxFill(System.Drawing.Color.FromArgb(0, 0x45, 0x86));
+            var yellowFill = new XlsxFill(System.Drawing.Color.FromArgb(0xff, 0xff, 0x88));
             var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
             var highlightStyle = XlsxStyle.Default.With(yellowFill);
             var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
@@ -169,6 +175,47 @@ public static class XlsxWriterTest
                 sheet.Cells[cell].Style.Font.Name.Should().Be("Calibri");
                 sheet.Cells[cell].Style.Font.Size.Should().Be(11);
             }
+        }
+    }
+
+    [Test]
+    [TestCase(true)] // Writes Cell Reference
+    [TestCase(false)] // Do not writes Cell Reference
+    public static void LineAndCellReference(bool needsSheetRef)
+    {
+        var sheetName = "Sheet&'<1>\"";
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+        {
+            xlsxWriter
+                .BeginWorksheet("Sheet&'<1>\"", needsSheetRef: needsSheetRef)
+                .BeginRow().Write("Col<1>").Write("Col2").Write("Col&3")
+                .SetDefaultStyle(XlsxStyle.Default);
+        }
+
+        var spreadsheetDocument = SpreadsheetDocument.Open(stream, false);
+        var sheet = spreadsheetDocument.WorkbookPart?.Workbook.Sheets?.Elements<Sheet>().Single(s => s.Name == sheetName);
+
+        sheet.Should().NotBeNull();
+
+        var sheetId = sheet?.Id?.ToString() ?? string.Empty;
+        var wsPart = (WorksheetPart)spreadsheetDocument.WorkbookPart?.GetPartById(sheetId)!;
+
+        var row = wsPart.Worksheet.Descendants<Row>().Single();
+        row.Should().NotBeNull();
+        var cells = row.Elements<Cell>().ToArray();
+        cells.Should().NotBeNull();
+
+        foreach (var cellReference in new[] { "A1", "B1", "C1" })
+        {
+            var cell = cells.SingleOrDefault(cell => cell.CellReference == cellReference);
+
+            // If cell reference are written, cell should be found
+            if (needsSheetRef)
+                cell.Should().NotBeNull();
+            // Else cell should not be found
+            else
+                cell.Should().BeNull();
         }
     }
 

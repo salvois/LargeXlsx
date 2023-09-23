@@ -30,6 +30,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+
 using SharpCompress.Common;
 using SharpCompress.Compressors.Deflate;
 using SharpCompress.Writers;
@@ -178,14 +179,14 @@ namespace LargeXlsx
             }
         }
 
-        public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0, bool rightToLeft = false, IEnumerable<XlsxColumn> columns = null, bool showGridLines = true, bool showHeaders = true)
+        public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0, bool rightToLeft = false, IEnumerable<XlsxColumn> columns = null, bool showGridLines = true, bool showHeaders = true, bool needsSheetRef = false)
         {
             if (name.Length > MaxSheetNameLength)
                 throw new ArgumentException($"The name \"{name}\" exceeds the maximum length of {MaxSheetNameLength} characters supported by Excel");
             if (_worksheets.Any(ws => string.Equals(ws.Name, name, StringComparison.InvariantCultureIgnoreCase)))
                 throw new ArgumentException($"A worksheet named \"{name}\" has already been added");
             _currentWorksheet?.Dispose();
-            _currentWorksheet = new Worksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn, rightToLeft, _stylesheet, _sharedStringTable, columns ?? Enumerable.Empty<XlsxColumn>(), showGridLines, showHeaders);
+            _currentWorksheet = new Worksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn, rightToLeft, _stylesheet, _sharedStringTable, columns ?? Enumerable.Empty<XlsxColumn>(), showGridLines, showHeaders, needsSheetRef);
             _worksheets.Add(_currentWorksheet);
             return this;
         }
