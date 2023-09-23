@@ -74,6 +74,7 @@ The output is like:
 
 ## Changelog
 
+* 1.8: Ability to hide grid lines and row and column headers from worksheets, thanks to [Rajeev Datta](https://github.com/rajeevdatta)
 * 1.7: Write overload for booleans, more performance improvements thanks to [Antony Corbett](https://github.com/AntonyCorbett) and [Mark Pflug](https://github.com/MarkPflug)
 * 1.6: Opt-in shared string table (for memory vs. file size trade-off)
 * 1.5: Password protection of sheets
@@ -136,8 +137,14 @@ The first version returns the column name for the column at the insertion point.
 
 ### Creating a new worksheet
 
-Call `BeginWorksheet` passing the sheet name and, optionally, the one-based indexes of the row and column where to place a split to create frozen panes. Setting `rightToLeft` to `true` switches the worksheet to right-to-left mode (to support languages such as Arabic and Hebrew). Finally, the `columns` parameter can be used to specify optional column formatting.\
-A call to `BeginWorksheet` finalizes the last worksheet being written, if any, and sets up a new one, so that rows can be added.
+Call `BeginWorksheet` passing the sheet name and one or more of the following optional parameters (using named arguments is recommended):
+
+- `splitRow`: if greater than zero, the one-based index of the row where to place a horizontal split to create frozen panes
+- `splitColumn`: if greater than zero, the one-based index of the column where to place a vertical split to create frozen panes
+- `rightToLeft`: set to `true` to switch the worksheet to right-to-left mode (to support languages such as Arabic and Hebrew)
+- `columns`: pass a non-`null` list to specify optional column formatting (see below)
+- `showGridLines`: set to `false` to hide gridlines in the sheet
+- `showHeaders`: set to `false` to hide row and column headers in the sheet
 
 ```csharp
 // class XlsxWriter
@@ -146,11 +153,16 @@ public XlsxWriter BeginWorksheet(
         int splitRow = 0,
         int splitColumn = 0,
         bool rightToLeft = false, // rightToLeft since version 1.2
-        IEnumerable<XlsxColumn> columns = null);
+        IEnumerable<XlsxColumn> columns = null,
+        bool showGridLines = true, // showGridLines since version 1.8
+        bool showHeaders = true); // showHeaders since version 1.8
 ```
 
 Note that, for compatibility with a restriction of the Excel application, names are restricted to a maximum of 31 character. An `ArgumentException` is thrown if a longer name is passed.
 An `ArgumentException` is also thrown when trying to add a worksheet with a name already used for another worksheet.
+
+A call to `BeginWorksheet` finalizes the last worksheet being written, if any, and sets up a new one, so that rows can be added.
+
 
 #### Column formating
 
@@ -571,7 +583,7 @@ Permissive, [2-clause BSD style](https://opensource.org/licenses/BSD-2-Clause)
 
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020  Salvatore ISAJA
+Copyright 2020-2023  Salvatore ISAJA
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 

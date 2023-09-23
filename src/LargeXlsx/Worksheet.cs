@@ -57,7 +57,7 @@ namespace LargeXlsx
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, bool needsSheetRef, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns)
+        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool needsSheetRef)
         {
             Id = id;
             Name = name;
@@ -74,7 +74,9 @@ namespace LargeXlsx
             _streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                 + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
                                 + "<sheetViews>"
-                                + $"<sheetView workbookViewId=\"0\" rightToLeft=\"{Util.BoolToInt(rightToLeft)}\">\n");
+                                + $"<sheetView showGridLines=\"{Util.BoolToInt(showGridLines)}\" showRowColHeaders=\"{Util.BoolToInt(showHeaders)}\""
+                                + $" rightToLeft=\"{Util.BoolToInt(rightToLeft)}\" workbookViewId=\"0\">\n");
+
             if (splitRow > 0 || splitColumn > 0)
                 FreezePanes(splitRow, splitColumn);
             _streamWriter.Write("</sheetView></sheetViews>\n");
