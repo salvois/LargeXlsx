@@ -364,6 +364,13 @@ namespace LargeXlsx
             return this;
         }
 
+        public XlsxWriter SetHeaderFooter(XlsxHeaderFooter headerFooter)
+        {
+            CheckInWorksheet();
+            _currentWorksheet.SetHeaderFooter(headerFooter);
+            return this;
+        }
+        
         private void CheckInWorksheet()
         {
             if (_currentWorksheet == null)

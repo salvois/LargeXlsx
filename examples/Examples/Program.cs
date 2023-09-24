@@ -48,5 +48,6 @@ public static class Program
         StyledLarge.Run();
         StyledLargeCreateStyles.Run();
         Zip64Huge.Run();
+        HeaderFooter.Run();
     }
 }
