@@ -42,6 +42,7 @@ namespace LargeXlsx
         private readonly StreamWriter _streamWriter;
         private readonly Stylesheet _stylesheet;
         private readonly SharedStringTable _sharedStringTable;
+        private readonly bool _requireCellReferences;
         private readonly List<string> _mergedCellRefs;
         private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
         private string _autoFilterRef;
@@ -56,7 +57,7 @@ namespace LargeXlsx
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders)
+        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool requireCellReferences)
         {
             Id = id;
             Name = name;
@@ -64,6 +65,7 @@ namespace LargeXlsx
             CurrentColumnNumber = 0;
             _stylesheet = stylesheet;
             _sharedStringTable = sharedStringTable;
+            _requireCellReferences = requireCellReferences;
             _mergedCellRefs = new List<string>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
@@ -105,7 +107,7 @@ namespace LargeXlsx
             CurrentRowNumber++;
             CurrentColumnNumber = 1;
             _streamWriter.Write("<row");
-            if (_needsRef)
+            if (_requireCellReferences || _needsRef)
             {
                 _streamWriter.Write(" r =\"");
                 _streamWriter.Write(CurrentRowNumber);
@@ -280,7 +282,7 @@ namespace LargeXlsx
         
         private void WriteCellRef()
         {
-            if (_needsRef)
+            if (_requireCellReferences || _needsRef)
             {
                 _streamWriter.Write(" r=\"");
                 _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));

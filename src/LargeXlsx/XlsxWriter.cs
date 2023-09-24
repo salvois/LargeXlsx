@@ -44,6 +44,7 @@ namespace LargeXlsx
         private readonly List<Worksheet> _worksheets;
         private readonly Stylesheet _stylesheet;
         private readonly SharedStringTable _sharedStringTable;
+        private readonly bool _requireCellReferences;
         private Worksheet _currentWorksheet;
         private bool _hasFormulasWithoutResult;
         private bool _disposed;
@@ -55,11 +56,12 @@ namespace LargeXlsx
         public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
         public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
 
-        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3, bool useZip64 = false)
+        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3, bool useZip64 = false, bool requireCellReferences = false)
         {
             _worksheets = new List<Worksheet>();
             _stylesheet = new Stylesheet();
             _sharedStringTable = new SharedStringTable();
+            _requireCellReferences = requireCellReferences;
             DefaultStyle = XlsxStyle.Default;
 
             _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate) { DeflateCompressionLevel = compressionLevel, UseZip64 = useZip64 });
@@ -185,7 +187,19 @@ namespace LargeXlsx
             if (_worksheets.Any(ws => string.Equals(ws.Name, name, StringComparison.InvariantCultureIgnoreCase)))
                 throw new ArgumentException($"A worksheet named \"{name}\" has already been added");
             _currentWorksheet?.Dispose();
-            _currentWorksheet = new Worksheet(_zipWriter, _worksheets.Count + 1, name, splitRow, splitColumn, rightToLeft, _stylesheet, _sharedStringTable, columns ?? Enumerable.Empty<XlsxColumn>(), showGridLines, showHeaders);
+            _currentWorksheet = new Worksheet(
+                zipWriter: _zipWriter,
+                id: _worksheets.Count + 1,
+                name: name,
+                splitRow: splitRow,
+                splitColumn: splitColumn,
+                rightToLeft: rightToLeft,
+                stylesheet: _stylesheet,
+                sharedStringTable: _sharedStringTable,
+                columns: columns ?? Enumerable.Empty<XlsxColumn>(),
+                showGridLines: showGridLines,
+                showHeaders: showHeaders,
+                requireCellReferences: _requireCellReferences);
             _worksheets.Add(_currentWorksheet);
             return this;
         }

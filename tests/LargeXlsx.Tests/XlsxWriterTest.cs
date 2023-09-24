@@ -25,8 +25,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
-using System.Drawing;
 using System.IO;
+using System.Linq;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
 using FluentAssertions;
 using NUnit.Framework;
 using OfficeOpenXml;
@@ -94,9 +96,9 @@ public static class XlsxWriterTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
         {
-            var whiteFont = new XlsxFont("Segoe UI", 9, Color.White, bold: true);
-            var blueFill = new XlsxFill(Color.FromArgb(0, 0x45, 0x86));
-            var yellowFill = new XlsxFill(Color.FromArgb(0xff, 0xff, 0x88));
+            var whiteFont = new XlsxFont("Segoe UI", 9, System.Drawing.Color.White, bold: true);
+            var blueFill = new XlsxFill(System.Drawing.Color.FromArgb(0, 0x45, 0x86));
+            var yellowFill = new XlsxFill(System.Drawing.Color.FromArgb(0xff, 0xff, 0x88));
             var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
             var highlightStyle = XlsxStyle.Default.With(yellowFill);
             var dateStyle = XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime);
@@ -405,7 +407,7 @@ public static class XlsxWriterTest
     {
         using var stream = new MemoryStream();
         using var xlsxWriter = new XlsxWriter(stream);
-        Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection(""));
+        var act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection(""));
         act.Should().Throw<ArgumentException>();
     }
 
@@ -414,7 +416,7 @@ public static class XlsxWriterTest
     {
         using var stream = new MemoryStream();
         using var xlsxWriter = new XlsxWriter(stream);
-        Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in"));
+        var act = () => xlsxWriter.BeginWorksheet("Sheet1").SetSheetProtection(new XlsxSheetProtection("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in"));
         act.Should().Throw<ArgumentException>();
     }
 
@@ -445,6 +447,26 @@ public static class XlsxWriterTest
             sheet.Cells["A4"].Value.Should().Be("consectetur adipiscing elit");
             sheet.Cells["A5"].Value.Should().Be("consectetur adipiscing elit");
             sheet.Cells["A6"].Value.Should().Be("Lorem ipsum dolor sit amet");
+        }
+    }
+
+    [Theory]
+    public static void RequireCellReferences(bool requireCellReferences)
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream, requireCellReferences: requireCellReferences))
+        {
+            xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("Lorem").Write("ipsum");
+        }
+
+        using (var spreadsheetDocument = SpreadsheetDocument.Open(stream, false))
+        {
+            var sheetId = spreadsheetDocument.WorkbookPart!.Workbook.Sheets!.Elements<Sheet>().Single(s => s.Name == "Sheet1").Id!.ToString()!;
+            var worksheetPart = (WorksheetPart)spreadsheetDocument.WorkbookPart!.GetPartById(sheetId);
+            worksheetPart.Worksheet
+                .Descendants<Row>().Single()
+                .Descendants<Cell>().Any(c => c.CellReference == "B1")
+                .Should().Be(requireCellReferences);
         }
     }
 
