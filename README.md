@@ -19,7 +19,7 @@ Currently the library supports:
 * cell validation, such as dropdown list of allowed values
 * right-to-left worksheets, to support languages such as Arabic and Hebrew
 * password protection of sheets against accidental modification
-* add plain text headers and footers to worksheet printout
+* headers and footers for worksheet printout
 
 
 ## Example
@@ -73,9 +73,42 @@ The output is like:
 ![Single sheet Excel document with 7 rows and 3 columns](https://github.com/salvois/LargeXlsx/raw/master/example.png)
 
 
+
+## Table of contents
+
+  - [Supported features](#supported-features)
+  - [Example](#example)
+  - [Changelog](#changelog)
+  - [Usage](#usage)
+    - [The insertion point](#the-insertion-point)
+    - [Column names](#column-names)
+    - [Creating a new worksheet](#creating-a-new-worksheet)
+      - [Column formatting](#column-formatting)
+    - [Adding or skipping rows](#adding-or-skipping-rows)
+    - [Writing cells](#writing-cells)
+      - [Writing hyperlinks](#writing-hyperlinks)
+      - [Skipping columns](#skipping-columns)
+    - [Merged cells](#merged-cells)
+    - [Auto filter](#auto-filter)
+    - [Data validation](#data-validation)
+    - [Password protection of sheets](#password-protection-of-sheets)
+    - [Headers and footers](#headers-and-footers)
+      - [Left, center and right sections of header and footer](#left-center-and-right-sections-of-header-and-footer)
+      - [Header and footer formatting codes](#header-and-footer-formatting-codes)
+    - [Styling](#styling)
+      - [The default style](#the-default-style)
+      - [Fonts](#fonts)
+      - [Fills](#fills)
+      - [Borders](#borders)
+      - [Number formats](#number-formats)
+      - [Alignment](#alignment)
+  - [Special thanks](#special-thanks)
+  - [License](#license)
+
+
 ## Changelog
 
-* 1.9: Optionally force writing cell references for compatibility with some readers, thanks to [Mikk182](https://github.com/Mikk182)
+* 1.9: Optionally force writing cell references for compatibility with some readers, thanks to [Mikk182](https://github.com/Mikk182); header and footer functionality thanks to [soend](https://github.com/soend)
 * 1.8: Ability to hide grid lines and row and column headers from worksheets, thanks to [Rajeev Datta](https://github.com/rajeevdatta)
 * 1.7: Write overload for booleans, more performance improvements thanks to [Antony Corbett](https://github.com/AntonyCorbett) and [Mark Pflug](https://github.com/MarkPflug)
 * 1.6: Opt-in shared string table (for memory vs. file size trade-off)
@@ -99,14 +132,14 @@ public XlsxWriter(
     Stream stream,
     SharpCompress.Compressors.Deflate.CompressionLevel compressionLevel = CompressionLevel.Level3, // compressionLevel since version 1.2
     bool uzeZip64 = false, // useZip64 since version 1.3
-    bool requireCellReferences = false); // requireCellReferences since version 1.9
+    bool requireCellReferences = true); // requireCellReferences since version 1.9
 ```
 
 The constructor accepts:
 * A writeable `Stream` to save the Excel file into
 * An optional desired compression level of the underlying zip stream. The default `CompressionLevel.Level3` roughly matches file sizes produced by Excel. Higher compression levels may result in lower speed.
 * An optional flag indicating whether to use ZIP64 compression to support content larger than 4 GiB uncompressed. Recent versions of XLSX-enabled applications such as Excel or LibreOffice should be able to read any file compressd using ZIP64, even small ones, thus, if you don't know the file size in advance and you target recent software, you could just set it to `true`.
-* An optional flag indicating whether row numbers and cell references (such as "A1") are to be included in the XLSX file even when redundant. Row numbers and cell references are optional according to the specification, and omitting them (which the default) provides a notable performance boost when writing XLSX files (as much as 40%). Unfortunately, some non-compliant readers consider files without row and cell references as invalid, thus you can set this flag to `true` if you want to make them happy.
+* An optional flag indicating whether row numbers and cell references (such as "A1") are to be included in the XLSX file even when redundant. Row numbers and cell references are optional according to the specification, and omitting them provides a notable performance boost when writing XLSX files (as much as 40%). Unfortunately, some non-compliant readers (which apparently [include MS Access itself](https://github.com/salvois/LargeXlsx/issues/36)!) consider files without row and cell references as invalid, thus you can be consertative and set this flag to `true` if you want to make them happy. Spreadsheet applications such as Excel and LibreOffice can read XLSX files without references just fine, thus, if they are your target, you could use `false` for greater performance
 
 The recipe is adding a worksheet with `BeginWorksheet`, adding a row with `BeginRow`, writing cells to that row with `Write`, and repeating as required. Rows and worksheets are implicitly finalized as soon as new rows or worksheets are added, or the `XlsxWriter` is disposed.
 
@@ -168,7 +201,7 @@ An `ArgumentException` is also thrown when trying to add a worksheet with a name
 A call to `BeginWorksheet` finalizes the last worksheet being written, if any, and sets up a new one, so that rows can be added.
 
 
-#### Column formating
+#### Column formatting
 
 The `BeginWorksheet` method accepts an optional `columns` parameter to specify a list of column formatting objects of type `XlsxColumn`, each describing one or more adjacent columns, with their custom width, hidden state or default style, starting from column A.
 
@@ -401,85 +434,86 @@ Each flag in `XlsxSheetProtection` specifies what operations are **protected**, 
 
 You can call `SetSheetProtection` at any moment while writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object). Each worksheet can contain only up to one protection definition, thus if you call `SetSheetProtection` multiple times for the same worksheet only the last one will apply.
 
-**Note:** password protection of sheets is not to be confused with workbook encryption and is not meant to be secure. File contents are still written in clear text and may be changed by deliberately editing the file. The password is not written into the file but a hash of the password is.
+**Note:** password protection of sheets is not to be confused with workbook encryption and is not meant to be secure. File contents are still written in clear text and may be changed by deliberately editing the file. The password is not written into the file but a hash of the password is. Workbook encryption (that is, password protection of the whole file) requires the writer to use a different file format and will be, unfortunately, not provided by this library in the foreseeable future.
 
-### Adding headers and footers to worksheet printout
+### Headers and footers
 
-Call `SetHeaderFooter` when you want to add headers and footers to worksheet printout.
+Call `SetHeaderFooter` on an `XlsxWriter` when you want to add headers and footers to worksheet printout (since version 1.9):
 
 ```csharp
 //class XlsxWriter
 public XlsxWriter SetHeaderFooter(XlsxHeaderFooter headerFooter);
-```
-Create `XlsxHeaderFooter` using constructor and define header/footer as parameters or clone an existing
-one replacing a property with a `With` method.
 
-```csharp
 //class XlsxHeaderFooter
 public XlsxHeaderFooter(
-        XlsxHeaderFooterText header = null,
-        XlsxHeaderFooterText footer = null,
-        XlsxHeaderFooterText firstHeader = null,
-        XlsxHeaderFooterText firstFooter = null,
-        XlsxHeaderFooterText evenHeader = null,
-        XlsxHeaderFooterText evenFooter = null,
-        XlsxHeaderFooterSettings settings = null);
-
-public XlsxHeaderFooter WithHeader(XlsxHeaderFooterText header);
-public XlsxHeaderFooter WithFooter(XlsxHeaderFooterText footer);
-public XlsxHeaderFooter WithFirstHeader(XlsxHeaderFooterText firstHeader);
-public XlsxHeaderFooter WithFirstFooter(XlsxHeaderFooterText firstFooter);
-public XlsxHeaderFooter WithEvenHeader(XlsxHeaderFooterText evenHeader);
-public XlsxHeaderFooter WithEvenFooter(XlsxHeaderFooterText evenFooter);
+        string oddHeader = null,
+        string oddFooter = null,
+        string evenHeader = null,
+        string evenFooter = null,
+        string firstHeader = null,
+        string firstFooter = null,
+        bool alignWithMargins = true,
+        bool scaleWithDoc = true);
 ```
-`XlsxHeaderFooter` takes several properties to control the content of headers or footers.
-- `header` object sets header to use on every page. When `evenHeader` is also set then
-  `header` values will be used only for odd pages.
-- `footer` object sets footer to use on every page. When `evenFooter` is also set then
-  `footer` values will be used only for odd pages.
-- `firstHeader` object sets header to be used only on first page.
-- `firstFooter` object sets footer to be used only on first page.
-- `evenHeader` object sets header to be used only on even pages. When set then
-  `header` values will be used only for odd pages.
-- `evenFooter` object sets footer to be used only on even pages. When set then
-  `footer` values will be used only for odd pages.
-- `settings` takes `XlsxHeaderFooterSettings` object what can be used to set header and footer settings:
-  - `AlignWithMargins`: Align header footer margins with page margins. When true, as left/right margins grow and shrink, the header and footer edges stay aligned with the margins. When false, headers and footers are aligned on the paper edges, regardless of margins. (**Default: `true`**)
-  - `ScaleWithDoc`: Scale header and footer with document scaling. (**Default: `false`**)
 
-`XlsxHeaderFooterText` lets you specify the text that will be displayed in left, center and right section of the header
-or footer.
+You can call `SetHeaderFooter` at any moment while writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object). Each worksheet can contain only up to one header/footer definition, thus if you call `SetHeaderFooter` multiple times for the same worksheet only the last one will apply.
+
+The constructor of `XlsxHeaderFooter` takes several properties to control the content of headers or footers:
+- `oddHeader` sets the header text, if any, to use on every page, or only on odd pages if `evenHeader` is also set
+- `oddFooter` sets the footer text, if any, to use on every page, or only on odd pages if `evenFooter` is also set
+- `firstHeader` sets the header text, if any, to be used only on first page
+- `firstFooter` sets the footer text, if any, to be used only on first page
+- `evenHeader` sets the header text, if any, to be used only on even pages
+- `evenFooter` sets the footer text, if any, to be used only on even pages
+- `alignWithMargins`: align header and footer margins with page margins. When true, as left/right margins grow and shrink, the header and footer edges stay aligned with the margins. When false, headers and footers are aligned on the paper edges, regardless of margins
+- `scaleWithDoc`: scale header and footer with document scaling
+
+**Note**: that header and footer text may contain a number of formatting codes to control styling and insert special content such as the page number or file name. These codes are prefixed with the `&` character (more information below). A single literal ampersand must thus be represented as `&&`.
+
+#### Left, center and right sections of header and footer
+
+Spreadsheet applications such as Excel and LibreOffice expect headers and footers to be formed of three different sections, for left-, center- and right-aligned texts.
+
+These sections are introduced by the `&L`, `&C` and `&R` formatting codes respectively. For maximum compatibility, you should always use at least one of them to specify at least one section, and you should not repeat the same sections multiple times (although supported, this could lead to unexpected results)-
+
+Other libraries force you to follow the above recommendation by providing an object with three separate properties rather than a single string. This library does not enforce this by design, to facilitate localization in right-to-left cultures.
+
+#### Header and footer formatting codes
+
+Excel specifies a set of formatting codes to control styling and insert special content into headers and footers, as specified in [Office Implementation Information for ISO/IEC 29500 Standards Support](https://learn.microsoft.com/en-us/openspecs/office_standards/ms-oi29500/c167a243-45ad-4def-816e-7032fb1adf5c).
+
+You can either insert these formatting codes manually in your header and footer strings, to ease localization, or use the following class to build header and footer strings programmatically:
 
 ```csharp
-//class XlsxHeaderFooterText
-public XlsxHeaderFooterText(
-        string leftAlignedText = null,
-        string centeredText = null, 
-        string rightAlignedText = null);
+public class XlsxHeaderFooterBuilder
+{
+    public override string ToString(); // renders the built text
+
+    public XlsxHeaderFooterBuilder Left(); // &L - left section
+    public XlsxHeaderFooterBuilder Center(); // &C - center section
+    public XlsxHeaderFooterBuilder Right(); // &R - right section
+    public XlsxHeaderFooterBuilder Text(string text); // plain text, auto escaping ampersands
+    public XlsxHeaderFooterBuilder CurrentDate(); // &D
+    public XlsxHeaderFooterBuilder CurrentTime(); // &T
+    public XlsxHeaderFooterBuilder FileName(); // &F
+    public XlsxHeaderFooterBuilder FilePath(); // &Z
+    public XlsxHeaderFooterBuilder NumberOfPages(); // &N
+    public XlsxHeaderFooterBuilder PageNumber(int offset = 0) // &P or &P+offset or &P+offset - current page number, optionally offset by the specified number
+    public XlsxHeaderFooterBuilder SheetName(); // &A
+    public XlsxHeaderFooterBuilder FontSize(int points); // &points
+    public XlsxHeaderFooterBuilder Font(string name, bool bold = false, bool italic = false); // &"name,type" - set font name and type
+    public XlsxHeaderFooterBuilder Font(bool bold = false, bool italic = false); // &"-,type" - set only font type
+    public XlsxHeaderFooterBuilder Bold(); // &B - each occurrence toggles on or off
+    public XlsxHeaderFooterBuilder Italic(); // &I - each occurrence toggles on or off
+    public XlsxHeaderFooterBuilder Underline(); // &U - each occurrence toggles on or off
+    public XlsxHeaderFooterBuilder DoubleUnderline(); // &E - each occurrence toggles on or off
+    public XlsxHeaderFooterBuilder StrikeThrough(); // &S - each occurrence toggles on or off
+    public XlsxHeaderFooterBuilder Subscript(); // &Y - each occurrence toggles on or off
+    public XlsxHeaderFooterBuilder Superscript(); // &X - each occurrence toggles on or off
+}
 ```
 
-#### Header and footer codes
-OpenXML standard (ISO/IEC 29500-1) specifies [specific codes](https://learn.microsoft.com/en-us/openspecs/office_standards/ms-oi29500/c167a243-45ad-4def-816e-7032fb1adf5c) what can be used to format header and footer text
-and add dynamic info (For example date time, filename, page number etc.)
-
-`XlsxHeaderFooter` class contains some more common codes as constants:
-
-| Constant | Code | Description |
-| --- |:----:| --- |
-| `XlsxHeaderFooter.CurrentDate` |  &D  | Inserts the current date. |
-| `XlsxHeaderFooter.CurrentTime` |  &T  | Inserts the current time. |
-| `XlsxHeaderFooter.FileName` |  &F  | Inserts the name of workbook file. |
-| `XlsxHeaderFooter.FilePath` |  &Z  | Inserts the workbook file path. |
-| `XlsxHeaderFooter.NumberOfPages` |  &N  | Inserts the total number of pages in a workbook. |
-| `XlsxHeaderFooter.PageNumber` |  &P  | Inserts the current page number. |
-| `XlsxHeaderFooter.SheetName` |  &A  | Inserts the name of a worksheet. |
-| `XlsxHeaderFooter.Bold` |  &B  | Turns bold on or off for the characters that follow. |
-| `XlsxHeaderFooter.Italic` |  &I  | Turns italic on or off for the characters that follow. |
-| `XlsxHeaderFooter.Underline` |  &U  | Turns underline on or off for the characters that follow. |
-| `XlsxHeaderFooter.DoubleUnderline` |  &E  | Turns double underline on or off for the characters that follow. |
-| `XlsxHeaderFooter.Strikethrough` |  &S  | Turns strikethrough on or off for the characters that follow. |
-| `XlsxHeaderFooter.Subscript` |  &Y  | Turns subscript on or off for the characters that follow. |
-| `XlsxHeaderFooter.Superscript` |  &X  | Turns superscript on or off for the characters that follow. |
+When writing the `&"font,type"` and `&"-,type"` codes manually, the type field can assume one of the following values: `Regular`, `Bold`, `Italic` and `Bold Italic`.
 
 ### Styling
 
@@ -658,6 +692,9 @@ The built-in `XlsxAlignment.Default` object provides an alignment with default v
 ## Special thanks
 
 Kudos to [Roberto Montinaro](https://github.com/montinaro), [Matteo Pierangeli](https://github.com/matpierangeli) and [Giovanni Improta](https://github.com/improtag) for their patience and their very valuable suggestions! <3
+
+Many thanks to all great people who contributed with [pull requests](https://github.com/salvois/LargeXlsx/pulls?q=), questions and reports!
+
 
 ## License
 

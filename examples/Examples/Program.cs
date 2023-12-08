@@ -43,11 +43,11 @@ public static class Program
         RightToLeft.Run();
         Zip64Small.Run();
         SheetProtection.Run();
+        HeaderFooter.Run();
         SharedStrings.Run();
         Large.Run();
         StyledLarge.Run();
         StyledLargeCreateStyles.Run();
         Zip64Huge.Run();
-        HeaderFooter.Run();
     }
 }
