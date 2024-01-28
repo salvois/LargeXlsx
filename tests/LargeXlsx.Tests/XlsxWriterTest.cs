@@ -91,6 +91,18 @@ public static class XlsxWriterTest
     }
 
     [Test]
+    public static void InsertionPointAfterMergedCells()
+    {
+        using var stream = new MemoryStream();
+        using var xlsxWriter = new XlsxWriter(stream);
+        xlsxWriter.BeginWorksheet("Sheet1")
+            .BeginRow().Write("A1").Write("B1", columnSpan: 3);
+
+        xlsxWriter.CurrentRowNumber.Should().Be(1);
+        xlsxWriter.CurrentColumnNumber.Should().Be(5);
+    }
+
+    [Test]
     public static void Simple()
     {
         using var stream = new MemoryStream();

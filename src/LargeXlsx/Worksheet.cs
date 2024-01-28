@@ -109,7 +109,7 @@ namespace LargeXlsx
             _streamWriter.Write("<row");
             if (_requireCellReferences || _needsRef)
             {
-                _streamWriter.Write(" r =\"");
+                _streamWriter.Write(" r=\"");
                 _streamWriter.Write(CurrentRowNumber);
                 _streamWriter.Write("\"");
                 _needsRef = false;
@@ -151,8 +151,8 @@ namespace LargeXlsx
                 WriteCellRef();
                 WriteStyle(styleId);
                 _streamWriter.Write("/>\n");
+                CurrentColumnNumber++;
             }
-            CurrentColumnNumber++;
         }
 
         public void Write(string value, XlsxStyle style)
