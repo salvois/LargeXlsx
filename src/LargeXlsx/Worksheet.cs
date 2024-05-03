@@ -28,8 +28,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
@@ -57,7 +57,7 @@ namespace LargeXlsx
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool requireCellReferences)
+        public Worksheet(ZipArchive zipArchive, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool requireCellReferences, CompressionLevel compressionLevel)
         {
             Id = id;
             Name = name;
@@ -68,7 +68,7 @@ namespace LargeXlsx
             _requireCellReferences = requireCellReferences;
             _mergedCellRefs = new List<string>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
-            _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
+            _stream = zipArchive.CreateEntry($"xl/worksheets/sheet{id}.xml", compressionLevel).Open();
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
             _streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
@@ -170,6 +170,32 @@ namespace LargeXlsx
             _streamWriter.Write(" t=\"inlineStr\"><is><t>");
             _streamWriter.Write(Util.EscapeXmlText(value));
             _streamWriter.Write("</t></is></c>\n");
+            CurrentColumnNumber++;
+        }
+
+        public void Write(long value, XlsxStyle style)
+        {
+            EnsureRow();
+            // <c r="{0}{1}" s="{2}"><v>{3}</v></c>
+            _streamWriter.Write("<c");
+            WriteCellRef();
+            WriteStyle(style);
+            _streamWriter.Write("><v>");
+            _streamWriter.Write(value);
+            _streamWriter.Write("</v></c>\n");
+            CurrentColumnNumber++;
+        }
+
+        public void Write(decimal value, XlsxStyle style)
+        {
+            EnsureRow();
+            // <c r="{0}{1}" s="{2}"><v>{3}</v></c>
+            _streamWriter.Write("<c");
+            WriteCellRef();
+            WriteStyle(style);
+            _streamWriter.Write("><v>");
+            _streamWriter.Write(value);
+            _streamWriter.Write("</v></c>\n");
             CurrentColumnNumber++;
         }
 
