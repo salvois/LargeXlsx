@@ -38,6 +38,11 @@ namespace LargeXlsx
             return new XlsxColumn(count, false, null, null);
         }
 
+        public static XlsxColumn NumberFormat(XlsxNumberFormat numberFormat)
+        {
+            return new XlsxColumn(1, false, XlsxStyle.Default.With(numberFormat), null);
+        }
+
         public static XlsxColumn Formatted(double width, int count = 1, bool hidden = false, XlsxStyle style = null)
         {
             return new XlsxColumn(count, hidden, style, width);
