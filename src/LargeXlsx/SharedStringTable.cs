@@ -26,19 +26,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
     internal class SharedStringTable
     {
         private readonly Dictionary<string, int> _stringItems;
+        private readonly CompressionLevel _compressionLevel;
         private int _nextStringId;
 
-        public SharedStringTable()
+        public SharedStringTable(CompressionLevel compressionLevel = CompressionLevel.Fastest)
         {
+            _compressionLevel = compressionLevel;
             _stringItems = new Dictionary<string, int>();
             _nextStringId = 0;
         }
@@ -53,9 +55,10 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipWriter zipWriter)
+        public void Save(ZipArchive zipArchive)
         {
-            using (var stream = zipWriter.WriteToStream("xl/sharedStrings.xml", new ZipWriterEntryOptions()))
+            var entry = zipArchive.CreateEntry("xl/sharedStrings.xml", _compressionLevel);
+            using (var stream = entry.Open())
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"

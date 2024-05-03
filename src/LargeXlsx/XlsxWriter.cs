@@ -27,24 +27,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using SharpCompress.Common;
-using SharpCompress.Compressors.Deflate;
-using SharpCompress.Writers;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
     public sealed class XlsxWriter : IDisposable
     {
         private const int MaxSheetNameLength = 31;
-        private readonly ZipWriter _zipWriter;
+        private readonly ZipArchive _zipArchive;
         private readonly List<Worksheet> _worksheets;
         private readonly Stylesheet _stylesheet;
         private readonly SharedStringTable _sharedStringTable;
         private readonly bool _requireCellReferences;
+        private readonly CompressionLevel _compressionLevel;
         private Worksheet _currentWorksheet;
         private bool _hasFormulasWithoutResult;
         private bool _disposed;
@@ -56,15 +54,16 @@ namespace LargeXlsx
         public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
         public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
 
-        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3, bool useZip64 = false, bool requireCellReferences = true)
+        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Fastest, bool useZip64 = false, bool requireCellReferences = true)
         {
+            _compressionLevel = compressionLevel;
             _worksheets = new List<Worksheet>();
-            _stylesheet = new Stylesheet();
+            _stylesheet = new Stylesheet(compressionLevel);
             _sharedStringTable = new SharedStringTable();
             _requireCellReferences = requireCellReferences;
             DefaultStyle = XlsxStyle.Default;
 
-            _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate) { DeflateCompressionLevel = compressionLevel, UseZip64 = useZip64 });
+            _zipArchive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true);
         }
 
         public void Dispose()
@@ -72,14 +71,14 @@ namespace LargeXlsx
             if (!_disposed)
             {
                 _currentWorksheet?.Dispose();
-                _stylesheet.Save(_zipWriter);
-                _sharedStringTable.Save(_zipWriter);
+                _stylesheet.Save(_zipArchive);
+                _sharedStringTable.Save(_zipArchive);
                 SaveDocProps();
                 SaveContentTypes();
                 SaveRels();
                 SaveWorkbook();
                 SaveWorkbookRels();
-                _zipWriter.Dispose();
+                _zipArchive.Dispose();
                 _disposed = true;
             }
         }
@@ -87,7 +86,7 @@ namespace LargeXlsx
         private void SaveDocProps()
         {
             var assemblyName = Assembly.GetExecutingAssembly().GetName();
-            using (var stream = _zipWriter.WriteToStream("docProps/app.xml", new ZipWriterEntryOptions()))
+            using (var stream = _zipArchive.CreateEntry("docProps/app.xml", _compressionLevel).Open())
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 // Looks some applications (e.g. Microsoft's) may consider a file invalid if a specific version number is not found.
@@ -103,7 +102,7 @@ namespace LargeXlsx
 
         private void SaveContentTypes()
         {
-            using (var stream = _zipWriter.WriteToStream("[Content_Types].xml", new ZipWriterEntryOptions()))
+            using (var stream = _zipArchive.CreateEntry("[Content_Types].xml", _compressionLevel).Open())
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 var worksheetTags = new StringBuilder();
@@ -126,7 +125,7 @@ namespace LargeXlsx
 
         private void SaveRels()
         {
-            using (var stream = _zipWriter.WriteToStream("_rels/.rels", new ZipWriterEntryOptions()))
+            using (var stream = _zipArchive.CreateEntry("_rels/.rels", _compressionLevel).Open())
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
@@ -139,7 +138,7 @@ namespace LargeXlsx
 
         private void SaveWorkbook()
         {
-            using (var stream = _zipWriter.WriteToStream("xl/workbook.xml", new ZipWriterEntryOptions()))
+            using (var stream = _zipArchive.CreateEntry("xl/workbook.xml", _compressionLevel).Open())
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 var worksheetTags = new StringBuilder();
@@ -165,7 +164,7 @@ namespace LargeXlsx
 
         private void SaveWorkbookRels()
         {
-            using (var stream = _zipWriter.WriteToStream("xl/_rels/workbook.xml.rels", new ZipWriterEntryOptions()))
+            using (var stream = _zipArchive.CreateEntry("xl/_rels/workbook.xml.rels", _compressionLevel).Open())
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 var worksheetTags = new StringBuilder();
@@ -188,7 +187,7 @@ namespace LargeXlsx
                 throw new ArgumentException($"A worksheet named \"{name}\" has already been added");
             _currentWorksheet?.Dispose();
             _currentWorksheet = new Worksheet(
-                zipWriter: _zipWriter,
+                zipArchive: _zipArchive,
                 id: _worksheets.Count + 1,
                 name: name,
                 splitRow: splitRow,
@@ -199,7 +198,8 @@ namespace LargeXlsx
                 columns: columns ?? Enumerable.Empty<XlsxColumn>(),
                 showGridLines: showGridLines,
                 showHeaders: showHeaders,
-                requireCellReferences: _requireCellReferences);
+                requireCellReferences: _requireCellReferences,
+                compressionLevel: _compressionLevel);
             _worksheets.Add(_currentWorksheet);
             return this;
         }

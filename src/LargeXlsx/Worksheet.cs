@@ -28,8 +28,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
@@ -57,7 +57,7 @@ namespace LargeXlsx
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool requireCellReferences)
+        public Worksheet(ZipArchive zipArchive, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool requireCellReferences, CompressionLevel compressionLevel)
         {
             Id = id;
             Name = name;
@@ -68,7 +68,7 @@ namespace LargeXlsx
             _requireCellReferences = requireCellReferences;
             _mergedCellRefs = new List<string>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
-            _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
+            _stream = zipArchive.CreateEntry($"xl/worksheets/sheet{id}.xml", compressionLevel).Open();
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
             _streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"

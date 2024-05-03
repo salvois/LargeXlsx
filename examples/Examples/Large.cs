@@ -28,8 +28,8 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using LargeXlsx;
-using SharpCompress.Compressors.Deflate;
 
 namespace Examples;
 
@@ -54,7 +54,7 @@ public static class Large
     private static void DoRun(bool requireCellReferences)
     {
         using var stream = new FileStream($"{nameof(Large)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.Level3, requireCellReferences: requireCellReferences);
+        using var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.Optimal, requireCellReferences: requireCellReferences);
         var whiteFont = new XlsxFont("Calibri", 11, Color.White, bold: true);
         var blueFill = new XlsxFill(Color.FromArgb(0, 0x45, 0x86));
         var headerStyle = new XlsxStyle(whiteFont, blueFill, XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);

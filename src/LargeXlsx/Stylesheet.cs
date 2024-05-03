@@ -27,8 +27,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
@@ -46,6 +46,7 @@ namespace LargeXlsx
         private readonly Dictionary<XlsxBorder, int> _borders;
         private readonly Dictionary<XlsxNumberFormat, int> _numberFormats;
         private readonly Dictionary<XlsxStyle, int> _styles;
+        private readonly CompressionLevel _compressionLevel;
         private int _nextFontId;
         private int _nextBorderId;
         private int _nextFillId;
@@ -54,8 +55,9 @@ namespace LargeXlsx
         private XlsxStyle _lastUsedStyle;
         private int _lastUsedStyleId;
 
-        public Stylesheet()
+        public Stylesheet(CompressionLevel compressionLevel = CompressionLevel.Fastest)
         {
+            _compressionLevel = compressionLevel;
             _fonts = new Dictionary<XlsxFont, int> { [XlsxFont.Default] = 0 };
             _nextFontId = 1;
 
@@ -108,9 +110,10 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipWriter zipWriter)
+        public void Save(ZipArchive zipArchive)
         {
-            using (var stream = zipWriter.WriteToStream("xl/styles.xml", new ZipWriterEntryOptions()))
+            var entry = zipArchive.CreateEntry("xl/styles.xml", _compressionLevel);
+            using (var stream = entry.Open())
             using (var streamWriter = new InvariantCultureStreamWriter(stream))
             {
                 streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
