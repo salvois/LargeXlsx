@@ -110,7 +110,7 @@ namespace LargeXlsx
             if (_requireCellReferences || _needsRef)
             {
                 _streamWriter.Write(" r=\"");
-                _streamWriter.Write(CurrentRowNumber);
+                _streamWriter.Write(RowNumberStringCache.Instance.GetRowNumberAsString(CurrentRowNumber));
                 _streamWriter.Write("\"");
                 _needsRef = false;
             }
@@ -286,7 +286,7 @@ namespace LargeXlsx
             {
                 _streamWriter.Write(" r=\"");
                 _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
-                _streamWriter.Write(CurrentRowNumber);
+                _streamWriter.Write(RowNumberStringCache.Instance.GetRowNumberAsString(CurrentRowNumber));
                 _streamWriter.Write("\"");
                 _needsRef = false;
             }
