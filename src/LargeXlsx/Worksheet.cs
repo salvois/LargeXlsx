@@ -50,6 +50,7 @@ namespace LargeXlsx
         private XlsxSheetProtection _sheetProtection;
         private XlsxHeaderFooter _headerFooter;
         private bool _needsRef;
+        private string _stringedCurrentRowNumber;
 
         public int Id { get; }
         public string Name { get; }
@@ -104,12 +105,13 @@ namespace LargeXlsx
             if (CurrentRowNumber == MaxRowNumbers)
                 throw new InvalidOperationException($"A worksheet can contain at most {MaxRowNumbers} rows ({CurrentRowNumber + 1} attempted)");
             CurrentRowNumber++;
+            _stringedCurrentRowNumber = null;
             CurrentColumnNumber = 1;
             _streamWriter.Write("<row");
             if (_requireCellReferences || _needsRef)
             {
                 _streamWriter.Write(" r=\"");
-                _streamWriter.Write(CurrentRowNumber);
+                WriteCurrentRowNumber();
                 _streamWriter.Write("\"");
                 _needsRef = false;
             }
@@ -285,10 +287,17 @@ namespace LargeXlsx
             {
                 _streamWriter.Write(" r=\"");
                 _streamWriter.Write(Util.GetColumnName(CurrentColumnNumber));
-                _streamWriter.Write(CurrentRowNumber);
+                WriteCurrentRowNumber();
                 _streamWriter.Write("\"");
                 _needsRef = false;
             }
+        }
+
+        private void WriteCurrentRowNumber()
+        {
+            if (_stringedCurrentRowNumber == null)
+                _stringedCurrentRowNumber = CurrentRowNumber.ToString();
+            _streamWriter.Write(_stringedCurrentRowNumber);
         }
 
         private void WriteStyle(int styleId)
