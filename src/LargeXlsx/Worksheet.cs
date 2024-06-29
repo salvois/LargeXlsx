@@ -80,8 +80,7 @@ namespace LargeXlsx
             if (splitRow > 0 || splitColumn > 0)
                 FreezePanes(splitRow, splitColumn);
             _streamWriter.Write("</sheetView></sheetViews>\n");
-            if (columns.Any())
-                WriteColumns(columns);
+            WriteColumns(columns);
             _streamWriter.Write("<sheetData>\n");
         }
 
@@ -348,11 +347,16 @@ namespace LargeXlsx
         private void WriteColumns(IEnumerable<XlsxColumn> columns)
         {
             var columnIndex = 1;
-            _streamWriter.Write("<cols>");
+            var colsWritten = false;
             foreach (var column in columns)
             {
                 if (column.Hidden || column.Style != null || column.Width.HasValue)
                 {
+                    if (!colsWritten)
+                    {
+                        _streamWriter.Write("<cols>");
+                        colsWritten = true;
+                    }
                     _streamWriter.Write("<col min=\"{0}\" max=\"{1}\"", columnIndex, columnIndex + column.Count - 1);
                     if (column.Width.HasValue) _streamWriter.Write(" width=\"{0}\"", column.Width.Value);
                     if (column.Hidden) _streamWriter.Write(" hidden=\"1\"");
@@ -362,7 +366,8 @@ namespace LargeXlsx
                 }
                 columnIndex += column.Count;
             }
-            _streamWriter.Write("</cols>\n");
+            if (colsWritten)
+                _streamWriter.Write("</cols>\n");
         }
 
         private void WriteAutoFilter()

@@ -24,12 +24,15 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-using System.Drawing;
 using System.IO;
+using System.Linq;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
 using FluentAssertions;
 using NUnit.Framework;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using Color = System.Drawing.Color;
 
 namespace LargeXlsx.Tests;
 
@@ -90,5 +93,18 @@ public static class ColumnFormattingTest
         worksheet.Column(5).Hidden.Should().BeFalse();
         worksheet.Column(6).Hidden.Should().BeTrue();
         worksheet.Column(7).Hidden.Should().BeFalse();
+    }
+
+    [Test]
+    public static void OnlyUnformatted()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Unformatted() });
+
+        using var spreadsheetDocument = SpreadsheetDocument.Open(stream, false);
+        var sheetId = spreadsheetDocument.WorkbookPart!.Workbook.Sheets!.Elements<Sheet>().Single(s => s.Name == "Sheet 1").Id!.ToString()!;
+        var worksheetPart = (WorksheetPart)spreadsheetDocument.WorkbookPart!.GetPartById(sheetId);
+        worksheetPart.Worksheet.Descendants<Columns>().Should().BeEmpty();
     }
 }
