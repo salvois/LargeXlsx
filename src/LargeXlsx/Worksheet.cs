@@ -56,14 +56,16 @@ namespace LargeXlsx
         public string Name { get; }
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
+        public bool Hidden { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool requireCellReferences)
+        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool requireCellReferences, bool hidden = false)
         {
             Id = id;
             Name = name;
             CurrentRowNumber = 0;
             CurrentColumnNumber = 0;
+            Hidden = hidden;
             _stylesheet = stylesheet;
             _sharedStringTable = sharedStringTable;
             _requireCellReferences = requireCellReferences;
