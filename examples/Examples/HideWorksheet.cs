@@ -24,34 +24,31 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-using System;
+using System.Drawing;
+using System.IO;
+using LargeXlsx;
 
 namespace Examples;
 
-public static class Program
+public static class HideWorksheet
 {
-    public static void Main(string[] _)
+    public static void Run()
     {
-        Simple.Run();
-        MultipleSheet.Run();
-        FrozenPanes.Run();
-        HideGridlines.Run();
-        HideWorksheet.Run();
-        NumberFormats.Run();
-        ColumnFormatting.Run();
-        RowFormatting.Run();
-        Alignment.Run();
-        Border.Run();
-        DataValidation.Run();
-        RightToLeft.Run();
-        Zip64Small.Run();
-        SheetProtection.Run();
-        HeaderFooter.Run();
-        SharedStrings.Run();
-        Large.Run();
-        StyledLarge.Run();
-        StyledLargeCreateStyles.Run();
-        Zip64Huge.Run();
-        Console.WriteLine($"Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)} TotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
+        var xlsxStyle = XlsxStyle.Default.With(XlsxBorder.Around(new XlsxBorder.Line(Color.Black, XlsxBorder.Style.Dotted)));
+        using var stream = new FileStream($"{nameof(HideWorksheet)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream);
+        xlsxWriter
+            .BeginWorksheet("VisibleWorksheet")
+            .BeginRow().Write("A1", xlsxStyle).Write("B1", xlsxStyle).Write("C1", xlsxStyle)
+            .BeginRow().Write("A2", xlsxStyle).Write("B2", xlsxStyle).Write("C2", xlsxStyle)
+            .BeginRow().Write("A3", xlsxStyle).Write("B3", xlsxStyle).Write("C3", xlsxStyle)
+            .BeginWorksheet("HiddenWorksheet", visibleType: Visibility.Hidden)
+            .BeginRow()
+            .BeginRow().Write("").Write("This sheet is hidden by default")
+            .BeginRow()
+            .BeginWorksheet("VeryHiddenWorksheet", visibleType: Visibility.VeryHidden)
+            .BeginRow()
+            .BeginRow().Write("").Write("This sheet is veryHidden by default")
+            .BeginRow();
     }
 }
