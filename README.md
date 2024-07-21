@@ -182,7 +182,7 @@ Call `BeginWorksheet` passing the sheet name and one or more of the following op
 - `columns`: pass a non-`null` list to specify optional column formatting (see below)
 - `showGridLines`: set to `false` to hide gridlines in the sheet
 - `showHeaders`: set to `false` to hide row and column headers in the sheet
-- `hidden`: set to `true` to hide the entire worksheet
+- `visibleType`: set workspace visibility, possible are: `visible`, `hidden` and `veryHidden`
 
 ```csharp
 // class XlsxWriter
@@ -194,7 +194,7 @@ public XlsxWriter BeginWorksheet(
         IEnumerable<XlsxColumn> columns = null,
         bool showGridLines = true, // showGridLines since version 1.8
         bool showHeaders = true,  // showHeaders since version 1.8
-        bool hidden = false);
+        Visibility visibleType = Visibility.Visible);
 ```
 
 Note that, for compatibility with a restriction of the Excel application, names are restricted to a maximum of 31 character. An `ArgumentException` is thrown if a longer name is passed.

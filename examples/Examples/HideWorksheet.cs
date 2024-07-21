@@ -42,9 +42,13 @@ public static class HideWorksheet
             .BeginRow().Write("A1", xlsxStyle).Write("B1", xlsxStyle).Write("C1", xlsxStyle)
             .BeginRow().Write("A2", xlsxStyle).Write("B2", xlsxStyle).Write("C2", xlsxStyle)
             .BeginRow().Write("A3", xlsxStyle).Write("B3", xlsxStyle).Write("C3", xlsxStyle)
-            .BeginWorksheet("HiddenWorksheet", hidden: true)
+            .BeginWorksheet("HiddenWorksheet", visibleType: Visibility.Hidden)
             .BeginRow()
             .BeginRow().Write("").Write("This sheet is hidden by default")
+            .BeginRow()
+            .BeginWorksheet("VeryHiddenWorksheet", visibleType: Visibility.VeryHidden)
+            .BeginRow()
+            .BeginRow().Write("").Write("This sheet is veryHidden by default")
             .BeginRow();
     }
 }
