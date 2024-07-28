@@ -24,34 +24,23 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-using System;
+using System.IO;
+using LargeXlsx;
 
 namespace Examples;
 
-public static class Program
+public static class WorksheetVisibility
 {
-    public static void Main(string[] _)
+    public static void Run()
     {
-        Simple.Run();
-        MultipleSheet.Run();
-        FrozenPanes.Run();
-        HideGridlines.Run();
-        WorksheetVisibility.Run();
-        NumberFormats.Run();
-        ColumnFormatting.Run();
-        RowFormatting.Run();
-        Alignment.Run();
-        Border.Run();
-        DataValidation.Run();
-        RightToLeft.Run();
-        Zip64Small.Run();
-        SheetProtection.Run();
-        HeaderFooter.Run();
-        SharedStrings.Run();
-        Large.Run();
-        StyledLarge.Run();
-        StyledLargeCreateStyles.Run();
-        Zip64Huge.Run();
-        Console.WriteLine($"Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)} TotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
+        using var stream = new FileStream($"{nameof(WorksheetVisibility)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream);
+        xlsxWriter
+            .BeginWorksheet("VisibleWorksheet")
+            .BeginRow().Write("A1").Write("B1")
+            .BeginWorksheet("HiddenWorksheet", state: XlsxWorksheetState.Hidden)
+            .BeginRow().Write("This sheet is hidden by default")
+            .BeginWorksheet("VeryHiddenWorksheet", state: XlsxWorksheetState.VeryHidden)
+            .BeginRow().Write("This sheet is veryHidden");
     }
 }

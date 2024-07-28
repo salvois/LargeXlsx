@@ -147,7 +147,7 @@ namespace LargeXlsx
                 var sheetIndex = 0;
                 foreach (var worksheet in _worksheets)
                 {
-                    worksheetTags.Append($"<sheet name=\"{Util.EscapeXmlAttribute(worksheet.Name)}\" sheetId=\"{worksheet.Id}\" {SetState(worksheet)} r:id=\"RidWS{worksheet.Id}\"/>");
+                    worksheetTags.Append($"<sheet name=\"{Util.EscapeXmlAttribute(worksheet.Name)}\" sheetId=\"{worksheet.Id}\" {GetWorksheetState(worksheet.State)} r:id=\"RidWS{worksheet.Id}\"/>");
                     if (worksheet.AutoFilterAbsoluteRef != null)
                         definedNames.Append($"<definedName name=\"_xlnm._FilterDatabase\" localSheetId=\"{sheetIndex}\" hidden=\"1\">{Util.EscapeXmlText(worksheet.AutoFilterAbsoluteRef)}</definedName>");
                     sheetIndex++;
@@ -163,17 +163,18 @@ namespace LargeXlsx
             }
         }
 
-        private static string SetState(Worksheet worksheet)
+        private static string GetWorksheetState(XlsxWorksheetState state)
         {
-            switch (worksheet.VisibleType)
+            switch (state)
             {
-                case Visibility.Hidden:
-                    return "state=\"hidden\"";
-                case Visibility.VeryHidden:
-                    return "state=\"veryHidden\"";
-                case Visibility.Visible:
-                default:
+                case XlsxWorksheetState.Visible:
                     return "";
+                case XlsxWorksheetState.Hidden:
+                    return "state=\"hidden\"";
+                case XlsxWorksheetState.VeryHidden:
+                    return "state=\"veryHidden\"";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
         }
 
@@ -194,7 +195,15 @@ namespace LargeXlsx
             }
         }
 
-        public XlsxWriter BeginWorksheet(string name, int splitRow = 0, int splitColumn = 0, bool rightToLeft = false, IEnumerable<XlsxColumn> columns = null, bool showGridLines = true, bool showHeaders = true, Visibility visibleType = Visibility.Visible)
+        public XlsxWriter BeginWorksheet(
+            string name,
+            int splitRow = 0,
+            int splitColumn = 0,
+            bool rightToLeft = false,
+            IEnumerable<XlsxColumn> columns = null,
+            bool showGridLines = true,
+            bool showHeaders = true,
+            XlsxWorksheetState state = XlsxWorksheetState.Visible)
         {
             if (name.Length > MaxSheetNameLength)
                 throw new ArgumentException($"The name \"{name}\" exceeds the maximum length of {MaxSheetNameLength} characters supported by Excel");
@@ -208,7 +217,7 @@ namespace LargeXlsx
                 splitRow: splitRow,
                 splitColumn: splitColumn,
                 rightToLeft: rightToLeft,
-                visibleType: visibleType,
+                state: state,
                 stylesheet: _stylesheet,
                 sharedStringTable: _sharedStringTable,
                 columns: columns ?? Enumerable.Empty<XlsxColumn>(),

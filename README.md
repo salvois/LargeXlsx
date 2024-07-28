@@ -108,6 +108,7 @@ The output is like:
 
 ## Changelog
 
+* 1.10: Ability to hide worksheets, thanks to [Micha Voße](https://github.com/piwonesien)
 * 1.9: Optionally force writing cell references for compatibility with some readers, thanks to [Mikk182](https://github.com/Mikk182); header and footer functionality thanks to [soend](https://github.com/soend)
 * 1.8: Ability to hide grid lines and row and column headers from worksheets, thanks to [Rajeev Datta](https://github.com/rajeevdatta)
 * 1.7: Write overload for booleans, more performance improvements thanks to [Antony Corbett](https://github.com/AntonyCorbett) and [Mark Pflug](https://github.com/MarkPflug)
@@ -182,19 +183,19 @@ Call `BeginWorksheet` passing the sheet name and one or more of the following op
 - `columns`: pass a non-`null` list to specify optional column formatting (see below)
 - `showGridLines`: set to `false` to hide gridlines in the sheet
 - `showHeaders`: set to `false` to hide row and column headers in the sheet
-- `visibleType`: set workspace visibility, possible are: `visible`, `hidden` and `veryHidden`
+- `state`: whether the worksheet is `Visible`, `Hidden` (but spreadsheet applications let unhide it) or `VeryHidden` (spreadsheet applications are not supposed to let unhide it; Excel doesn't but LibreOffice does)
 
 ```csharp
 // class XlsxWriter
 public XlsxWriter BeginWorksheet(
-        string name,
-        int splitRow = 0,
-        int splitColumn = 0,
-        bool rightToLeft = false, // rightToLeft since version 1.2
-        IEnumerable<XlsxColumn> columns = null,
-        bool showGridLines = true, // showGridLines since version 1.8
-        bool showHeaders = true,  // showHeaders since version 1.8
-        Visibility visibleType = Visibility.Visible);
+    string name,
+    int splitRow = 0,
+    int splitColumn = 0,
+    bool rightToLeft = false, // rightToLeft since version 1.2
+    IEnumerable<XlsxColumn> columns = null,
+    bool showGridLines = true, // showGridLines since version 1.8
+    bool showHeaders = true,  // showHeaders since version 1.8
+    XlsxWorksheetState state = XlsxWorksheetState.Visible); // state since version 1.10
 ```
 
 Note that, for compatibility with a restriction of the Excel application, names are restricted to a maximum of 31 character. An `ArgumentException` is thrown if a longer name is passed.

@@ -128,61 +128,59 @@ public static class XlsxWriterTest
                 .BeginRow().Write("Row8").Write(false).Write(true);
         }
 
-        using (var package = new ExcelPackage(stream))
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets.Count.Should().Be(1);
+        var sheet = package.Workbook.Worksheets[0];
+        sheet.Name.Should().Be("Sheet&'<1>\"");
+
+        sheet.Cells["A1"].Value.Should().Be("Col<1>");
+        sheet.Cells["B1"].Value.Should().Be("Col2");
+        sheet.Cells["C1"].Value.Should().Be("Col&3");
+        sheet.Cells["A2"].Value.Should().BeNull();
+        sheet.Cells["B2"].Value.Should().Be("Sub2");
+        sheet.Cells["C2"].Value.Should().Be("Sub3");
+        sheet.Cells["A3"].Value.Should().Be("Row3");
+        sheet.Cells["B3"].Value.Should().Be(42);
+        sheet.Cells["C3"].Value.Should().Be(-1);
+        sheet.Cells["A4"].Value.Should().Be("Row4");
+        sheet.Cells["B4"].Value.Should().BeNull();
+        sheet.Cells["C4"].Value.Should().Be(new DateTime(2020, 5, 6, 18, 27, 0));
+        sheet.Cells["C4"].Style.Numberformat.NumFmtID.Should().Be(22);
+        sheet.Cells["A5"].Value.Should().BeNull();
+        sheet.Cells["A6"].Value.Should().BeNull();
+        sheet.Cells["A7"].Value.Should().Be("Row7");
+        sheet.Cells["B7"].Value.Should().BeNull();
+        sheet.Cells["C7"].Value.Should().Be(3.14159265359);
+        sheet.Cells["A8"].Value.Should().Be("Row8");
+        sheet.Cells["B8"].Value.Should().Be(false);
+        sheet.Cells["C8"].Value.Should().Be(true);
+
+        sheet.Cells["A7:B7"].Merge.Should().BeTrue();
+
+        foreach (var cell in new[] { "A1", "B1", "C1", "A2", "B2", "C2" })
         {
-            package.Workbook.Worksheets.Count.Should().Be(1);
-            var sheet = package.Workbook.Worksheets[0];
-            sheet.Name.Should().Be("Sheet&'<1>\"");
+            sheet.Cells[cell].Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
+            sheet.Cells[cell].Style.Fill.BackgroundColor.Rgb.Should().Be("FF004586");
+            sheet.Cells[cell].Style.Font.Bold.Should().BeTrue();
+            sheet.Cells[cell].Style.Font.Color.Rgb.Should().Be("FFFFFFFF");
+            sheet.Cells[cell].Style.Font.Name.Should().Be("Segoe UI");
+            sheet.Cells[cell].Style.Font.Size.Should().Be(9);
+        }
 
-            sheet.Cells["A1"].Value.Should().Be("Col<1>");
-            sheet.Cells["B1"].Value.Should().Be("Col2");
-            sheet.Cells["C1"].Value.Should().Be("Col&3");
-            sheet.Cells["A2"].Value.Should().BeNull();
-            sheet.Cells["B2"].Value.Should().Be("Sub2");
-            sheet.Cells["C2"].Value.Should().Be("Sub3");
-            sheet.Cells["A3"].Value.Should().Be("Row3");
-            sheet.Cells["B3"].Value.Should().Be(42);
-            sheet.Cells["C3"].Value.Should().Be(-1);
-            sheet.Cells["A4"].Value.Should().Be("Row4");
-            sheet.Cells["B4"].Value.Should().BeNull();
-            sheet.Cells["C4"].Value.Should().Be(new DateTime(2020, 5, 6, 18, 27, 0));
-            sheet.Cells["C4"].Style.Numberformat.NumFmtID.Should().Be(22);
-            sheet.Cells["A5"].Value.Should().BeNull();
-            sheet.Cells["A6"].Value.Should().BeNull();
-            sheet.Cells["A7"].Value.Should().Be("Row7");
-            sheet.Cells["B7"].Value.Should().BeNull();
-            sheet.Cells["C7"].Value.Should().Be(3.14159265359);
-            sheet.Cells["A8"].Value.Should().Be("Row8");
-            sheet.Cells["B8"].Value.Should().Be(false);
-            sheet.Cells["C8"].Value.Should().Be(true);
+        sheet.Cells["C3"].Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
+        sheet.Cells["C3"].Style.Fill.BackgroundColor.Rgb.Should().Be("FFFFFF88");
+        sheet.Cells["C3"].Style.Font.Bold.Should().BeFalse();
+        sheet.Cells["C3"].Style.Font.Color.Rgb.Should().Be("FF000000");
+        sheet.Cells["C3"].Style.Font.Name.Should().Be("Calibri");
+        sheet.Cells["C3"].Style.Font.Size.Should().Be(11);
 
-            sheet.Cells["A7:B7"].Merge.Should().BeTrue();
-
-            foreach (var cell in new[] { "A1", "B1", "C1", "A2", "B2", "C2" })
-            {
-                sheet.Cells[cell].Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-                sheet.Cells[cell].Style.Fill.BackgroundColor.Rgb.Should().Be("FF004586");
-                sheet.Cells[cell].Style.Font.Bold.Should().BeTrue();
-                sheet.Cells[cell].Style.Font.Color.Rgb.Should().Be("FFFFFFFF");
-                sheet.Cells[cell].Style.Font.Name.Should().Be("Segoe UI");
-                sheet.Cells[cell].Style.Font.Size.Should().Be(9);
-            }
-
-            sheet.Cells["C3"].Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-            sheet.Cells["C3"].Style.Fill.BackgroundColor.Rgb.Should().Be("FFFFFF88");
-            sheet.Cells["C3"].Style.Font.Bold.Should().BeFalse();
-            sheet.Cells["C3"].Style.Font.Color.Rgb.Should().Be("FF000000");
-            sheet.Cells["C3"].Style.Font.Name.Should().Be("Calibri");
-            sheet.Cells["C3"].Style.Font.Size.Should().Be(11);
-
-            foreach (var cell in new[] { "A3", "B3", "A4", "B4", "C4", "A5", "B5", "C5", "A6", "B6", "C6", "A7", "B7", "C7" })
-            {
-                sheet.Cells[cell].Style.Fill.PatternType.Should().Be(ExcelFillStyle.None);
-                sheet.Cells[cell].Style.Font.Bold.Should().BeFalse();
-                sheet.Cells[cell].Style.Font.Color.Rgb.Should().Be("FF000000");
-                sheet.Cells[cell].Style.Font.Name.Should().Be("Calibri");
-                sheet.Cells[cell].Style.Font.Size.Should().Be(11);
-            }
+        foreach (var cell in new[] { "A3", "B3", "A4", "B4", "C4", "A5", "B5", "C5", "A6", "B6", "C6", "A7", "B7", "C7" })
+        {
+            sheet.Cells[cell].Style.Fill.PatternType.Should().Be(ExcelFillStyle.None);
+            sheet.Cells[cell].Style.Font.Bold.Should().BeFalse();
+            sheet.Cells[cell].Style.Font.Color.Rgb.Should().Be("FF000000");
+            sheet.Cells[cell].Style.Font.Name.Should().Be("Calibri");
+            sheet.Cells[cell].Style.Font.Size.Should().Be(11);
         }
     }
 
@@ -203,17 +201,15 @@ public static class XlsxWriterTest
                 .BeginRow().Write("Row3", doubleUnderLineStyle);
         }
 
-        using (var package = new ExcelPackage(stream))
-        {
-            var sheet = package.Workbook.Worksheets[0];
+        using var package = new ExcelPackage(stream);
+        var sheet = package.Workbook.Worksheets[0];
 
-            sheet.Cells["A1"].Style.Font.UnderLine.Should().Be(false);
-            sheet.Cells["A1"].Style.Font.UnderLineType.Should().Be(ExcelUnderLineType.None);
-            sheet.Cells["A2"].Style.Font.UnderLine.Should().Be(true);
-            sheet.Cells["A2"].Style.Font.UnderLineType.Should().Be(ExcelUnderLineType.Single);
-            sheet.Cells["A3"].Style.Font.UnderLine.Should().Be(true);
-            sheet.Cells["A3"].Style.Font.UnderLineType.Should().Be(ExcelUnderLineType.Double);
-        }
+        sheet.Cells["A1"].Style.Font.UnderLine.Should().Be(false);
+        sheet.Cells["A1"].Style.Font.UnderLineType.Should().Be(ExcelUnderLineType.None);
+        sheet.Cells["A2"].Style.Font.UnderLine.Should().Be(true);
+        sheet.Cells["A2"].Style.Font.UnderLineType.Should().Be(ExcelUnderLineType.Single);
+        sheet.Cells["A3"].Style.Font.UnderLine.Should().Be(true);
+        sheet.Cells["A3"].Style.Font.UnderLineType.Should().Be(ExcelUnderLineType.Double);
     }
 
     [Test]
@@ -231,30 +227,28 @@ public static class XlsxWriterTest
                 .BeginRow().Write("Sheet2.A2").Write("Sheet2.B2").Write("Sheet2.C2");
         }
 
-        using (var package = new ExcelPackage(stream))
-        {
-            package.Workbook.Worksheets.Count.Should().Be(2);
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets.Count.Should().Be(2);
 
-            var sheet1 = package.Workbook.Worksheets[0];
-            sheet1.Name.Should().Be("Sheet1");
-            sheet1.Cells["A1"].Value.Should().Be("Sheet1.A1");
-            sheet1.Cells["B1"].Value.Should().Be("Sheet1.B1");
-            sheet1.Cells["C1"].Value.Should().Be("Sheet1.C1");
-            sheet1.Cells["A2"].Value.Should().Be("Sheet1.A2");
-            sheet1.Cells["B2"].Value.Should().BeNull();
-            sheet1.Cells["C2"].Value.Should().Be("Sheet1.C2");
-            sheet1.Cells["A2:B2"].Merge.Should().BeTrue();
+        var sheet1 = package.Workbook.Worksheets[0];
+        sheet1.Name.Should().Be("Sheet1");
+        sheet1.Cells["A1"].Value.Should().Be("Sheet1.A1");
+        sheet1.Cells["B1"].Value.Should().Be("Sheet1.B1");
+        sheet1.Cells["C1"].Value.Should().Be("Sheet1.C1");
+        sheet1.Cells["A2"].Value.Should().Be("Sheet1.A2");
+        sheet1.Cells["B2"].Value.Should().BeNull();
+        sheet1.Cells["C2"].Value.Should().Be("Sheet1.C2");
+        sheet1.Cells["A2:B2"].Merge.Should().BeTrue();
 
-            var sheet2 = package.Workbook.Worksheets[1];
-            sheet2.Name.Should().Be("Sheet2");
-            sheet2.Cells["A1"].Value.Should().Be("Sheet2.A1");
-            sheet2.Cells["B1"].Value.Should().BeNull();
-            sheet2.Cells["C1"].Value.Should().Be("Sheet2.C1");
-            sheet2.Cells["A2"].Value.Should().Be("Sheet2.A2");
-            sheet2.Cells["B2"].Value.Should().Be("Sheet2.B2");
-            sheet2.Cells["C2"].Value.Should().Be("Sheet2.C2");
-            sheet2.Cells["A1:B1"].Merge.Should().BeTrue();
-        }
+        var sheet2 = package.Workbook.Worksheets[1];
+        sheet2.Name.Should().Be("Sheet2");
+        sheet2.Cells["A1"].Value.Should().Be("Sheet2.A1");
+        sheet2.Cells["B1"].Value.Should().BeNull();
+        sheet2.Cells["C1"].Value.Should().Be("Sheet2.C1");
+        sheet2.Cells["A2"].Value.Should().Be("Sheet2.A2");
+        sheet2.Cells["B2"].Value.Should().Be("Sheet2.B2");
+        sheet2.Cells["C2"].Value.Should().Be("Sheet2.C2");
+        sheet2.Cells["A1:B1"].Merge.Should().BeTrue();
     }
 
     [Test]
@@ -270,13 +264,11 @@ public static class XlsxWriterTest
                 .BeginWorksheet("OnlyCols", splitColumn: 1);
         }
 
-        using (var package = new ExcelPackage(stream))
-        {
-            package.Workbook.Worksheets[0].View.ActiveCell.Should().Be("C2");
-            package.Workbook.Worksheets[1].View.ActiveCell.Should().Be("B3");
-            package.Workbook.Worksheets[2].View.ActiveCell.Should().Be("A2");
-            package.Workbook.Worksheets[3].View.ActiveCell.Should().Be("B1");
-        }
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets[0].View.ActiveCell.Should().Be("C2");
+        package.Workbook.Worksheets[1].View.ActiveCell.Should().Be("B3");
+        package.Workbook.Worksheets[2].View.ActiveCell.Should().Be("A2");
+        package.Workbook.Worksheets[3].View.ActiveCell.Should().Be("B1");
     }
 
     [Test]
@@ -292,8 +284,8 @@ public static class XlsxWriterTest
                 .BeginRow().Write("A4").Write("B4").Write("C4")
                 .SetAutoFilter(1, 1, xlsxWriter.CurrentRowNumber, 3);
 
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].AutoFilterAddress.Address.Should().Be("A1:C4");
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets[0].AutoFilterAddress.Address.Should().Be("A1:C4");
     }
 
     [Test]
@@ -301,7 +293,7 @@ public static class XlsxWriterTest
     {
         using var stream = new MemoryStream();
         using var xlsxWriter = new XlsxWriter(stream);
-        Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("A very, very, very, long worksheet name exceeding what Excel can handle");
+        var act = () => xlsxWriter.BeginWorksheet("A very, very, very, long worksheet name exceeding what Excel can handle");
         act.Should().Throw<ArgumentException>();
     }
 
@@ -311,7 +303,7 @@ public static class XlsxWriterTest
         using var stream = new MemoryStream();
         using var xlsxWriter = new XlsxWriter(stream);
         xlsxWriter.BeginWorksheet("Sheet1");
-        Func<XlsxWriter> act = () => xlsxWriter.BeginWorksheet("Sheet1");
+        var act = () => xlsxWriter.BeginWorksheet("Sheet1");
         act.Should().Throw<ArgumentException>();
     }
 
@@ -325,8 +317,8 @@ public static class XlsxWriterTest
                 .BeginRow().Write(@"ما هو ""لوريم إيبسوم"" ؟")
                 .BeginRow().Write(@"لوريم إيبسوم(Lorem Ipsum) هو ببساطة نص شكلي (بمعنى أن الغاية هي الشكل وليس المحتوى) ويُستخدم في صناعات المطابع ودور النشر.");
 
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].View.RightToLeft.Should().Be(rightToLeft);
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets[0].View.RightToLeft.Should().Be(rightToLeft);
     }
 
     [Theory]
@@ -336,10 +328,10 @@ public static class XlsxWriterTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter
                 .BeginWorksheet("Sheet 1", showGridLines: showGridLines)
-                .BeginRow().Write(@"Gridlines are hidden in this sheet.");
+                .BeginRow().Write("Gridlines are hidden in this sheet.");
 
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].View.ShowGridLines.Should().Be(showGridLines);
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets[0].View.ShowGridLines.Should().Be(showGridLines);
     }
 
     [Theory]
@@ -349,10 +341,23 @@ public static class XlsxWriterTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter
                 .BeginWorksheet("Sheet 1", showHeaders: showHeaders)
-                .BeginRow().Write(@"Row and column headers are hidden in this sheet.");
+                .BeginRow().Write("Row and column headers are hidden in this sheet.");
 
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].View.ShowHeaders.Should().Be(showHeaders);
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets[0].View.ShowHeaders.Should().Be(showHeaders);
+    }
+
+    [TestCase(XlsxWorksheetState.Visible, eWorkSheetHidden.Visible)]
+    [TestCase(XlsxWorksheetState.Hidden, eWorkSheetHidden.Hidden)]
+    [TestCase(XlsxWorksheetState.VeryHidden, eWorkSheetHidden.VeryHidden)]
+    public static void WorksheetVisibility(XlsxWorksheetState state, eWorkSheetHidden expected)
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+            xlsxWriter.BeginWorksheet("Sheet 1", state: state).BeginRow().Write("A1");
+
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets[0].Hidden.Should().Be(expected);
     }
 
     [Theory]
@@ -367,16 +372,14 @@ public static class XlsxWriterTest
                 .BeginRow().Write("A2").Write("B2");
         }
 
-        using (var package = new ExcelPackage(stream))
-        {
-            package.Workbook.Worksheets.Count.Should().Be(1);
-            var sheet = package.Workbook.Worksheets[0];
-            sheet.Name.Should().Be("Sheet1");
-            sheet.Cells["A1"].Value.Should().Be("A1");
-            sheet.Cells["B1"].Value.Should().Be("B1");
-            sheet.Cells["A2"].Value.Should().Be("A2");
-            sheet.Cells["B2"].Value.Should().Be("B2");
-        }
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets.Count.Should().Be(1);
+        var sheet = package.Workbook.Worksheets[0];
+        sheet.Name.Should().Be("Sheet1");
+        sheet.Cells["A1"].Value.Should().Be("A1");
+        sheet.Cells["B1"].Value.Should().Be("B1");
+        sheet.Cells["A2"].Value.Should().Be("A2");
+        sheet.Cells["B2"].Value.Should().Be("B2");
     }
 
     [Test]
@@ -391,27 +394,25 @@ public static class XlsxWriterTest
                 .BeginRow().Write("A1");
         }
 
-        using (var package = new ExcelPackage(stream))
-        {
-            package.Workbook.Worksheets.Count.Should().Be(1);
-            var protection = package.Workbook.Worksheets[0].Protection;
-            protection.IsProtected.Should().BeTrue();
-            protection.AllowAutoFilter.Should().BeTrue();
-            protection.AllowDeleteColumns.Should().BeFalse();
-            protection.AllowDeleteRows.Should().BeFalse();
-            protection.AllowEditObject.Should().BeFalse();
-            protection.AllowEditScenarios.Should().BeFalse();
-            protection.AllowFormatCells.Should().BeFalse();
-            protection.AllowFormatColumns.Should().BeFalse();
-            protection.AllowFormatRows.Should().BeFalse();
-            protection.AllowInsertColumns.Should().BeFalse();
-            protection.AllowInsertHyperlinks.Should().BeFalse();
-            protection.AllowInsertRows.Should().BeFalse();
-            protection.AllowPivotTables.Should().BeFalse();
-            protection.AllowSelectLockedCells.Should().BeTrue();
-            protection.AllowSelectUnlockedCells.Should().BeTrue();
-            protection.AllowSort.Should().BeFalse();
-        }
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets.Count.Should().Be(1);
+        var protection = package.Workbook.Worksheets[0].Protection;
+        protection.IsProtected.Should().BeTrue();
+        protection.AllowAutoFilter.Should().BeTrue();
+        protection.AllowDeleteColumns.Should().BeFalse();
+        protection.AllowDeleteRows.Should().BeFalse();
+        protection.AllowEditObject.Should().BeFalse();
+        protection.AllowEditScenarios.Should().BeFalse();
+        protection.AllowFormatCells.Should().BeFalse();
+        protection.AllowFormatColumns.Should().BeFalse();
+        protection.AllowFormatRows.Should().BeFalse();
+        protection.AllowInsertColumns.Should().BeFalse();
+        protection.AllowInsertHyperlinks.Should().BeFalse();
+        protection.AllowInsertRows.Should().BeFalse();
+        protection.AllowPivotTables.Should().BeFalse();
+        protection.AllowSelectLockedCells.Should().BeTrue();
+        protection.AllowSelectUnlockedCells.Should().BeTrue();
+        protection.AllowSort.Should().BeFalse();
     }
 
     [Test]
@@ -448,18 +449,16 @@ public static class XlsxWriterTest
                 .BeginRow().WriteSharedString("Lorem ipsum dolor sit amet");
         }
 
-        using (var package = new ExcelPackage(stream))
-        {
-            package.Workbook.Worksheets.Count.Should().Be(1);
-            var sheet = package.Workbook.Worksheets[0];
-            sheet.Name.Should().Be("Sheet1");
-            sheet.Cells["A1"].Value.Should().Be("Lorem ipsum dolor sit amet");
-            sheet.Cells["A2"].Value.Should().Be("Lorem ipsum dolor sit amet");
-            sheet.Cells["A3"].Value.Should().Be("Lorem ipsum dolor sit amet");
-            sheet.Cells["A4"].Value.Should().Be("consectetur adipiscing elit");
-            sheet.Cells["A5"].Value.Should().Be("consectetur adipiscing elit");
-            sheet.Cells["A6"].Value.Should().Be("Lorem ipsum dolor sit amet");
-        }
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets.Count.Should().Be(1);
+        var sheet = package.Workbook.Worksheets[0];
+        sheet.Name.Should().Be("Sheet1");
+        sheet.Cells["A1"].Value.Should().Be("Lorem ipsum dolor sit amet");
+        sheet.Cells["A2"].Value.Should().Be("Lorem ipsum dolor sit amet");
+        sheet.Cells["A3"].Value.Should().Be("Lorem ipsum dolor sit amet");
+        sheet.Cells["A4"].Value.Should().Be("consectetur adipiscing elit");
+        sheet.Cells["A5"].Value.Should().Be("consectetur adipiscing elit");
+        sheet.Cells["A6"].Value.Should().Be("Lorem ipsum dolor sit amet");
     }
 
     [Theory]
@@ -471,14 +470,12 @@ public static class XlsxWriterTest
             xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("Lorem").Write("ipsum");
         }
 
-        using (var spreadsheetDocument = SpreadsheetDocument.Open(stream, false))
-        {
-            var sheetId = spreadsheetDocument.WorkbookPart!.Workbook.Sheets!.Elements<Sheet>().Single(s => s.Name == "Sheet1").Id!.ToString()!;
-            var worksheetPart = (WorksheetPart)spreadsheetDocument.WorkbookPart!.GetPartById(sheetId);
-            worksheetPart.Worksheet
-                .Descendants<Row>().Single()
-                .Descendants<Cell>().Any(c => c.CellReference == "B1")
-                .Should().Be(requireCellReferences);
-        }
+        using var spreadsheetDocument = SpreadsheetDocument.Open(stream, false);
+        var sheetId = spreadsheetDocument.WorkbookPart!.Workbook.Sheets!.Elements<Sheet>().Single(s => s.Name == "Sheet1").Id!.ToString()!;
+        var worksheetPart = (WorksheetPart)spreadsheetDocument.WorkbookPart!.GetPartById(sheetId);
+        worksheetPart.Worksheet
+            .Descendants<Row>().Single()
+            .Descendants<Cell>().Any(c => c.CellReference == "B1")
+            .Should().Be(requireCellReferences);
     }
 }

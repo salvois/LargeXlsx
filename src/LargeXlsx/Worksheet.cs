@@ -33,13 +33,6 @@ using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
-    public enum Visibility
-    {
-        Visible,
-        Hidden,
-        VeryHidden
-    }
-
     internal class Worksheet : IDisposable
     {
         private const int MinSheetProtectionPasswordLength = 1;
@@ -61,18 +54,31 @@ namespace LargeXlsx
 
         public int Id { get; }
         public string Name { get; }
+        public XlsxWorksheetState State { get; }
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
-        public Visibility VisibleType { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
-        public Worksheet(ZipWriter zipWriter, int id, string name, int splitRow, int splitColumn, bool rightToLeft, Stylesheet stylesheet, SharedStringTable sharedStringTable, IEnumerable<XlsxColumn> columns, bool showGridLines, bool showHeaders, bool requireCellReferences, Visibility visibleType = Visibility.Visible)
+        public Worksheet(
+            ZipWriter zipWriter,
+            int id,
+            string name,
+            int splitRow,
+            int splitColumn,
+            bool rightToLeft,
+            Stylesheet stylesheet,
+            SharedStringTable sharedStringTable,
+            IEnumerable<XlsxColumn> columns,
+            bool showGridLines,
+            bool showHeaders,
+            bool requireCellReferences,
+            XlsxWorksheetState state)
         {
             Id = id;
             Name = name;
+            State = state;
             CurrentRowNumber = 0;
             CurrentColumnNumber = 0;
-            VisibleType = visibleType;
             _stylesheet = stylesheet;
             _sharedStringTable = sharedStringTable;
             _requireCellReferences = requireCellReferences;

@@ -24,31 +24,12 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-using System.Drawing;
-using System.IO;
-using LargeXlsx;
-
-namespace Examples;
-
-public static class HideWorksheet
+namespace LargeXlsx
 {
-    public static void Run()
+    public enum XlsxWorksheetState
     {
-        var xlsxStyle = XlsxStyle.Default.With(XlsxBorder.Around(new XlsxBorder.Line(Color.Black, XlsxBorder.Style.Dotted)));
-        using var stream = new FileStream($"{nameof(HideWorksheet)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        xlsxWriter
-            .BeginWorksheet("VisibleWorksheet")
-            .BeginRow().Write("A1", xlsxStyle).Write("B1", xlsxStyle).Write("C1", xlsxStyle)
-            .BeginRow().Write("A2", xlsxStyle).Write("B2", xlsxStyle).Write("C2", xlsxStyle)
-            .BeginRow().Write("A3", xlsxStyle).Write("B3", xlsxStyle).Write("C3", xlsxStyle)
-            .BeginWorksheet("HiddenWorksheet", visibleType: Visibility.Hidden)
-            .BeginRow()
-            .BeginRow().Write("").Write("This sheet is hidden by default")
-            .BeginRow()
-            .BeginWorksheet("VeryHiddenWorksheet", visibleType: Visibility.VeryHidden)
-            .BeginRow()
-            .BeginRow().Write("").Write("This sheet is veryHidden by default")
-            .BeginRow();
+        Visible,
+        Hidden,
+        VeryHidden
     }
 }
