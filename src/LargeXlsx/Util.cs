@@ -40,33 +40,13 @@ namespace LargeXlsx
 
         public static string EscapeXmlText(string value)
         {
-            var sb = new StringBuilder(value.Length);
-            foreach (var c in value)
-            {
-                if (c == '<') sb.Append("&lt;");
-                else if (c == '>') sb.Append("&gt;");
-                else if (c == '&') sb.Append("&amp;");
-                else sb.Append(c);
-            }
-
-            return sb.ToString();
-        }
+			return System.Security.SecurityElement.Escape(value);
+		}
 
         public static string EscapeXmlAttribute(string value)
         {
-            var sb = new StringBuilder(value.Length);
-            foreach (var c in value)
-            {
-                if (c == '<') sb.Append("&lt;");
-                else if (c == '>') sb.Append("&gt;");
-                else if (c == '&') sb.Append("&amp;");
-                else if (c == '\'') sb.Append("&apos;");
-                else if (c == '"') sb.Append("&quot;");
-                else sb.Append(c);
-            }
-
-            return sb.ToString();
-        }
+			return System.Security.SecurityElement.Escape(value);
+		}
 
         public static string GetColumnName(int columnIndex)
         {
