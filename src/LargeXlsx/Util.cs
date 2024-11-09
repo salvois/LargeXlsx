@@ -54,23 +54,23 @@ namespace LargeXlsx
 			if (string.IsNullOrEmpty(value))
 				return value;
 
-			var stringBuilrede = new StringBuilder();
+			var stringBuilder = new StringBuilder();
 
 			for (int i = 0; i < value.Length; i++)
 			{
 				if (XmlConvert.IsXmlChar(value[i]))
 				{
-					stringBuilrede.Append(value[i]);
+					stringBuilder.Append(value[i]);
 				}
 				else if (char.IsHighSurrogate(value[i]) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
 				{
-					stringBuilrede.Append(value[i]);
-					stringBuilrede.Append(value[i + 1]);
+					stringBuilder.Append(value[i]);
+					stringBuilder.Append(value[i + 1]);
 					i++;
 				}
 			}
 
-			return stringBuilrede.ToString();
+			return stringBuilder.ToString();
 		}
 
 		public static string GetColumnName(int columnIndex)
