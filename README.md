@@ -320,6 +320,15 @@ For example, if merging the 2 rows x 3 columns range `A7:C8` using `AddMergedCel
 
 **Note**: due to the structure of the XLSX file format, the ranges for all merged cells of a worksheet must be accumulated in RAM, because they must be written to the file after the content of the whole worksheet. **Using a large number of merged cells may cause high memory consumption**. This also means that you may call `AddMergedCell` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or cells you won't write content to.
 
+### PageBreaks
+Page breaks can be specified in rows or columns or both
+```csharp
+// class XlsxWriter
+public XlsxWriter AddPageBreak(); //adds a page break at the current index and column
+public XlsxWriter AddRowPageBreak(); //adds a horizontal page break at the current row
+public XlsxWriter AddColumnPageBreak(); //adds a vertical page break at the current column
+```
+adding page breaks does not advance the insertion point 
 
 ### Auto filter
 

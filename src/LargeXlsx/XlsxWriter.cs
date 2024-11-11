@@ -349,6 +349,24 @@ namespace LargeXlsx
         public XlsxWriter AddMergedCell(int rowCount, int columnCount)
         {
             return AddMergedCell(CurrentRowNumber, CurrentColumnNumber, rowCount, columnCount);
+        }  
+        public XlsxWriter AddPageBreak()
+        {
+            CheckInWorksheet();
+            _currentWorksheet.AddPageBreak();
+            return this;
+        }
+        public XlsxWriter AddRowPageBreak()
+        {
+            CheckInWorksheet();
+            _currentWorksheet.AddRowPageBreak();
+            return this;
+        }
+        public XlsxWriter AddColumnPageBreak()
+        {
+            CheckInWorksheet();
+            _currentWorksheet.AddColumnPageBreak();
+            return this;
         }
 
         public XlsxWriter SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount)
