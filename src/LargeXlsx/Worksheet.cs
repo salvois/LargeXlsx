@@ -45,6 +45,8 @@ namespace LargeXlsx
         private readonly bool _requireCellReferences;
         private readonly List<string> _mergedCellRefs;
         private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
+        private readonly List<int> _rowBreaks;     
+        private readonly List<int> _columnBreaks;  
         private string _autoFilterRef;
         private string _autoFilterAbsoluteRef;
         private XlsxSheetProtection _sheetProtection;
@@ -83,6 +85,8 @@ namespace LargeXlsx
             _sharedStringTable = sharedStringTable;
             _requireCellReferences = requireCellReferences;
             _mergedCellRefs = new List<string>();
+            _rowBreaks = new List<int>();  
+            _columnBreaks = new List<int>();  
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
@@ -109,6 +113,7 @@ namespace LargeXlsx
             WriteMergedCells();
             WriteDataValidations();
             WriteHeaderFooter();
+            WritePageBreaks();
             _streamWriter.Write("</worksheet>\n");
             _streamWriter.Dispose();
             _stream.Dispose();
@@ -256,6 +261,30 @@ namespace LargeXlsx
             var fromColumnName = Util.GetColumnName(fromColumn);
             var toColumnName = Util.GetColumnName(fromColumn + columnCount - 1);
             _mergedCellRefs.Add($"{fromColumnName}{fromRow}:{toColumnName}{toRow}");
+        }
+       
+        public void AddRowPageBreak()
+        {
+            if (CurrentRowNumber <= 0)
+                throw new InvalidOperationException("Cannot add row page break before starting a row");
+            
+            if (!_rowBreaks.Contains(CurrentRowNumber))
+                _rowBreaks.Add(CurrentRowNumber);
+        }
+
+        public void AddColumnPageBreak()
+        {
+            if (CurrentColumnNumber <= 0)
+                throw new InvalidOperationException("Cannot add column page break before starting a column");
+            
+            if (!_columnBreaks.Contains(CurrentColumnNumber))
+                _columnBreaks.Add(CurrentColumnNumber);
+        }
+
+        public void AddPageBreak()
+        {
+            AddRowPageBreak();
+            AddColumnPageBreak();
         }
 
         public void SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount)
@@ -410,6 +439,30 @@ namespace LargeXlsx
             _streamWriter.Write("</mergeCells>\n");
         }
 
+        private void WritePageBreaks()
+        {
+            // Write row breaks (horizontal)
+            if (_rowBreaks.Count > 0)
+            {
+                _streamWriter.Write($"<rowBreaks count=\"{_rowBreaks.Count}\" manualBreakCount=\"{_rowBreaks.Count}\">");
+                foreach (var rowNum in _rowBreaks.OrderBy(r => r))
+                {
+                    _streamWriter.Write($"<brk id=\"{rowNum}\" max=\"16383\" man=\"1\"/>");
+                }
+                _streamWriter.Write("</rowBreaks>");
+            }
+
+            // Write column breaks (vertical)
+            if (_columnBreaks.Count > 0)
+            {
+                _streamWriter.Write($"<colBreaks count=\"{_columnBreaks.Count}\" manualBreakCount=\"{_columnBreaks.Count}\">");
+                foreach (var colNum in _columnBreaks.OrderBy(c => c))
+                {
+                    _streamWriter.Write($"<brk id=\"{colNum}\" max=\"1048575\" man=\"1\"/>");
+                }
+                _streamWriter.Write("</colBreaks>");
+            }
+        }
         private void WriteDataValidations()
         {
             if (!_cellRefsByDataValidation.Any())
