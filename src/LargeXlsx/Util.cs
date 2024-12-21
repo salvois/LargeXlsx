@@ -25,9 +25,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml;
 
 namespace LargeXlsx
 {
@@ -129,6 +131,12 @@ namespace LargeXlsx
                 hash = hasher.ComputeHash(hash.Concat(iterator).ToArray());
             }
             return hash;
+        }
+
+        public static void AddSpacePreserveIfNeeded(StreamWriter streamWriter, string value)
+        {
+            if (value.Length > 0 && (XmlConvert.IsWhitespaceChar(value[0]) || XmlConvert.IsWhitespaceChar(value[value.Length - 1])))
+                streamWriter.Write(" xml:space=\"preserve\"");
         }
     }
 }

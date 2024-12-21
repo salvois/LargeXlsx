@@ -179,11 +179,13 @@ namespace LargeXlsx
                 return;
             }
             EnsureRow();
-            // <c r="{0}{1}" s="{2}" t="inlineStr"><is><t>{3}</t></is></c>
+            // <c r="{0}{1}" s="{2}" t="inlineStr"><is><t xml:space="preserve">{3}</t></is></c>
             _streamWriter.Write("<c");
             WriteCellRef();
             WriteStyle(style);
-            _streamWriter.Write(" t=\"inlineStr\"><is><t>");
+            _streamWriter.Write(" t=\"inlineStr\"><is><t");
+            Util.AddSpacePreserveIfNeeded(_streamWriter, value);
+            _streamWriter.Write(">");
             _streamWriter.Write(Util.EscapeXmlText(value));
             _streamWriter.Write("</t></is></c>\n");
             CurrentColumnNumber++;

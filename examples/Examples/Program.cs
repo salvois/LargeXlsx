@@ -47,6 +47,7 @@ public static class Program
         Zip64Small.Run();
         SheetProtection.Run();
         HeaderFooter.Run();
+        InlineStrings.Run();
         SharedStrings.Run();
         Large.Run();
         StyledLarge.Run();

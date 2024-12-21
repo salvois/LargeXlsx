@@ -61,7 +61,14 @@ namespace LargeXlsx
                 streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
                 foreach (var si in _stringItems.OrderBy(s => s.Value))
-                    streamWriter.WriteLine("<si><t>{0}</t></si>", Util.EscapeXmlText(si.Key));
+                {
+                    // <si><t xml:space="preserve">{0}</t></si>
+                    streamWriter.Write("<si><t");
+                    Util.AddSpacePreserveIfNeeded(streamWriter, si.Key);
+                    streamWriter.Write(">");
+                    streamWriter.Write(Util.EscapeXmlText(si.Key));
+                    streamWriter.WriteLine("</t></si>");
+                }
                 streamWriter.WriteLine("</sst>");
             }
         }

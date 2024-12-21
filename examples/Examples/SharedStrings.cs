@@ -59,9 +59,9 @@ public static class SharedStrings
         for (var i = 0; i < RowCount; i++)
         {
             xlsxWriter.BeginRow()
-                .WriteSharedString("Lorem ipsum dolor sit amet")
-                .WriteSharedString("consectetur adipiscing elit")
-                .WriteSharedString("sed do eiusmod tempor incididunt ut labore et dolore magna aliqua");
+                .WriteSharedString("  Leading spaces")
+                .WriteSharedString("Trailing spaces   ")
+                .WriteSharedString("Spaces  in   between");
         }
     }
 }

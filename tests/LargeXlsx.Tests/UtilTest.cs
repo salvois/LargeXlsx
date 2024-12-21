@@ -25,6 +25,8 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
+using System.IO;
+using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -94,4 +96,21 @@ public static class UtilTest
                 saltValue: Convert.FromBase64String("5kelhTC7DUqQ5qi78ihM8A=="),
                 spinCount: 100000))
             .Should().Be("/dQmPXViT1u/fiTHmjLlP2HqOjYeRKI8W367Qn/Eikv63K8nnZMiyk2Wl9ShdHaBL7y1AeeJq5gxm4bW0ArxYg==");
+
+    [TestCase(" leading space", " xml:space=\"preserve\"")]
+    [TestCase("\tleading tab", " xml:space=\"preserve\"")]
+    [TestCase("\rleading CR", " xml:space=\"preserve\"")]
+    [TestCase("\nleading LF", " xml:space=\"preserve\"")]
+    [TestCase("trailing space ", " xml:space=\"preserve\"")]
+    [TestCase("trailing tab\t", " xml:space=\"preserve\"")]
+    [TestCase("trailing CR\n", " xml:space=\"preserve\"")]
+    [TestCase("trailing LF\n", " xml:space=\"preserve\"")]
+    [TestCase("middle   spaces", "")]
+    public static void AddSpacePreserveIfNeeded_LeadingOrTrailingWhitespace(string value, string expectation)
+    {
+        using var memoryStream = new MemoryStream();
+        using (var streamWriter = new InvariantCultureStreamWriter(memoryStream))
+            Util.AddSpacePreserveIfNeeded(streamWriter, value);
+        Encoding.UTF8.GetString(memoryStream.ToArray()).Should().Be(expectation);
+    }
 }
