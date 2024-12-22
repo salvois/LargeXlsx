@@ -135,8 +135,12 @@ namespace LargeXlsx
             streamWriter.WriteLine("<numFmts count=\"{0}\">", _numberFormats.Count(nf => nf.Value >= FirstCustomNumberFormatId));
             foreach (var numberFormat in _numberFormats.Where(nf => nf.Value >= FirstCustomNumberFormatId).OrderBy(nf => nf.Value))
             {
-                streamWriter.WriteLine("<numFmt numFmtId=\"{0}\" formatCode=\"{1}\"/>",
-                    numberFormat.Value, Util.EscapeXmlAttribute(numberFormat.Key.FormatCode));
+                streamWriter
+                    .Append("<numFmt numFmtId=\"")
+                    .Append(numberFormat.Value)
+                    .Append("\" formatCode=\"")
+                    .AppendEscapedXmlAttribute(numberFormat.Key.FormatCode)
+                    .Append("\"/>\n");
             }
             streamWriter.WriteLine("</numFmts>");
         }
@@ -146,35 +150,34 @@ namespace LargeXlsx
             streamWriter.WriteLine("<fonts count=\"{0}\">", _fonts.Count);
             foreach (var font in _fonts.OrderBy(f => f.Value))
             {
-                streamWriter.WriteLine("<font>"
-                                   + "<sz val=\"{0}\"/>"
-                                   + "<color rgb=\"{1}\"/>"
-                                   + "<name val=\"{2}\"/>"
-                                   + "<family val=\"2\"/>"
-                                   + "{3}{4}{5}{6}"
-                                   + "</font>",
-                    font.Key.Size,
-                    GetColorString(font.Key.Color),
-                    Util.EscapeXmlAttribute(font.Key.Name),
-                    font.Key.Bold ? "<b val=\"true\"/>" : "",
-                    font.Key.Italic ? "<i val=\"true\"/>" : "",
-                    font.Key.Strike ? "<strike val=\"true\"/>" : "",
-                    GetUnderline(font.Key.UnderlineType));
+                streamWriter
+                    .Append("<font><sz val=\"")
+                    .Append(font.Key.Size)
+                    .Append("\"/><color rgb=\"")
+                    .Append(GetColorString(font.Key.Color))
+                    .Append("\"/><name val=\"")
+                    .AppendEscapedXmlAttribute(font.Key.Name)
+                    .Append("\"/><family val=\"2\"/>");
+                if (font.Key.Bold)
+                    streamWriter.Append("<b val=\"true\"/>");
+                if (font.Key.Italic)
+                    streamWriter.Append("<i val=\"true\"/>");
+                if (font.Key.Strike)
+                    streamWriter.Append("<strike val=\"true\"/>");
+                switch (font.Key.UnderlineType)
+                {
+                    case XlsxFont.Underline.None:
+                        break;
+                    case XlsxFont.Underline.Single:
+                        streamWriter.Append("<u/>");
+                        break;
+                    default:
+                        streamWriter.Append($"<u val=\"{Util.EnumToAttributeValue(font.Key.UnderlineType)}\"/>");
+                        break;
+                }
+                streamWriter.Append("</font>\n");
             }
             streamWriter.WriteLine("</fonts>");
-        }
-
-        private static string GetUnderline(XlsxFont.Underline underline)
-        {
-            switch (underline)
-            {
-                case XlsxFont.Underline.None:
-                    return "";
-                case XlsxFont.Underline.Single:
-                    return "<u/>";
-                default:
-                    return $"<u val=\"{Util.EnumToAttributeValue(underline)}\"/>";
-            }
         }
 
         private void WriteFills(StreamWriter streamWriter)

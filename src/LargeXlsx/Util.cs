@@ -40,34 +40,52 @@ namespace LargeXlsx
         private static readonly DateTime Date19000301 = new DateTime(1900, 3, 1);
         private static readonly string[] CachedColumnNames = new string[MaxColumnCount];
 
-        public static string EscapeXmlText(string value)
+        public static TextWriter Append(this TextWriter textWriter, string value)
         {
-            var sb = new StringBuilder(value.Length);
-            foreach (var c in value)
-            {
-                if (c == '<') sb.Append("&lt;");
-                else if (c == '>') sb.Append("&gt;");
-                else if (c == '&') sb.Append("&amp;");
-                else sb.Append(c);
-            }
-
-            return sb.ToString();
+            textWriter.Write(value);
+            return textWriter;
         }
 
-        public static string EscapeXmlAttribute(string value)
+        public static TextWriter Append(this TextWriter textWriter, int value)
         {
-            var sb = new StringBuilder(value.Length);
-            foreach (var c in value)
-            {
-                if (c == '<') sb.Append("&lt;");
-                else if (c == '>') sb.Append("&gt;");
-                else if (c == '&') sb.Append("&amp;");
-                else if (c == '\'') sb.Append("&apos;");
-                else if (c == '"') sb.Append("&quot;");
-                else sb.Append(c);
-            }
+            textWriter.Write(value);
+            return textWriter;
+        }
 
-            return sb.ToString();
+        public static TextWriter Append(this TextWriter textWriter, double value)
+        {
+            textWriter.Write(value);
+            return textWriter;
+        }
+
+        public static TextWriter AppendEscapedXmlText(this TextWriter textWriter, string value)
+        {
+            // A plain old for provides a measurable improvement on garbage collection
+            for (var i = 0; i < value.Length; i++)
+            {
+                var c = value[i];
+                if (c == '<') textWriter.Write("&lt;");
+                else if (c == '>') textWriter.Write("&gt;");
+                else if (c == '&') textWriter.Write("&amp;");
+                else textWriter.Write(c);
+            }
+            return textWriter;
+        }
+
+        public static TextWriter AppendEscapedXmlAttribute(this TextWriter textWriter, string value)
+        {
+            // A plain old for provides a measurable improvement on garbage collection
+            for (var i = 0; i < value.Length; i++)
+            {
+                var c = value[i];
+                if (c == '<') textWriter.Write("&lt;");
+                else if (c == '>') textWriter.Write("&gt;");
+                else if (c == '&') textWriter.Write("&amp;");
+                else if (c == '\'') textWriter.Write("&apos;");
+                else if (c == '"') textWriter.Write("&quot;");
+                else textWriter.Write(c);
+            }
+            return textWriter;
         }
 
         public static string GetColumnName(int columnIndex)
@@ -133,10 +151,11 @@ namespace LargeXlsx
             return hash;
         }
 
-        public static void AddSpacePreserveIfNeeded(StreamWriter streamWriter, string value)
+        public static TextWriter AddSpacePreserveIfNeeded(this TextWriter textWriter, string value)
         {
             if (value.Length > 0 && (XmlConvert.IsWhitespaceChar(value[0]) || XmlConvert.IsWhitespaceChar(value[value.Length - 1])))
-                streamWriter.Write(" xml:space=\"preserve\"");
+                textWriter.Write(" xml:space=\"preserve\"");
+            return textWriter;
         }
     }
 }

@@ -26,7 +26,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
 using System.IO;
-using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -36,18 +35,16 @@ namespace LargeXlsx.Tests;
 public static class UtilTest
 {
     [Test]
-    public static void EscapeXmlText()
-    {
-        var escapedXmlText = Util.EscapeXmlText("Lorem 'ipsum' & \"dolor\" <sit> amet");
-        escapedXmlText.Should().Be("Lorem 'ipsum' &amp; \"dolor\" &lt;sit&gt; amet");
-    }
+    public static void AppendEscapedXmlText() =>
+        new StringWriter()
+            .AppendEscapedXmlText("Lorem 'ipsum' & \"dolor\" <sit> amet")
+            .ToString().Should().Be("Lorem 'ipsum' &amp; \"dolor\" &lt;sit&gt; amet");
 
     [Test]
-    public static void EscapeXmlAttribute()
-    {
-        var escapedXmlText = Util.EscapeXmlAttribute("Lorem 'ipsum' & \"dolor\" <sit> amet");
-        escapedXmlText.Should().Be("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; &lt;sit&gt; amet");
-    }
+    public static void AppendEscapedXmlAttribute() =>
+        new StringWriter()
+            .AppendEscapedXmlAttribute("Lorem 'ipsum' & \"dolor\" <sit> amet")
+            .ToString().Should().Be("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; &lt;sit&gt; amet");
 
     [TestCase(1, "A")]
     [TestCase(2, "B")]
@@ -74,7 +71,7 @@ public static class UtilTest
     [TestCase(16385)]
     public static void GetColumnNameOutOfRange(int index)
     {
-        Func<string> act = () => Util.GetColumnName(index);
+        var act = () => Util.GetColumnName(index);
         act.Should().Throw<InvalidOperationException>();
     }
 
@@ -106,11 +103,8 @@ public static class UtilTest
     [TestCase("trailing CR\n", " xml:space=\"preserve\"")]
     [TestCase("trailing LF\n", " xml:space=\"preserve\"")]
     [TestCase("middle   spaces", "")]
-    public static void AddSpacePreserveIfNeeded_LeadingOrTrailingWhitespace(string value, string expectation)
-    {
-        using var memoryStream = new MemoryStream();
-        using (var streamWriter = new InvariantCultureStreamWriter(memoryStream))
-            Util.AddSpacePreserveIfNeeded(streamWriter, value);
-        Encoding.UTF8.GetString(memoryStream.ToArray()).Should().Be(expectation);
-    }
+    public static void AddSpacePreserveIfNeeded_LeadingOrTrailingWhitespace(string value, string expectation) =>
+        new StringWriter()
+            .AddSpacePreserveIfNeeded(value)
+            .ToString().Should().Be(expectation);
 }

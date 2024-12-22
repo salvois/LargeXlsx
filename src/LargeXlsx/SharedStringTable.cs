@@ -63,11 +63,12 @@ namespace LargeXlsx
                 foreach (var si in _stringItems.OrderBy(s => s.Value))
                 {
                     // <si><t xml:space="preserve">{0}</t></si>
-                    streamWriter.Write("<si><t");
-                    Util.AddSpacePreserveIfNeeded(streamWriter, si.Key);
-                    streamWriter.Write(">");
-                    streamWriter.Write(Util.EscapeXmlText(si.Key));
-                    streamWriter.WriteLine("</t></si>");
+                    streamWriter
+                        .Append("<si><t")
+                        .AddSpacePreserveIfNeeded(si.Key)
+                        .Append(">")
+                        .AppendEscapedXmlText(si.Key)
+                        .Append("</t></si>\n");
                 }
                 streamWriter.WriteLine("</sst>");
             }

@@ -93,11 +93,13 @@ namespace LargeXlsx
                 // Looks some applications (e.g. Microsoft's) may consider a file invalid if a specific version number is not found.
                 // Thus, pretend being version 15.0 like LibreOffice Calc does.
                 // https://bugs.documentfoundation.org/show_bug.cgi?id=91064
-                streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-                                   + "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\">"
-                                   + $"<Application>{Util.EscapeXmlText(assemblyName.Name)}/{assemblyName.Version.Major}.{assemblyName.Version.Minor}.{assemblyName.Version.Build}</Application>"
-                                   + "<AppVersion>15.0000</AppVersion>"
-                                   + "</Properties>");
+                streamWriter
+                    .Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                            + "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\">"
+                            + "<Application>").AppendEscapedXmlText(assemblyName.Name)
+                    .Append($"/{assemblyName.Version.Major}.{assemblyName.Version.Minor}.{assemblyName.Version.Build}</Application>"
+                            + "<AppVersion>15.0000</AppVersion>"
+                            + "</Properties>");
             }
         }
 
@@ -142,14 +144,20 @@ namespace LargeXlsx
             using (var stream = _zipWriter.WriteToStream("xl/workbook.xml", new ZipWriterEntryOptions()))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
-                var worksheetTags = new StringBuilder();
-                var definedNames = new StringBuilder();
+                var worksheetTags = new StringWriter();
+                var definedNames = new StringWriter();
                 var sheetIndex = 0;
                 foreach (var worksheet in _worksheets)
                 {
-                    worksheetTags.Append($"<sheet name=\"{Util.EscapeXmlAttribute(worksheet.Name)}\" sheetId=\"{worksheet.Id}\" {GetWorksheetState(worksheet.State)} r:id=\"RidWS{worksheet.Id}\"/>");
+                    worksheetTags
+                        .Append("<sheet name=\"")
+                        .AppendEscapedXmlAttribute(worksheet.Name)
+                        .Append($"\" sheetId=\"{worksheet.Id}\" {GetWorksheetState(worksheet.State)} r:id=\"RidWS{worksheet.Id}\"/>");
                     if (worksheet.AutoFilterAbsoluteRef != null)
-                        definedNames.Append($"<definedName name=\"_xlnm._FilterDatabase\" localSheetId=\"{sheetIndex}\" hidden=\"1\">{Util.EscapeXmlText(worksheet.AutoFilterAbsoluteRef)}</definedName>");
+                        definedNames
+                            .Append($"<definedName name=\"_xlnm._FilterDatabase\" localSheetId=\"{sheetIndex}\" hidden=\"1\">")
+                            .AppendEscapedXmlText(worksheet.AutoFilterAbsoluteRef)
+                            .Append("</definedName>");
                     sheetIndex++;
                 }
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
@@ -157,7 +165,9 @@ namespace LargeXlsx
                                    + "<sheets>"
                                    + worksheetTags
                                    + "</sheets>");
-                if (definedNames.Length > 0) streamWriter.Write("<definedNames>" + definedNames + "</definedNames>");
+                var definedNamesString = definedNames.ToString();
+                if (definedNamesString.Length > 0)
+                    streamWriter.Append("<definedNames>").Append(definedNamesString).Append("</definedNames>");
                 if (_hasFormulasWithoutResult) streamWriter.Write("<calcPr calcCompleted=\"0\" fullCalcOnLoad=\"1\"/>");
                 streamWriter.Write("</workbook>");
             }
@@ -394,7 +404,7 @@ namespace LargeXlsx
             _currentWorksheet.SetHeaderFooter(headerFooter);
             return this;
         }
-        
+
         private void CheckInWorksheet()
         {
             if (_currentWorksheet == null)
