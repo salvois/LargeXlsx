@@ -45,6 +45,7 @@ namespace LargeXlsx
         private readonly Stylesheet _stylesheet;
         private readonly SharedStringTable _sharedStringTable;
         private readonly bool _requireCellReferences;
+        private readonly bool _skipInvalidCharacters;
         private Worksheet _currentWorksheet;
         private bool _hasFormulasWithoutResult;
         private bool _disposed;
@@ -56,12 +57,13 @@ namespace LargeXlsx
         public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
         public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
 
-        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3, bool useZip64 = false, bool requireCellReferences = true)
+        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3, bool useZip64 = false, bool requireCellReferences = true, bool skipInvalidCharacters = false)
         {
             _worksheets = new List<Worksheet>();
             _stylesheet = new Stylesheet();
-            _sharedStringTable = new SharedStringTable();
+            _sharedStringTable = new SharedStringTable(skipInvalidCharacters);
             _requireCellReferences = requireCellReferences;
+            _skipInvalidCharacters = skipInvalidCharacters;
             DefaultStyle = XlsxStyle.Default;
 
             _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate) { DeflateCompressionLevel = compressionLevel, UseZip64 = useZip64 });
@@ -96,7 +98,7 @@ namespace LargeXlsx
                 streamWriter
                     .Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                             + "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\">"
-                            + "<Application>").AppendEscapedXmlText(assemblyName.Name)
+                            + "<Application>").AppendEscapedXmlText(assemblyName.Name, false)
                     .Append($"/{assemblyName.Version.Major}.{assemblyName.Version.Minor}.{assemblyName.Version.Build}</Application>"
                             + "<AppVersion>15.0000</AppVersion>"
                             + "</Properties>");
@@ -151,12 +153,12 @@ namespace LargeXlsx
                 {
                     worksheetTags
                         .Append("<sheet name=\"")
-                        .AppendEscapedXmlAttribute(worksheet.Name)
+                        .AppendEscapedXmlAttribute(worksheet.Name, _skipInvalidCharacters)
                         .Append($"\" sheetId=\"{worksheet.Id}\" {GetWorksheetState(worksheet.State)} r:id=\"RidWS{worksheet.Id}\"/>");
                     if (worksheet.AutoFilterAbsoluteRef != null)
                         definedNames
                             .Append($"<definedName name=\"_xlnm._FilterDatabase\" localSheetId=\"{sheetIndex}\" hidden=\"1\">")
-                            .AppendEscapedXmlText(worksheet.AutoFilterAbsoluteRef)
+                            .AppendEscapedXmlText(worksheet.AutoFilterAbsoluteRef, _skipInvalidCharacters)
                             .Append("</definedName>");
                     sheetIndex++;
                 }
@@ -233,7 +235,8 @@ namespace LargeXlsx
                 columns: columns ?? Enumerable.Empty<XlsxColumn>(),
                 showGridLines: showGridLines,
                 showHeaders: showHeaders,
-                requireCellReferences: _requireCellReferences);
+                requireCellReferences: _requireCellReferences,
+                skipInvalidCharacters: _skipInvalidCharacters);
             _worksheets.Add(_currentWorksheet);
             return this;
         }

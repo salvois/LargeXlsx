@@ -25,35 +25,28 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
+using System.Diagnostics;
+using System.IO;
+using LargeXlsx;
 
 namespace Examples;
 
-public static class Program
+public static class InvalidXmlChars
 {
-    public static void Main(string[] _)
+    public static void Run()
     {
-        Simple.Run();
-        MultipleSheet.Run();
-        FrozenPanes.Run();
-        HideGridlines.Run();
-        WorksheetVisibility.Run();
-        NumberFormats.Run();
-        ColumnFormatting.Run();
-        RowFormatting.Run();
-        Alignment.Run();
-        Border.Run();
-        DataValidation.Run();
-        RightToLeft.Run();
-        Zip64Small.Run();
-        SheetProtection.Run();
-        HeaderFooter.Run();
-        InvalidXmlChars.Run();
-        InlineStrings.Run();
-        SharedStrings.Run();
-        Large.Run();
-        StyledLarge.Run();
-        StyledLargeCreateStyles.Run();
-        Zip64Huge.Run();
-        Console.WriteLine($"Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)} TotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
+        var stopwatch = Stopwatch.StartNew();
+        DoRun();
+        stopwatch.Stop();
+        Console.WriteLine($"{nameof(InvalidXmlChars)} completed in {stopwatch.ElapsedMilliseconds} ms.");
+    }
+
+    private static void DoRun()
+    {
+        using var stream = new FileStream($"{nameof(InvalidXmlChars)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream, skipInvalidCharacters: true);
+        xlsxWriter.BeginWorksheet("Sheet1")
+            .BeginRow().Write("Inline str\u0002ing")
+            .BeginRow().WriteSharedString("Shared str\u0002ing");
     }
 }

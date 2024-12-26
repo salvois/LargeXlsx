@@ -58,32 +58,54 @@ namespace LargeXlsx
             return textWriter;
         }
 
-        public static TextWriter AppendEscapedXmlText(this TextWriter textWriter, string value)
+        public static TextWriter AppendEscapedXmlText(this TextWriter textWriter, string value, bool skipInvalidCharacters)
         {
             // A plain old for provides a measurable improvement on garbage collection
             for (var i = 0; i < value.Length; i++)
             {
                 var c = value[i];
-                if (c == '<') textWriter.Write("&lt;");
-                else if (c == '>') textWriter.Write("&gt;");
-                else if (c == '&') textWriter.Write("&amp;");
-                else textWriter.Write(c);
+                if (XmlConvert.IsXmlChar(c))
+                {
+                    if (c == '<') textWriter.Write("&lt;");
+                    else if (c == '>') textWriter.Write("&gt;");
+                    else if (c == '&') textWriter.Write("&amp;");
+                    else textWriter.Write(c);
+                }
+                else if (i < value.Length - 1 && XmlConvert.IsXmlSurrogatePair(value[i + 1], c))
+                {
+                    textWriter.Write(c);
+                    textWriter.Write(value[i + 1]);
+                    i++;
+                }
+                else if (!skipInvalidCharacters)
+                    throw new XmlException($"Invalid XML character at position {i} in \"{value}\"");
             }
             return textWriter;
         }
 
-        public static TextWriter AppendEscapedXmlAttribute(this TextWriter textWriter, string value)
+        public static TextWriter AppendEscapedXmlAttribute(this TextWriter textWriter, string value, bool skipInvalidCharacters)
         {
             // A plain old for provides a measurable improvement on garbage collection
             for (var i = 0; i < value.Length; i++)
             {
                 var c = value[i];
-                if (c == '<') textWriter.Write("&lt;");
-                else if (c == '>') textWriter.Write("&gt;");
-                else if (c == '&') textWriter.Write("&amp;");
-                else if (c == '\'') textWriter.Write("&apos;");
-                else if (c == '"') textWriter.Write("&quot;");
-                else textWriter.Write(c);
+                if (XmlConvert.IsXmlChar(c))
+                {
+                    if (c == '<') textWriter.Write("&lt;");
+                    else if (c == '>') textWriter.Write("&gt;");
+                    else if (c == '&') textWriter.Write("&amp;");
+                    else if (c == '\'') textWriter.Write("&apos;");
+                    else if (c == '"') textWriter.Write("&quot;");
+                    else textWriter.Write(c);
+                }
+                else if (i < value.Length - 1 && XmlConvert.IsXmlSurrogatePair(value[i + 1], c))
+                {
+                    textWriter.Write(c);
+                    textWriter.Write(value[i + 1]);
+                    i++;
+                }
+                else if (!skipInvalidCharacters) 
+                    throw new XmlException($"Invalid XML character at position {i} in \"{value}\"");
             }
             return textWriter;
         }

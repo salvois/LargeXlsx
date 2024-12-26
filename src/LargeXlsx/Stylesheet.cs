@@ -139,7 +139,7 @@ namespace LargeXlsx
                     .Append("<numFmt numFmtId=\"")
                     .Append(numberFormat.Value)
                     .Append("\" formatCode=\"")
-                    .AppendEscapedXmlAttribute(numberFormat.Key.FormatCode)
+                    .AppendEscapedXmlAttribute(numberFormat.Key.FormatCode, false)
                     .Append("\"/>\n");
             }
             streamWriter.WriteLine("</numFmts>");
@@ -156,7 +156,7 @@ namespace LargeXlsx
                     .Append("\"/><color rgb=\"")
                     .Append(GetColorString(font.Key.Color))
                     .Append("\"/><name val=\"")
-                    .AppendEscapedXmlAttribute(font.Key.Name)
+                    .AppendEscapedXmlAttribute(font.Key.Name, false)
                     .Append("\"/><family val=\"2\"/>");
                 if (font.Key.Bold)
                     streamWriter.Append("<b val=\"true\"/>");

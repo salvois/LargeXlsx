@@ -32,6 +32,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using FluentAssertions;
 using NUnit.Framework;
 using OfficeOpenXml;
+using OfficeOpenXml.DataValidation;
 using OfficeOpenXml.Style;
 
 namespace LargeXlsx.Tests;
@@ -477,5 +478,51 @@ public static class XlsxWriterTest
             .Descendants<Row>().Single()
             .Descendants<Cell>().Any(c => c.CellReference == "B1")
             .Should().Be(requireCellReferences);
+    }
+
+    [Test]
+    public static void InvalidXmlCharacters()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream, skipInvalidCharacters: true))
+        {
+            xlsxWriter
+                .BeginWorksheet("Sheet\01")
+                .SetHeaderFooter(new XlsxHeaderFooter(
+                    oddHeader: "&COdd h\0eader",
+                    oddFooter: "&COdd f\0ooter",
+                    evenHeader: "&CEven h\0eader",
+                    evenFooter: "&CEven f\0ooter",
+                    firstHeader: "&CFirst he\0ader",
+                    firstFooter: "&CFirst fo\0oter"))
+                .BeginRow().Write("Inline str\0ing")
+                .BeginRow().WriteSharedString("Shared str\0ing")
+                .BeginRow().WriteFormula("=A2&\0A3", result: "Inline stringShared string")
+                .BeginRow().AddDataValidation(
+                    XlsxDataValidation.List(
+                        choices: ["Choice\01", "Choice2"],
+                        showErrorMessage: true, errorTitle: "Error ti\0tle", error: "A very inform\0ative error message",
+                        showInputMessage: true, promptTitle: "Prompt ti\0tle", prompt: "A very enlig\0htening prompt"));
+        }
+
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets.Count.Should().Be(1);
+        var sheet = package.Workbook.Worksheets[0];
+        sheet.Name.Should().Be("Sheet1");
+        sheet.Cells["A1"].Value.Should().Be("Inline string");
+        sheet.Cells["A2"].Value.Should().Be("Shared string");
+        sheet.Cells["A3"].Value.Should().Be("Inline stringShared string");
+        sheet.HeaderFooter.OddHeader.CenteredText.Should().Be("Odd header");
+        sheet.HeaderFooter.OddFooter.CenteredText.Should().Be("Odd footer");
+        sheet.HeaderFooter.EvenHeader.CenteredText.Should().Be("Even header");
+        sheet.HeaderFooter.EvenFooter.CenteredText.Should().Be("Even footer");
+        sheet.HeaderFooter.FirstHeader.CenteredText.Should().Be("First header");
+        sheet.HeaderFooter.FirstFooter.CenteredText.Should().Be("First footer");
+        var dataValidation = (ExcelDataValidationList)package.Workbook.Worksheets[0].DataValidations[0];
+        dataValidation.ErrorTitle.Should().Be("Error title");
+        dataValidation.Error.Should().Be("A very informative error message");
+        dataValidation.PromptTitle.Should().Be("Prompt title");
+        dataValidation.Prompt.Should().Be("A very enlightening prompt");
+        dataValidation.Formula.Values.Should().BeEquivalentTo("Choice1", "Choice2");
     }
 }

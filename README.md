@@ -108,6 +108,7 @@ The output is like:
 
 ## Changelog
 
+* 1.11: Validation and optional skipping of invalid XML characters, inspired by [Anton Mihai](https://github.com/mike101200)
 * 1.10: Ability to hide worksheets, thanks to [Micha Voße](https://github.com/piwonesien)
 * 1.9: Optionally force writing cell references for compatibility with some readers, thanks to [Mikk182](https://github.com/Mikk182); header and footer functionality thanks to [soend](https://github.com/soend)
 * 1.8: Ability to hide grid lines and row and column headers from worksheets, thanks to [Rajeev Datta](https://github.com/rajeevdatta)
@@ -133,7 +134,8 @@ public XlsxWriter(
     Stream stream,
     SharpCompress.Compressors.Deflate.CompressionLevel compressionLevel = CompressionLevel.Level3, // compressionLevel since version 1.2
     bool uzeZip64 = false, // useZip64 since version 1.3
-    bool requireCellReferences = true); // requireCellReferences since version 1.9
+    bool requireCellReferences = true, // requireCellReferences since version 1.9
+    bool skipInvalidCharacters = false); // skipInvalidCharacters since version 1.11
 ```
 
 The constructor accepts:
@@ -141,6 +143,7 @@ The constructor accepts:
 * An optional desired compression level of the underlying zip stream. The default `CompressionLevel.Level3` roughly matches file sizes produced by Excel. Higher compression levels may result in lower speed.
 * An optional flag indicating whether to use ZIP64 compression to support content larger than 4 GiB uncompressed. Recent versions of XLSX-enabled applications such as Excel or LibreOffice should be able to read any file compressd using ZIP64, even small ones, thus, if you don't know the file size in advance and you target recent software, you could just set it to `true`.
 * An optional flag indicating whether row numbers and cell references (such as "A1") are to be included in the XLSX file even when redundant. Row numbers and cell references are optional according to the specification, and omitting them provides a notable performance boost when writing XLSX files (as much as 40%). Unfortunately, some non-compliant readers (which apparently [include MS Access itself](https://github.com/salvois/LargeXlsx/issues/36)!) consider files without row and cell references as invalid, thus you can be consertative and set this flag to `true` if you want to make them happy. Spreadsheet applications such as Excel and LibreOffice can read XLSX files without references just fine, thus, if they are your target, you could use `false` for greater performance
+* An optional flag indicating how to behave when trying to write characters that are invalid for the XML underlying the XLSX file format. When `false`, since version 1.11 an XmlException is thrown if such invalid characters are found. When `true`, invalid characters are just skipped.
 
 The recipe is adding a worksheet with `BeginWorksheet`, adding a row with `BeginRow`, writing cells to that row with `Write`, and repeating as required. Rows and worksheets are implicitly finalized as soon as new rows or worksheets are added, or the `XlsxWriter` is disposed.
 

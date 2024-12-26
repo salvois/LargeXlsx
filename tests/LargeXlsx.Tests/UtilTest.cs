@@ -26,6 +26,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
 using System.IO;
+using System.Xml;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -35,16 +36,50 @@ namespace LargeXlsx.Tests;
 public static class UtilTest
 {
     [Test]
-    public static void AppendEscapedXmlText() =>
+    public static void AppendEscapedXmlText_AllValid() =>
         new StringWriter()
-            .AppendEscapedXmlText("Lorem 'ipsum' & \"dolor\" <sit> amet")
-            .ToString().Should().Be("Lorem 'ipsum' &amp; \"dolor\" &lt;sit&gt; amet");
+            .AppendEscapedXmlText("Lorem 'ipsum' & \"dolor\" \U0001d11e <sit> amet", skipInvalidCharacters: false)
+            .ToString().Should().Be("Lorem 'ipsum' &amp; \"dolor\" \U0001d11e &lt;sit&gt; amet");
+
+    [TestCase(new[] { 'a', '\0', 'b' })]
+    [TestCase(new[] { 'a', '\ud800', 'b' })]
+    [TestCase(new[] { 'a', '\udc00', 'b' })]
+    public static void AppendEscapedXmlText_InvalidChars_Throw(char[] value)
+    {
+        var act = () => new StringWriter().AppendEscapedXmlText(new string(value), skipInvalidCharacters: false);
+        act.Should().Throw<XmlException>();
+    }
+
+    [TestCase(new[] { 'a', '\0', 'b' })]
+    [TestCase(new[] { 'a', '\ud800', 'b' })]
+    [TestCase(new[] { 'a', '\udc00', 'b' })]
+    public static void AppendEscapedXmlText_InvalidChars_Skip(char[] value) =>
+        new StringWriter()
+            .AppendEscapedXmlText(new string(value), skipInvalidCharacters: true)
+            .ToString().Should().Be("ab");
 
     [Test]
-    public static void AppendEscapedXmlAttribute() =>
+    public static void AppendEscapedXmlAttribute_AllValid() =>
         new StringWriter()
-            .AppendEscapedXmlAttribute("Lorem 'ipsum' & \"dolor\" <sit> amet")
-            .ToString().Should().Be("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; &lt;sit&gt; amet");
+            .AppendEscapedXmlAttribute("Lorem 'ipsum' & \"dolor\" \U0001d11e <sit> amet", skipInvalidCharacters: false)
+            .ToString().Should().Be("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; \U0001d11e &lt;sit&gt; amet");
+
+    [TestCase(new[] { 'a', '\0', 'b' })]
+    [TestCase(new[] { 'a', '\ud800', 'b' })]
+    [TestCase(new[] { 'a', '\udc00', 'b' })]
+    public static void AppendEscapedXmlAttribute_InvalidChars_Throw(char[] value)
+    {
+        var act = () => new StringWriter().AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: false);
+        act.Should().Throw<XmlException>();
+    }
+
+    [TestCase(new[] { 'a', '\0', 'b' })]
+    [TestCase(new[] { 'a', '\ud800', 'b' })]
+    [TestCase(new[] { 'a', '\udc00', 'b' })]
+    public static void AppendEscapedXmlAttribute_InvalidChars_Skip(char[] value) =>
+        new StringWriter()
+            .AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: true)
+            .ToString().Should().Be("ab");
 
     [TestCase(1, "A")]
     [TestCase(2, "B")]

@@ -43,6 +43,7 @@ namespace LargeXlsx
         private readonly Stylesheet _stylesheet;
         private readonly SharedStringTable _sharedStringTable;
         private readonly bool _requireCellReferences;
+        private readonly bool _skipInvalidCharacters;
         private readonly List<string> _mergedCellRefs;
         private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
         private string _autoFilterRef;
@@ -72,6 +73,7 @@ namespace LargeXlsx
             bool showGridLines,
             bool showHeaders,
             bool requireCellReferences,
+            bool skipInvalidCharacters,
             XlsxWorksheetState state)
         {
             Id = id;
@@ -82,6 +84,7 @@ namespace LargeXlsx
             _stylesheet = stylesheet;
             _sharedStringTable = sharedStringTable;
             _requireCellReferences = requireCellReferences;
+            _skipInvalidCharacters = skipInvalidCharacters;
             _mergedCellRefs = new List<string>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
@@ -187,7 +190,7 @@ namespace LargeXlsx
                 .Append(" t=\"inlineStr\"><is><t")
                 .AddSpacePreserveIfNeeded(value)
                 .Append(">")
-                .AppendEscapedXmlText(value)
+                .AppendEscapedXmlText(value, _skipInvalidCharacters)
                 .Append("</t></is></c>\n");
             CurrentColumnNumber++;
         }
@@ -228,12 +231,12 @@ namespace LargeXlsx
             WriteCellRef();
             WriteStyle(style);
             _streamWriter.Append(" t=\"str\"><f>")
-                .AppendEscapedXmlText(formula)
+                .AppendEscapedXmlText(formula, _skipInvalidCharacters)
                 .Append("</f>");
             if (result != null)
                 _streamWriter
                     .Append("<v>")
-                    .AppendEscapedXmlText(result.ToString(CultureInfo.InvariantCulture))
+                    .AppendEscapedXmlText(result.ToString(CultureInfo.InvariantCulture), _skipInvalidCharacters)
                     .Append("</v>");
             _streamWriter.Write("</c>\n");
             CurrentColumnNumber++;
@@ -421,17 +424,17 @@ namespace LargeXlsx
                 _streamWriter.Write("<dataValidation sqref=\"{0}\" allowBlank=\"{1}\"",
                     string.Join(" ", kvp.Value.Distinct()), Util.BoolToInt(kvp.Key.AllowBlank));
                 if (kvp.Key.Error != null)
-                    _streamWriter.Append(" error=\"").AppendEscapedXmlAttribute(kvp.Key.Error).Write('"');
+                    _streamWriter.Append(" error=\"").AppendEscapedXmlAttribute(kvp.Key.Error, _skipInvalidCharacters).Write('"');
                 if (kvp.Key.ErrorStyleValue.HasValue)
                     _streamWriter.Write(" errorStyle=\"{0}\"", Util.EnumToAttributeValue(kvp.Key.ErrorStyleValue));
                 if (kvp.Key.ErrorTitle != null)
-                    _streamWriter.Append(" errorTitle=\"").AppendEscapedXmlAttribute(kvp.Key.ErrorTitle).Write('"');
+                    _streamWriter.Append(" errorTitle=\"").AppendEscapedXmlAttribute(kvp.Key.ErrorTitle, _skipInvalidCharacters).Write('"');
                 if (kvp.Key.OperatorValue.HasValue)
                     _streamWriter.Write(" operator=\"{0}\"", Util.EnumToAttributeValue(kvp.Key.OperatorValue));
                 if (kvp.Key.Prompt != null)
-                    _streamWriter.Append(" prompt=\"").AppendEscapedXmlAttribute(kvp.Key.Prompt).Write('"');
+                    _streamWriter.Append(" prompt=\"").AppendEscapedXmlAttribute(kvp.Key.Prompt, _skipInvalidCharacters).Write('"');
                 if (kvp.Key.PromptTitle != null)
-                    _streamWriter.Append(" promptTitle=\"").AppendEscapedXmlAttribute(kvp.Key.PromptTitle).Write('"');
+                    _streamWriter.Append(" promptTitle=\"").AppendEscapedXmlAttribute(kvp.Key.PromptTitle, _skipInvalidCharacters).Write('"');
                 if (kvp.Key.ShowDropDown)
                     _streamWriter.Write(" showDropDown=\"1\"");
                 if (kvp.Key.ShowErrorMessage)
@@ -442,9 +445,9 @@ namespace LargeXlsx
                     _streamWriter.Write(" type=\"{0}\"", Util.EnumToAttributeValue(kvp.Key.ValidationTypeValue));
                 _streamWriter.Write(">");
                 if (kvp.Key.Formula1 != null)
-                    _streamWriter.Append("<formula1>").AppendEscapedXmlText(kvp.Key.Formula1).Append("</formula1>");
+                    _streamWriter.Append("<formula1>").AppendEscapedXmlText(kvp.Key.Formula1, _skipInvalidCharacters).Append("</formula1>");
                 if (kvp.Key.Formula2 != null)
-                    _streamWriter.Append("<formula2>").AppendEscapedXmlText(kvp.Key.Formula2).Append("</formula2>");
+                    _streamWriter.Append("<formula2>").AppendEscapedXmlText(kvp.Key.Formula2, _skipInvalidCharacters).Append("</formula2>");
                 _streamWriter.Write("</dataValidation>\n");
             }
             _streamWriter.Write("</dataValidations>\n");
@@ -490,17 +493,17 @@ namespace LargeXlsx
                 Util.BoolToInt(differentOddEven),
                 Util.BoolToInt(_headerFooter.ScaleWithDoc));
             if (_headerFooter.OddHeader != null)
-                _streamWriter.Append("<oddHeader>").AppendEscapedXmlText(_headerFooter.OddHeader).Append("</oddHeader>");
+                _streamWriter.Append("<oddHeader>").AppendEscapedXmlText(_headerFooter.OddHeader, _skipInvalidCharacters).Append("</oddHeader>");
             if (_headerFooter.OddFooter != null)
-                _streamWriter.Append("<oddFooter>").AppendEscapedXmlText(_headerFooter.OddFooter).Append("</oddFooter>");
+                _streamWriter.Append("<oddFooter>").AppendEscapedXmlText(_headerFooter.OddFooter, _skipInvalidCharacters).Append("</oddFooter>");
             if (_headerFooter.EvenHeader != null)
-                _streamWriter.Append("<evenHeader>").AppendEscapedXmlText(_headerFooter.EvenHeader).Append("</evenHeader>");
+                _streamWriter.Append("<evenHeader>").AppendEscapedXmlText(_headerFooter.EvenHeader, _skipInvalidCharacters).Append("</evenHeader>");
             if (_headerFooter.EvenFooter != null)
-                _streamWriter.Append("<evenFooter>").AppendEscapedXmlText(_headerFooter.EvenFooter).Append("</evenFooter>");
+                _streamWriter.Append("<evenFooter>").AppendEscapedXmlText(_headerFooter.EvenFooter, _skipInvalidCharacters).Append("</evenFooter>");
             if (_headerFooter.FirstHeader != null)
-                _streamWriter.Append("<firstHeader>").AppendEscapedXmlText(_headerFooter.FirstHeader).Append("</firstHeader>");
+                _streamWriter.Append("<firstHeader>").AppendEscapedXmlText(_headerFooter.FirstHeader, _skipInvalidCharacters).Append("</firstHeader>");
             if (_headerFooter.FirstFooter != null)
-                _streamWriter.Append("<firstFooter>").AppendEscapedXmlText(_headerFooter.FirstFooter).Append("</firstFooter>");
+                _streamWriter.Append("<firstFooter>").AppendEscapedXmlText(_headerFooter.FirstFooter, _skipInvalidCharacters).Append("</firstFooter>");
             _streamWriter.Write("</headerFooter>");
         }
     }

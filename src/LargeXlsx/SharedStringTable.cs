@@ -34,11 +34,13 @@ namespace LargeXlsx
 {
     internal class SharedStringTable
     {
+        private readonly bool _skipInvalidCharacters;
         private readonly Dictionary<string, int> _stringItems;
         private int _nextStringId;
 
-        public SharedStringTable()
+        public SharedStringTable(bool skipInvalidCharacters)
         {
+            _skipInvalidCharacters = skipInvalidCharacters;
             _stringItems = new Dictionary<string, int>();
             _nextStringId = 0;
         }
@@ -67,7 +69,7 @@ namespace LargeXlsx
                         .Append("<si><t")
                         .AddSpacePreserveIfNeeded(si.Key)
                         .Append(">")
-                        .AppendEscapedXmlText(si.Key)
+                        .AppendEscapedXmlText(si.Key, _skipInvalidCharacters)
                         .Append("</t></si>\n");
                 }
                 streamWriter.WriteLine("</sst>");
