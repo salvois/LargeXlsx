@@ -84,6 +84,7 @@ The output is like:
     - [Column names](#column-names)
     - [Creating a new worksheet](#creating-a-new-worksheet)
       - [Column formatting](#column-formatting)
+      - [Auto fit column width](#auto-fit-column-width)
     - [Adding or skipping rows](#adding-or-skipping-rows)
     - [Writing cells](#writing-cells)
       - [Writing hyperlinks](#writing-hyperlinks)
@@ -224,6 +225,15 @@ public static XlsxColumn Formatted(double width, int count = 1, bool hidden = fa
 `Unformatted` creates a column description that is used basically to skip one or more unformatted columns.
 
 `Formatted` creates a column description to specify the mandatory witdh, optional hidden state, and optional style of one or more contiguous columns. The width is expressed (simplyfing) in approximate number of characters. The column style represents how to style all *empty* cells of a column. Cells that are explicitly written always use the cell style instead.
+
+
+#### Auto fit column width
+
+A frequenly asked question about column formatting is how to automatically set column width based on column content.
+
+Unfortunately, the XLSX file format does not provide any special feature for automatic/best fit column widths, so your best bet is to estimate your maximum or average content width and use it in column formatting as described above. Moreover, since the file format specifies that column formatting are written into the file before cell contents, you are required to estimate width before streaming any data, or iterating your dataset twice, or just guessing a sensible value (the latter usually works surprisingly well).
+
+To be fair, the XLSX specification provides a `bestFit` attribute for columns, but it has a totally different purpose (automatically enlarging a column when a user types digits in it).
 
 
 ### Adding or skipping rows
