@@ -104,6 +104,36 @@ public static class XlsxWriterTest
     }
 
     [Test]
+    public static void Write()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+        {
+            xlsxWriter
+                .BeginWorksheet("Sheet1")
+                .BeginRow()
+                .Write("A string")
+                .Write(123)
+                .Write(456.0)
+                .Write(789m)
+                .Write(new DateTime(2020, 5, 6, 18, 27, 0), XlsxStyle.Default.With(XlsxNumberFormat.ShortDateTime))
+                .Write(true)
+                .Write();
+        }
+
+        using var package = new ExcelPackage(stream);
+        package.Workbook.Worksheets.Count.Should().Be(1);
+        var sheet = package.Workbook.Worksheets[0];
+        sheet.Cells["A1"].Value.Should().Be("A string");
+        sheet.Cells["B1"].Value.Should().Be(123.0);
+        sheet.Cells["C1"].Value.Should().Be(456.0);
+        sheet.Cells["D1"].Value.Should().Be(789.0);
+        sheet.Cells["E1"].Value.Should().Be(new DateTime(2020, 5, 6, 18, 27, 0));
+        sheet.Cells["F1"].Value.Should().Be(true);
+        sheet.Cells["G1"].Value.Should().BeNull();
+    }
+
+    [Test]
     public static void Simple()
     {
         using var stream = new MemoryStream();
