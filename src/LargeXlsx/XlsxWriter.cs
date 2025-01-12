@@ -302,7 +302,14 @@ namespace LargeXlsx
 
         public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 1)
         {
-            return Write((double)value, style, columnSpan);
+            if (columnSpan == 1)
+            {
+                CheckInWorksheet();
+                _currentWorksheet.Write(value, style ?? DefaultStyle);
+                return this;
+            }
+
+            return AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
 
         public XlsxWriter Write(int value, XlsxStyle style = null, int columnSpan = 1)

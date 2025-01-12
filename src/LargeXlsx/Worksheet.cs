@@ -195,20 +195,6 @@ namespace LargeXlsx
             CurrentColumnNumber++;
         }
 
-        public void Write(int value, XlsxStyle style)
-        {
-            EnsureRow();
-            // <c r="{0}{1}" s="{2}"><v>{3}</v></c>
-            _streamWriter.Write("<c");
-            WriteCellRef();
-            WriteStyle(style);
-            _streamWriter
-                .Append("><v>")
-                .Append(value)
-                .Append("</v></c>\n");
-            CurrentColumnNumber++;
-        }
-
         public void Write(double value, XlsxStyle style)
         {
             EnsureRow();
@@ -216,10 +202,29 @@ namespace LargeXlsx
             _streamWriter.Write("<c");
             WriteCellRef();
             WriteStyle(style);
-            _streamWriter
-                .Append("><v>")
-                .Append(value)
-                .Append("</v></c>\n");
+            _streamWriter.Append("><v>").Append(value).Append("</v></c>\n");
+            CurrentColumnNumber++;
+        }
+
+        public void Write(decimal value, XlsxStyle style)
+        {
+            EnsureRow();
+            // <c r="{0}{1}" s="{2}"><v>{3}</v></c>
+            _streamWriter.Write("<c");
+            WriteCellRef();
+            WriteStyle(style);
+            _streamWriter.Append("><v>").Append(value).Append("</v></c>\n");
+            CurrentColumnNumber++;
+        }
+
+        public void Write(int value, XlsxStyle style)
+        {
+            EnsureRow();
+            // <c r="{0}{1}" s="{2}"><v>{3}</v></c>
+            _streamWriter.Write("<c");
+            WriteCellRef();
+            WriteStyle(style);
+            _streamWriter.Append("><v>").Append(value).Append("</v></c>\n");
             CurrentColumnNumber++;
         }
 

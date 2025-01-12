@@ -46,13 +46,19 @@ namespace LargeXlsx
             return textWriter;
         }
 
-        public static TextWriter Append(this TextWriter textWriter, int value)
+        public static TextWriter Append(this TextWriter textWriter, double value)
         {
             textWriter.Write(value);
             return textWriter;
         }
 
-        public static TextWriter Append(this TextWriter textWriter, double value)
+        public static TextWriter Append(this TextWriter textWriter, decimal value)
+        {
+            textWriter.Write(value);
+            return textWriter;
+        }
+
+        public static TextWriter Append(this TextWriter textWriter, int value)
         {
             textWriter.Write(value);
             return textWriter;
