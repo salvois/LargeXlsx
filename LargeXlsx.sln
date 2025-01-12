@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LargeXlsx", "src\LargeXlsx\LargeXlsx.csproj", "{308A5F0D-BD89-45C3-A3A3-13A88C95BB3B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LargeXlsx", "LargeXlsx\LargeXlsx.csproj", "{308A5F0D-BD89-45C3-A3A3-13A88C95BB3B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples", "examples\Examples\Examples.csproj", "{869D7E79-84C9-4841-BB4E-D09ED41D44EE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples", "Examples\Examples.csproj", "{869D7E79-84C9-4841-BB4E-D09ED41D44EE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LargeXlsx.Tests", "tests\LargeXlsx.Tests\LargeXlsx.Tests.csproj", "{504AC08D-4236-4475-A379-E498A499ED44}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LargeXlsx.Tests", "LargeXlsx.Tests\LargeXlsx.Tests.csproj", "{504AC08D-4236-4475-A379-E498A499ED44}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
