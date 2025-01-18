@@ -27,8 +27,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.IO;
 using System.Xml;
-using FluentAssertions;
 using NUnit.Framework;
+using Shouldly;
 
 namespace LargeXlsx.Tests;
 
@@ -39,16 +39,13 @@ public static class UtilTest
     public static void AppendEscapedXmlText_AllValid() =>
         new StringWriter()
             .AppendEscapedXmlText("Lorem 'ipsum' & \"dolor\" \U0001d11e <sit> amet", skipInvalidCharacters: false)
-            .ToString().Should().Be("Lorem 'ipsum' &amp; \"dolor\" \U0001d11e &lt;sit&gt; amet");
+            .ToString().ShouldBe("Lorem 'ipsum' &amp; \"dolor\" \U0001d11e &lt;sit&gt; amet");
 
     [TestCase(new[] { 'a', '\0', 'b' })]
     [TestCase(new[] { 'a', '\ud800', 'b' })]
     [TestCase(new[] { 'a', '\udc00', 'b' })]
-    public static void AppendEscapedXmlText_InvalidChars_Throw(char[] value)
-    {
-        var act = () => new StringWriter().AppendEscapedXmlText(new string(value), skipInvalidCharacters: false);
-        act.Should().Throw<XmlException>();
-    }
+    public static void AppendEscapedXmlText_InvalidChars_Throw(char[] value) => 
+        Should.Throw<XmlException>(() => new StringWriter().AppendEscapedXmlText(new string(value), skipInvalidCharacters: false));
 
     [TestCase(new[] { 'a', '\0', 'b' })]
     [TestCase(new[] { 'a', '\ud800', 'b' })]
@@ -56,22 +53,19 @@ public static class UtilTest
     public static void AppendEscapedXmlText_InvalidChars_Skip(char[] value) =>
         new StringWriter()
             .AppendEscapedXmlText(new string(value), skipInvalidCharacters: true)
-            .ToString().Should().Be("ab");
+            .ToString().ShouldBe("ab");
 
     [Test]
     public static void AppendEscapedXmlAttribute_AllValid() =>
         new StringWriter()
             .AppendEscapedXmlAttribute("Lorem 'ipsum' & \"dolor\" \U0001d11e <sit> amet", skipInvalidCharacters: false)
-            .ToString().Should().Be("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; \U0001d11e &lt;sit&gt; amet");
+            .ToString().ShouldBe("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; \U0001d11e &lt;sit&gt; amet");
 
     [TestCase(new[] { 'a', '\0', 'b' })]
     [TestCase(new[] { 'a', '\ud800', 'b' })]
     [TestCase(new[] { 'a', '\udc00', 'b' })]
-    public static void AppendEscapedXmlAttribute_InvalidChars_Throw(char[] value)
-    {
-        var act = () => new StringWriter().AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: false);
-        act.Should().Throw<XmlException>();
-    }
+    public static void AppendEscapedXmlAttribute_InvalidChars_Throw(char[] value) => 
+        Should.Throw<XmlException>(() => new StringWriter().AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: false));
 
     [TestCase(new[] { 'a', '\0', 'b' })]
     [TestCase(new[] { 'a', '\ud800', 'b' })]
@@ -79,7 +73,7 @@ public static class UtilTest
     public static void AppendEscapedXmlAttribute_InvalidChars_Skip(char[] value) =>
         new StringWriter()
             .AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: true)
-            .ToString().Should().Be("ab");
+            .ToString().ShouldBe("ab");
 
     [TestCase(1, "A")]
     [TestCase(2, "B")]
@@ -98,17 +92,14 @@ public static class UtilTest
     public static void GetColumnName(int index, string expectedName)
     {
         var name = Util.GetColumnName(index);
-        name.Should().Be(expectedName);
+        name.ShouldBe(expectedName);
     }
 
     [TestCase(-1)]
     [TestCase(0)]
     [TestCase(16385)]
-    public static void GetColumnNameOutOfRange(int index)
-    {
-        var act = () => Util.GetColumnName(index);
-        act.Should().Throw<InvalidOperationException>();
-    }
+    public static void GetColumnNameOutOfRange(int index) => 
+        Should.Throw<InvalidOperationException>(() => Util.GetColumnName(index));
 
     [TestCase("2020-05-06T18:27:00", 43957.76875)]
     [TestCase("1900-01-01", 1)]
@@ -118,7 +109,7 @@ public static class UtilTest
     {
         var date = DateTime.Parse(dateString);
         var serialDate = Util.DateToDouble(date);
-        serialDate.Should().BeApproximately(expected, 0.000001);
+        serialDate.ShouldBe(expected, tolerance: 0.000001);
     }
 
     [Test]
@@ -127,7 +118,7 @@ public static class UtilTest
                 password: "Lorem ipsum",
                 saltValue: Convert.FromBase64String("5kelhTC7DUqQ5qi78ihM8A=="),
                 spinCount: 100000))
-            .Should().Be("/dQmPXViT1u/fiTHmjLlP2HqOjYeRKI8W367Qn/Eikv63K8nnZMiyk2Wl9ShdHaBL7y1AeeJq5gxm4bW0ArxYg==");
+            .ShouldBe("/dQmPXViT1u/fiTHmjLlP2HqOjYeRKI8W367Qn/Eikv63K8nnZMiyk2Wl9ShdHaBL7y1AeeJq5gxm4bW0ArxYg==");
 
     [TestCase(" leading space", " xml:space=\"preserve\"")]
     [TestCase("\tleading tab", " xml:space=\"preserve\"")]
@@ -141,5 +132,5 @@ public static class UtilTest
     public static void AddSpacePreserveIfNeeded_LeadingOrTrailingWhitespace(string value, string expectation) =>
         new StringWriter()
             .AddSpacePreserveIfNeeded(value)
-            .ToString().Should().Be(expectation);
+            .ToString().ShouldBe(expectation);
 }

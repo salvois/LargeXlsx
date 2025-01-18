@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using OfficeOpenXml;
 using System.IO;
-using FluentAssertions;
+using Shouldly;
 
 namespace LargeXlsx.Tests;
 
@@ -23,16 +23,16 @@ public static class HeaderFooterTest
 
         using var package = new ExcelPackage(stream);
         var sheet = package.Workbook.Worksheets[0];
-        sheet.HeaderFooter.AlignWithMargins.Should().BeTrue();
-        sheet.HeaderFooter.ScaleWithDocument.Should().BeTrue();
-        sheet.HeaderFooter.differentFirst.Should().BeFalse();
-        sheet.HeaderFooter.differentOddEven.Should().BeFalse();
-        sheet.HeaderFooter.OddHeader.LeftAlignedText.Should().Be("LeftHeader");
-        sheet.HeaderFooter.OddHeader.CenteredText.Should().BeNull();
-        sheet.HeaderFooter.OddHeader.RightAlignedText.Should().BeNull();
-        sheet.HeaderFooter.OddFooter.LeftAlignedText.Should().BeNull();
-        sheet.HeaderFooter.OddFooter.CenteredText.Should().Be("CenterFooter");
-        sheet.HeaderFooter.OddFooter.RightAlignedText.Should().BeNull();
+        sheet.HeaderFooter.AlignWithMargins.ShouldBeTrue();
+        sheet.HeaderFooter.ScaleWithDocument.ShouldBeTrue();
+        sheet.HeaderFooter.differentFirst.ShouldBeFalse();
+        sheet.HeaderFooter.differentOddEven.ShouldBeFalse();
+        sheet.HeaderFooter.OddHeader.LeftAlignedText.ShouldBe("LeftHeader");
+        sheet.HeaderFooter.OddHeader.CenteredText.ShouldBeNull();
+        sheet.HeaderFooter.OddHeader.RightAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.OddFooter.LeftAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.OddFooter.CenteredText.ShouldBe("CenterFooter");
+        sheet.HeaderFooter.OddFooter.RightAlignedText.ShouldBeNull();
     }
 
     [Theory]
@@ -51,8 +51,8 @@ public static class HeaderFooterTest
 
         using var package = new ExcelPackage(stream);
         var sheet = package.Workbook.Worksheets[0];
-        sheet.HeaderFooter.AlignWithMargins.Should().Be(alignWithMargins);
-        sheet.HeaderFooter.ScaleWithDocument.Should().Be(scaleWithDoc);
+        sheet.HeaderFooter.AlignWithMargins.ShouldBe(alignWithMargins);
+        sheet.HeaderFooter.ScaleWithDocument.ShouldBe(scaleWithDoc);
     }
 
     [Test]
@@ -71,22 +71,22 @@ public static class HeaderFooterTest
 
         using var package = new ExcelPackage(stream);
         var sheet = package.Workbook.Worksheets[0];
-        sheet.HeaderFooter.AlignWithMargins.Should().BeTrue();
-        sheet.HeaderFooter.ScaleWithDocument.Should().BeTrue();
-        sheet.HeaderFooter.differentFirst.Should().BeTrue();
-        sheet.HeaderFooter.differentOddEven.Should().BeFalse();
-        sheet.HeaderFooter.FirstHeader.LeftAlignedText.Should().BeNull();
-        sheet.HeaderFooter.FirstHeader.CenteredText.Should().BeNull();
-        sheet.HeaderFooter.FirstHeader.RightAlignedText.Should().Be("FirstHeader");
-        sheet.HeaderFooter.FirstFooter.LeftAlignedText.Should().BeNull();
-        sheet.HeaderFooter.FirstFooter.CenteredText.Should().BeNull();
-        sheet.HeaderFooter.FirstFooter.RightAlignedText.Should().BeNull();
-        sheet.HeaderFooter.OddHeader.LeftAlignedText.Should().Be("LeftHeader");
-        sheet.HeaderFooter.OddHeader.CenteredText.Should().BeNull();
-        sheet.HeaderFooter.OddHeader.RightAlignedText.Should().BeNull();
-        sheet.HeaderFooter.OddFooter.LeftAlignedText.Should().BeNull();
-        sheet.HeaderFooter.OddFooter.CenteredText.Should().Be("CenterFooter");
-        sheet.HeaderFooter.OddFooter.RightAlignedText.Should().BeNull();
+        sheet.HeaderFooter.AlignWithMargins.ShouldBeTrue();
+        sheet.HeaderFooter.ScaleWithDocument.ShouldBeTrue();
+        sheet.HeaderFooter.differentFirst.ShouldBeTrue();
+        sheet.HeaderFooter.differentOddEven.ShouldBeFalse();
+        sheet.HeaderFooter.FirstHeader.LeftAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.FirstHeader.CenteredText.ShouldBeNull();
+        sheet.HeaderFooter.FirstHeader.RightAlignedText.ShouldBe("FirstHeader");
+        sheet.HeaderFooter.FirstFooter.LeftAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.FirstFooter.CenteredText.ShouldBeNull();
+        sheet.HeaderFooter.FirstFooter.RightAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.OddHeader.LeftAlignedText.ShouldBe("LeftHeader");
+        sheet.HeaderFooter.OddHeader.CenteredText.ShouldBeNull();
+        sheet.HeaderFooter.OddHeader.RightAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.OddFooter.LeftAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.OddFooter.CenteredText.ShouldBe("CenterFooter");
+        sheet.HeaderFooter.OddFooter.RightAlignedText.ShouldBeNull();
     }
 
     [Test]
@@ -105,21 +105,21 @@ public static class HeaderFooterTest
 
         using var package = new ExcelPackage(stream);
         var sheet = package.Workbook.Worksheets[0];
-        sheet.HeaderFooter.AlignWithMargins.Should().BeTrue();
-        sheet.HeaderFooter.ScaleWithDocument.Should().BeTrue();
-        sheet.HeaderFooter.differentFirst.Should().BeFalse();
-        sheet.HeaderFooter.differentOddEven.Should().BeTrue();
-        sheet.HeaderFooter.OddHeader.LeftAlignedText.Should().Be("LeftHeader");
-        sheet.HeaderFooter.OddHeader.CenteredText.Should().BeNull();
-        sheet.HeaderFooter.OddHeader.RightAlignedText.Should().BeNull();
-        sheet.HeaderFooter.OddFooter.LeftAlignedText.Should().BeNull();
-        sheet.HeaderFooter.OddFooter.CenteredText.Should().Be("CenterFooter");
-        sheet.HeaderFooter.OddFooter.RightAlignedText.Should().BeNull();
-        sheet.HeaderFooter.EvenHeader.LeftAlignedText.Should().BeNull();
-        sheet.HeaderFooter.EvenHeader.CenteredText.Should().BeNull();
-        sheet.HeaderFooter.EvenHeader.RightAlignedText.Should().Be("EvenHeader");
-        sheet.HeaderFooter.EvenFooter.LeftAlignedText.Should().BeNull();
-        sheet.HeaderFooter.EvenFooter.CenteredText.Should().BeNull();
-        sheet.HeaderFooter.EvenFooter.RightAlignedText.Should().BeNull();
+        sheet.HeaderFooter.AlignWithMargins.ShouldBeTrue();
+        sheet.HeaderFooter.ScaleWithDocument.ShouldBeTrue();
+        sheet.HeaderFooter.differentFirst.ShouldBeFalse();
+        sheet.HeaderFooter.differentOddEven.ShouldBeTrue();
+        sheet.HeaderFooter.OddHeader.LeftAlignedText.ShouldBe("LeftHeader");
+        sheet.HeaderFooter.OddHeader.CenteredText.ShouldBeNull();
+        sheet.HeaderFooter.OddHeader.RightAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.OddFooter.LeftAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.OddFooter.CenteredText.ShouldBe("CenterFooter");
+        sheet.HeaderFooter.OddFooter.RightAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.EvenHeader.LeftAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.EvenHeader.CenteredText.ShouldBeNull();
+        sheet.HeaderFooter.EvenHeader.RightAlignedText.ShouldBe("EvenHeader");
+        sheet.HeaderFooter.EvenFooter.LeftAlignedText.ShouldBeNull();
+        sheet.HeaderFooter.EvenFooter.CenteredText.ShouldBeNull();
+        sheet.HeaderFooter.EvenFooter.RightAlignedText.ShouldBeNull();
     }
 }

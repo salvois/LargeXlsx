@@ -42,16 +42,21 @@ public static class StyledLargeCreateStyles
     public static void Run()
     {
         var stopwatch = Stopwatch.StartNew();
-        DoRun();
+        DoRun(requireCellReferences: true);
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(StyledLargeCreateStyles)} completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(StyledLargeCreateStyles)} requiring references completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+
+        stopwatch.Restart();
+        DoRun(requireCellReferences: false);
+        stopwatch.Stop();
+        Console.WriteLine($"{nameof(StyledLargeCreateStyles)} omitting references completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
     }
 
-    private static void DoRun()
+    private static void DoRun(bool requireCellReferences)
     {
         var rnd = new Random();
-        using var stream = new FileStream($"{nameof(StyledLargeCreateStyles)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
+        using var stream = new FileStream($"{nameof(StyledLargeCreateStyles)}_{requireCellReferences}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream, requireCellReferences: requireCellReferences);
         var colors = Enumerable.Repeat(0, 100).Select(_ => Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256))).ToList();
         var headerStyle = new XlsxStyle(
             new XlsxFont("Calibri", 10.5, Color.White, bold: true),

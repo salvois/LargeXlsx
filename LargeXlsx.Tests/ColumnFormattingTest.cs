@@ -28,10 +28,10 @@ using System.IO;
 using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
-using FluentAssertions;
 using NUnit.Framework;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using Shouldly;
 using Color = System.Drawing.Color;
 
 namespace LargeXlsx.Tests;
@@ -46,7 +46,7 @@ public static class ColumnFormattingTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 20) });
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Column(1).Width.Should().Be(20);
+            package.Workbook.Worksheets[0].Column(1).Width.ShouldBe(20);
     }
 
     [Test]
@@ -58,9 +58,9 @@ public static class ColumnFormattingTest
             xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 20, style: blueStyle) });
         using var package = new ExcelPackage(stream);
         var style = package.Workbook.Worksheets[0].Column(1).Style;
-        style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-        style.Fill.BackgroundColor.Rgb.Should().Be("FF004586");
-        style.Font.Color.Rgb.Should().Be("FFFFFFFF");
+        style.Fill.PatternType.ShouldBe(ExcelFillStyle.Solid);
+        style.Fill.BackgroundColor.Rgb.ShouldBe("FF004586");
+        style.Font.Color.Rgb.ShouldBe("FFFFFFFF");
     }
 
     [Test]
@@ -70,7 +70,7 @@ public static class ColumnFormattingTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 0, hidden: true) });
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Column(1).Hidden.Should().BeTrue();
+            package.Workbook.Worksheets[0].Column(1).Hidden.ShouldBeTrue();
     }
 
     [Test]
@@ -86,13 +86,13 @@ public static class ColumnFormattingTest
             });
         using var package = new ExcelPackage(stream);
         var worksheet = package.Workbook.Worksheets[0];
-        worksheet.Column(1).Hidden.Should().BeTrue();
-        worksheet.Column(2).Hidden.Should().BeTrue();
-        worksheet.Column(3).Hidden.Should().BeFalse();
-        worksheet.Column(4).Hidden.Should().BeFalse();
-        worksheet.Column(5).Hidden.Should().BeFalse();
-        worksheet.Column(6).Hidden.Should().BeTrue();
-        worksheet.Column(7).Hidden.Should().BeFalse();
+        worksheet.Column(1).Hidden.ShouldBeTrue();
+        worksheet.Column(2).Hidden.ShouldBeTrue();
+        worksheet.Column(3).Hidden.ShouldBeFalse();
+        worksheet.Column(4).Hidden.ShouldBeFalse();
+        worksheet.Column(5).Hidden.ShouldBeFalse();
+        worksheet.Column(6).Hidden.ShouldBeTrue();
+        worksheet.Column(7).Hidden.ShouldBeFalse();
     }
 
     [Test]
@@ -105,6 +105,6 @@ public static class ColumnFormattingTest
         using var spreadsheetDocument = SpreadsheetDocument.Open(stream, false);
         var sheetId = spreadsheetDocument.WorkbookPart!.Workbook.Sheets!.Elements<Sheet>().Single(s => s.Name == "Sheet 1").Id!.ToString()!;
         var worksheetPart = (WorksheetPart)spreadsheetDocument.WorkbookPart!.GetPartById(sheetId);
-        worksheetPart.Worksheet.Descendants<Columns>().Should().BeEmpty();
+        worksheetPart.Worksheet.Descendants<Columns>().ShouldBeEmpty();
     }
 }

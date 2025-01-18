@@ -26,10 +26,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.Drawing;
 using System.IO;
-using FluentAssertions;
 using NUnit.Framework;
 using OfficeOpenXml;
 using OfficeOpenXml.DataValidation;
+using Shouldly;
 
 namespace LargeXlsx.Tests;
 
@@ -49,10 +49,10 @@ public static class DataValidationTest
         using (var package = new ExcelPackage(stream))
         {
             var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationList;
-            dataValidation.Should().NotBeNull();
-            dataValidation!.ValidationType.Should().Be(ExcelDataValidationType.List);
-            dataValidation.Address.Address.Should().Be("A1 C1:D1");
-            dataValidation.Formula.Values.Should().BeEquivalentTo("Lorem", "Ipsum", "Dolor");
+            dataValidation.ShouldNotBeNull();
+            dataValidation.ValidationType.ShouldBe(ExcelDataValidationType.List);
+            dataValidation.Address.Address.ShouldBe("A1 C1:D1");
+            dataValidation.Formula.Values.ShouldBe(["Lorem", "Ipsum", "Dolor"]);
         }
     }
 
@@ -64,10 +64,10 @@ public static class DataValidationTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().AddDataValidation(XlsxDataValidation.List(new[] { "Lorem", "Ipsum", "Dolor" })).Write();
         using var package = new ExcelPackage(stream);
         var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationList;
-        dataValidation.Should().NotBeNull();
-        dataValidation!.ValidationType.Should().Be(ExcelDataValidationType.List);
-        dataValidation.Address.Address.Should().Be("A1");
-        dataValidation.Formula.Values.Should().BeEquivalentTo("Lorem", "Ipsum", "Dolor");
+        dataValidation.ShouldNotBeNull();
+        dataValidation.ValidationType.ShouldBe(ExcelDataValidationType.List);
+        dataValidation.Address.Address.ShouldBe("A1");
+        dataValidation.Formula.Values.ShouldBe(["Lorem", "Ipsum", "Dolor"]);
     }
 
     [Test]
@@ -84,10 +84,10 @@ public static class DataValidationTest
         using (var package = new ExcelPackage(stream))
         {
             var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationList;
-            dataValidation.Should().NotBeNull();
-            dataValidation!.ValidationType.Should().Be(ExcelDataValidationType.List);
-            dataValidation.Address.Address.Should().Be("A1");
-            dataValidation.Formula.ExcelFormula.Should().Be("=Choices!A1:A3");
+            dataValidation.ShouldNotBeNull();
+            dataValidation.ValidationType.ShouldBe(ExcelDataValidationType.List);
+            dataValidation.Address.Address.ShouldBe("A1");
+            dataValidation.Formula.ExcelFormula.ShouldBe("=Choices!A1:A3");
         }
     }
 
@@ -100,9 +100,9 @@ public static class DataValidationTest
                 new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.Decimal, formula1: "1", formula2: "10"));
         using var package = new ExcelPackage(stream);
         var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationDecimal;
-        dataValidation.Should().NotBeNull();
-        dataValidation!.Formula.Value.Should().Be(1.0);
-        dataValidation.Formula2.Value.Should().Be(10.0);
+        dataValidation.ShouldNotBeNull();
+        dataValidation.Formula.Value.ShouldBe(1.0);
+        dataValidation.Formula2.Value.ShouldBe(10.0);
     }
 
     [Test]
@@ -118,12 +118,12 @@ public static class DataValidationTest
         }
         using var package = new ExcelPackage(stream);
         var dataValidation = (ExcelDataValidationList)package.Workbook.Worksheets[0].DataValidations[0];
-        dataValidation.ShowErrorMessage.Should().BeTrue();
-        dataValidation.ErrorTitle.Should().Be("Error title");
-        dataValidation.Error.Should().Be("A very informative error message");
-        dataValidation.ShowInputMessage.Should().BeTrue();
-        dataValidation.PromptTitle.Should().Be("Prompt title");
-        dataValidation.Prompt.Should().Be("A very enlightening prompt");
+        dataValidation.ShowErrorMessage.ShouldBe(true);
+        dataValidation.ErrorTitle.ShouldBe("Error title");
+        dataValidation.Error.ShouldBe("A very informative error message");
+        dataValidation.ShowInputMessage.ShouldBe(true);
+        dataValidation.PromptTitle.ShouldBe("Prompt title");
+        dataValidation.Prompt.ShouldBe("A very enlightening prompt");
     }
 
     [TestCase(XlsxDataValidation.ErrorStyle.Information, ExcelDataValidationWarningStyle.information)]
@@ -136,7 +136,7 @@ public static class DataValidationTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().AddDataValidation(new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.List, errorStyle: errorStyle));
         using var package = new ExcelPackage(stream);
         var dataValidation = (ExcelDataValidationList)package.Workbook.Worksheets[0].DataValidations[0];
-        dataValidation.ErrorStyle.Should().Be(expected);
+        dataValidation.ErrorStyle.ShouldBe(expected);
     }
 
     [TestCase(XlsxDataValidation.ValidationType.Custom, eDataValidationType.Custom)]
@@ -153,7 +153,7 @@ public static class DataValidationTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().AddDataValidation(new XlsxDataValidation(validationType: validationType));
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].DataValidations[0].ValidationType.Type.Should().Be(expected);
+            package.Workbook.Worksheets[0].DataValidations[0].ValidationType.Type.ShouldBe(expected);
     }
 
     [TestCase(XlsxDataValidation.Operator.Between, ExcelDataValidationOperator.between)]
@@ -170,6 +170,6 @@ public static class DataValidationTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().AddDataValidation(new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.Decimal, operatorType: operatorType));
         using (var package = new ExcelPackage(stream))
-            ((ExcelDataValidationDecimal)package.Workbook.Worksheets[0].DataValidations[0]).Operator.Should().Be(expected);
+            ((ExcelDataValidationDecimal)package.Workbook.Worksheets[0].DataValidations[0]).Operator.ShouldBe(expected);
     }
 }

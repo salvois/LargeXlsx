@@ -56,7 +56,7 @@ public static class StyledLarge
     private static void DoRun(bool requireCellReferences)
     {
         var rnd = new Random();
-        using var stream = new FileStream($"{nameof(StyledLarge)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var stream = new FileStream($"{nameof(StyledLarge)}_{requireCellReferences}.xlsx", FileMode.Create, FileAccess.Write);
         using var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.Level3, requireCellReferences: requireCellReferences);
         var headerStyle = new XlsxStyle(
             new XlsxFont("Calibri", 11, Color.White, bold: true),

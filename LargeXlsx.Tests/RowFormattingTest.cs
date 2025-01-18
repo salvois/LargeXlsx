@@ -26,10 +26,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.Drawing;
 using System.IO;
-using FluentAssertions;
 using NUnit.Framework;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using Shouldly;
 
 namespace LargeXlsx.Tests;
 
@@ -43,7 +43,7 @@ public static class RowFormattingTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(height: 36.5).Write("Test");
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Row(1).Height.Should().Be(36.5);
+            package.Workbook.Worksheets[0].Row(1).Height.ShouldBe(36.5);
     }
 
     [Test]
@@ -53,7 +53,7 @@ public static class RowFormattingTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(hidden: true).Write("Test");
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Row(1).Hidden.Should().BeTrue();
+            package.Workbook.Worksheets[0].Row(1).Hidden.ShouldBeTrue();
     }
 
     [Test]
@@ -70,8 +70,8 @@ public static class RowFormattingTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(style: blueStyle).Write("Test");
         using var package = new ExcelPackage(stream);
         var row = package.Workbook.Worksheets[0].Row(1);
-        row.Style.Fill.PatternType.Should().Be(ExcelFillStyle.Solid);
-        row.Style.Fill.BackgroundColor.Rgb.Should().Be("FF004586");
-        row.Style.Font.Color.Rgb.Should().Be("FFFFFFFF");
+        row.Style.Fill.PatternType.ShouldBe(ExcelFillStyle.Solid);
+        row.Style.Fill.BackgroundColor.Rgb.ShouldBe("FF004586");
+        row.Style.Font.Color.Rgb.ShouldBe("FFFFFFFF");
     }
 }

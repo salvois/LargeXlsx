@@ -26,10 +26,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.Drawing;
 using System.IO;
-using FluentAssertions;
 using NUnit.Framework;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using Shouldly;
 
 namespace LargeXlsx.Tests;
 
@@ -57,8 +57,8 @@ public static class BorderTest
                 .Write("Test", XlsxStyle.Default.With(new XlsxBorder(top: new XlsxBorder.Line(Color.DeepPink, borderStyle))));
         using var package = new ExcelPackage(stream);
         var border = package.Workbook.Worksheets[0].Cells["A1"].Style.Border;
-        border.Top.Color.Rgb.Should().Be("FFFF1493");
-        border.Top.Style.Should().Be(expected);
+        border.Top.Color.Rgb.ShouldBe("FFFF1493");
+        border.Top.Style.ShouldBe(expected);
     }
 
 
@@ -70,17 +70,17 @@ public static class BorderTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().Write("Test");
         using var package = new ExcelPackage(stream);
         var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
-        style.Border.Top.Color.Rgb.Should().BeNull();
-        style.Border.Top.Style.Should().Be(ExcelBorderStyle.None);
-        style.Border.Right.Color.Rgb.Should().BeNull();
-        style.Border.Right.Style.Should().Be(ExcelBorderStyle.None);
-        style.Border.Bottom.Color.Rgb.Should().BeNull();
-        style.Border.Bottom.Style.Should().Be(ExcelBorderStyle.None);
-        style.Border.Left.Color.Rgb.Should().BeNull();
-        style.Border.Left.Style.Should().Be(ExcelBorderStyle.None);
-        style.Border.Diagonal.Color.Rgb.Should().BeNull();
-        style.Border.Diagonal.Style.Should().Be(ExcelBorderStyle.None);
-        style.Border.DiagonalDown.Should().BeFalse();
-        style.Border.DiagonalUp.Should().BeFalse();
+        style.Border.Top.Color.Rgb.ShouldBeNull();
+        style.Border.Top.Style.ShouldBe(ExcelBorderStyle.None);
+        style.Border.Right.Color.Rgb.ShouldBeNull();
+        style.Border.Right.Style.ShouldBe(ExcelBorderStyle.None);
+        style.Border.Bottom.Color.Rgb.ShouldBeNull();
+        style.Border.Bottom.Style.ShouldBe(ExcelBorderStyle.None);
+        style.Border.Left.Color.Rgb.ShouldBeNull();
+        style.Border.Left.Style.ShouldBe(ExcelBorderStyle.None);
+        style.Border.Diagonal.Color.Rgb.ShouldBeNull();
+        style.Border.Diagonal.Style.ShouldBe(ExcelBorderStyle.None);
+        style.Border.DiagonalDown.ShouldBeFalse();
+        style.Border.DiagonalUp.ShouldBeFalse();
     }
 }

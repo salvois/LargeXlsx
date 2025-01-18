@@ -25,10 +25,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.IO;
-using FluentAssertions;
 using NUnit.Framework;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using Shouldly;
 
 namespace LargeXlsx.Tests;
 
@@ -50,7 +50,7 @@ public static class AlignmentTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(horizontal: alignment)));
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.HorizontalAlignment.Should().Be(expected);
+            package.Workbook.Worksheets[0].Cells["A1"].Style.HorizontalAlignment.ShouldBe(expected);
     }
 
     [TestCase(XlsxAlignment.Vertical.Top, ExcelVerticalAlignment.Top)]
@@ -65,7 +65,7 @@ public static class AlignmentTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(vertical: alignment)));
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.VerticalAlignment.Should().Be(expected);
+            package.Workbook.Worksheets[0].Cells["A1"].Style.VerticalAlignment.ShouldBe(expected);
     }
 
     [Test]
@@ -76,7 +76,7 @@ public static class AlignmentTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(textRotation: 45)));
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.TextRotation.Should().Be(45);
+            package.Workbook.Worksheets[0].Cells["A1"].Style.TextRotation.ShouldBe(45);
     }
 
     [Test]
@@ -87,7 +87,7 @@ public static class AlignmentTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(indent: 2)));
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.Indent.Should().Be(2);
+            package.Workbook.Worksheets[0].Cells["A1"].Style.Indent.ShouldBe(2);
     }
 
     [Test]
@@ -98,7 +98,7 @@ public static class AlignmentTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(wrapText: true)));
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.WrapText.Should().Be(true);
+            package.Workbook.Worksheets[0].Cells["A1"].Style.WrapText.ShouldBe(true);
     }
 
     [Test]
@@ -109,7 +109,7 @@ public static class AlignmentTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(shrinkToFit: true)));
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.ShrinkToFit.Should().Be(true);
+            package.Workbook.Worksheets[0].Cells["A1"].Style.ShrinkToFit.ShouldBe(true);
     }
 
     [TestCase(XlsxAlignment.ReadingOrder.ContextDependent, ExcelReadingOrder.ContextDependent)]
@@ -122,7 +122,7 @@ public static class AlignmentTest
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(readingOrder: readingOrder)));
         using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.ReadingOrder.Should().Be(expected);
+            package.Workbook.Worksheets[0].Cells["A1"].Style.ReadingOrder.ShouldBe(expected);
     }
 
     [Test]
@@ -134,13 +134,13 @@ public static class AlignmentTest
         using (var package = new ExcelPackage(stream))
         {
             var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
-            style.HorizontalAlignment.Should().Be(ExcelHorizontalAlignment.General);
-            style.VerticalAlignment.Should().Be(ExcelVerticalAlignment.Bottom);
-            style.ShrinkToFit.Should().BeFalse();
-            style.WrapText.Should().BeFalse();
-            style.TextRotation.Should().Be(0);
-            style.Indent.Should().Be(0);
-            style.ReadingOrder.Should().Be(ExcelReadingOrder.ContextDependent);
+            style.HorizontalAlignment.ShouldBe(ExcelHorizontalAlignment.General);
+            style.VerticalAlignment.ShouldBe(ExcelVerticalAlignment.Bottom);
+            style.ShrinkToFit.ShouldBeFalse();
+            style.WrapText.ShouldBeFalse();
+            style.TextRotation.ShouldBe(0);
+            style.Indent.ShouldBe(0);
+            style.ReadingOrder.ShouldBe(ExcelReadingOrder.ContextDependent);
         }
     }
 }
