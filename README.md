@@ -275,7 +275,7 @@ public XlsxWriter WriteSharedString(string value, XlsxStyle style = null, int co
 
   * **Nothing**: a cell containing no value, but styled nonetheless.
   * **String**: an inline literal string of text; if the string is `null` the method falls back on the "nothing" case. The value of an inline string is written into the cell, thus resulting in low memory consumption but possibly larger files (see, in contrast, shared strings).
-  * **Number**: a numeric constant, that will be interpreted as a `double` value; convenience overloads accepting `int` and `decimal` are provided, but under the hood the value will be converted to `double` because it is the only numeric type truly supported by the XLSX file format.
+  * **Number**: a numeric constant, either as an `int`, a `double` or a `decimal`. Note that applications such as Excel and LibreOffice interpret numbers as `double`, so expect precision loss if you write values that cannot be represented exactly by a `double`.
   * **Date and time**: a `DateTime` value, that will be converted to its `double` representation (days since 1900-01-01). Note that you must style the cell using a date/time number format to have the value appear as a date.
   * **Boolean**: a `bool` value, that will appear either as `TRUE` or `FALSE`
   * **Formula**: a string that Excel or a compatible application will interpret as a formula to calculate. Note that, unless you provide a `result` calculated by yourself (either string or numeric), no result is saved into the XLSX file. However, a spreadsheet application will calculate the result as soon as the XLSX file is opened.
@@ -718,7 +718,7 @@ Permissive, [2-clause BSD style](https://opensource.org/licenses/BSD-2-Clause)
 
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020-2024  Salvatore ISAJA
+Copyright 2020-2025  Salvatore ISAJA
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 

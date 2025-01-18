@@ -5,7 +5,7 @@
     <Version>1.11.0</Version>
     <Authors>Salvo Isaja</Authors>
     <Company>Salvo Isaja</Company>
-    <Copyright>Copyright 2020-2024  Salvatore Isaja</Copyright>
+    <Copyright>Copyright 2020-2025  Salvatore Isaja</Copyright>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/salvois/LargeXlsx</PackageProjectUrl>
     <Description>Minimalistic .net library to write large Excel files in XLSX format with low memory consumption using streamed write.</Description>
@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="SharpCompress" Version="0.38.0" />
-    <None Include="../../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+    <None Include="../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
   </ItemGroup>
 
 </Project>
