@@ -84,6 +84,7 @@ The output is like:
     - [Column names](#column-names)
     - [Creating a new worksheet](#creating-a-new-worksheet)
       - [Column formatting](#column-formatting)
+      - [Auto fit column width](#auto-fit-column-width)
     - [Adding or skipping rows](#adding-or-skipping-rows)
     - [Writing cells](#writing-cells)
       - [Writing hyperlinks](#writing-hyperlinks)
@@ -108,6 +109,7 @@ The output is like:
 
 ## Changelog
 
+* 1.11: Validation and optional skipping of invalid XML characters, inspired by [Anton Mihai](https://github.com/mike101200)
 * 1.10: Ability to hide worksheets, thanks to [Micha Voße](https://github.com/piwonesien)
 * 1.9: Optionally force writing cell references for compatibility with some readers, thanks to [Mikk182](https://github.com/Mikk182); header and footer functionality thanks to [soend](https://github.com/soend)
 * 1.8: Ability to hide grid lines and row and column headers from worksheets, thanks to [Rajeev Datta](https://github.com/rajeevdatta)
@@ -133,7 +135,8 @@ public XlsxWriter(
     Stream stream,
     SharpCompress.Compressors.Deflate.CompressionLevel compressionLevel = CompressionLevel.Level3, // compressionLevel since version 1.2
     bool uzeZip64 = false, // useZip64 since version 1.3
-    bool requireCellReferences = true); // requireCellReferences since version 1.9
+    bool requireCellReferences = true, // requireCellReferences since version 1.9
+    bool skipInvalidCharacters = false); // skipInvalidCharacters since version 1.11
 ```
 
 The constructor accepts:
@@ -141,6 +144,7 @@ The constructor accepts:
 * An optional desired compression level of the underlying zip stream. The default `CompressionLevel.Level3` roughly matches file sizes produced by Excel. Higher compression levels may result in lower speed.
 * An optional flag indicating whether to use ZIP64 compression to support content larger than 4 GiB uncompressed. Recent versions of XLSX-enabled applications such as Excel or LibreOffice should be able to read any file compressd using ZIP64, even small ones, thus, if you don't know the file size in advance and you target recent software, you could just set it to `true`.
 * An optional flag indicating whether row numbers and cell references (such as "A1") are to be included in the XLSX file even when redundant. Row numbers and cell references are optional according to the specification, and omitting them provides a notable performance boost when writing XLSX files (as much as 40%). Unfortunately, some non-compliant readers (which apparently [include MS Access itself](https://github.com/salvois/LargeXlsx/issues/36)!) consider files without row and cell references as invalid, thus you can be consertative and set this flag to `true` if you want to make them happy. Spreadsheet applications such as Excel and LibreOffice can read XLSX files without references just fine, thus, if they are your target, you could use `false` for greater performance
+* An optional flag indicating how to behave when trying to write characters that are invalid for the XML underlying the XLSX file format. When `false`, since version 1.11 an XmlException is thrown if such invalid characters are found. When `true`, invalid characters are just skipped.
 
 The recipe is adding a worksheet with `BeginWorksheet`, adding a row with `BeginRow`, writing cells to that row with `Write`, and repeating as required. Rows and worksheets are implicitly finalized as soon as new rows or worksheets are added, or the `XlsxWriter` is disposed.
 
@@ -223,6 +227,15 @@ public static XlsxColumn Formatted(double width, int count = 1, bool hidden = fa
 `Formatted` creates a column description to specify the mandatory witdh, optional hidden state, and optional style of one or more contiguous columns. The width is expressed (simplyfing) in approximate number of characters. The column style represents how to style all *empty* cells of a column. Cells that are explicitly written always use the cell style instead.
 
 
+#### Auto fit column width
+
+A frequenly asked question about column formatting is how to automatically set column width based on column content.
+
+Unfortunately, the XLSX file format does not provide any special feature for automatic/best fit column widths, so your best bet is to estimate your maximum or average content width and use it in column formatting as described above. Moreover, since the file format specifies that column formatting are written into the file before cell contents, you are required to estimate width before streaming any data, or iterating your dataset twice, or just guessing a sensible value (the latter usually works surprisingly well).
+
+To be fair, the XLSX specification provides a `bestFit` attribute for columns, but it has a totally different purpose (automatically enlarging a column when a user types digits in it).
+
+
 ### Adding or skipping rows
 
 Call `BeginRow` to advance the insertion point to the beginning of the next line and set up a new row to accept content. If a previous row was being written, it is finalized before creating the new one.
@@ -262,7 +275,7 @@ public XlsxWriter WriteSharedString(string value, XlsxStyle style = null, int co
 
   * **Nothing**: a cell containing no value, but styled nonetheless.
   * **String**: an inline literal string of text; if the string is `null` the method falls back on the "nothing" case. The value of an inline string is written into the cell, thus resulting in low memory consumption but possibly larger files (see, in contrast, shared strings).
-  * **Number**: a numeric constant, that will be interpreted as a `double` value; convenience overloads accepting `int` and `decimal` are provided, but under the hood the value will be converted to `double` because it is the only numeric type truly supported by the XLSX file format.
+  * **Number**: a numeric constant, either as an `int`, a `double` or a `decimal`. Note that applications such as Excel and LibreOffice interpret numbers as `double`, so expect precision loss if you write values that cannot be represented exactly by a `double`.
   * **Date and time**: a `DateTime` value, that will be converted to its `double` representation (days since 1900-01-01). Note that you must style the cell using a date/time number format to have the value appear as a date.
   * **Boolean**: a `bool` value, that will appear either as `TRUE` or `FALSE`
   * **Formula**: a string that Excel or a compatible application will interpret as a formula to calculate. Note that, unless you provide a `result` calculated by yourself (either string or numeric), no result is saved into the XLSX file. However, a spreadsheet application will calculate the result as soon as the XLSX file is opened.
@@ -714,7 +727,7 @@ Permissive, [2-clause BSD style](https://opensource.org/licenses/BSD-2-Clause)
 
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
-Copyright 2020-2024  Salvatore ISAJA
+Copyright 2020-2025  Salvatore ISAJA
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
