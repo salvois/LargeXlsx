@@ -35,9 +35,6 @@ namespace LargeXlsx
 {
     internal class Worksheet : IDisposable
     {
-        private const int MinSheetProtectionPasswordLength = 1;
-        private const int MaxSheetProtectionPasswordLength = 255;
-        private const int MaxRowNumbers = 1048576;
         private readonly Stream _stream;
         private readonly TextWriter _streamWriter;
         private readonly Stylesheet _stylesheet;
@@ -46,8 +43,8 @@ namespace LargeXlsx
         private readonly bool _skipInvalidCharacters;
         private readonly List<string> _mergedCellRefs;
         private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
-        private readonly List<int> _rowBreaks;     
-        private readonly List<int> _columnBreaks;  
+        private readonly HashSet<int> _pageBreakRowNumbers;
+        private readonly HashSet<int> _pageBreakColumnNumbers;
         private string _autoFilterRef;
         private string _autoFilterAbsoluteRef;
         private XlsxSheetProtection _sheetProtection;
@@ -88,8 +85,8 @@ namespace LargeXlsx
             _requireCellReferences = requireCellReferences;
             _skipInvalidCharacters = skipInvalidCharacters;
             _mergedCellRefs = new List<string>();
-            _rowBreaks = new List<int>();  
-            _columnBreaks = new List<int>();  
+            _pageBreakRowNumbers = new HashSet<int>();
+            _pageBreakColumnNumbers = new HashSet<int>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
             _streamWriter = new InvariantCultureStreamWriter(_stream);
@@ -125,8 +122,8 @@ namespace LargeXlsx
         public void BeginRow(double? height, bool hidden, XlsxStyle style)
         {
             CloseLastRow();
-            if (CurrentRowNumber == MaxRowNumbers)
-                throw new InvalidOperationException($"A worksheet can contain at most {MaxRowNumbers} rows ({CurrentRowNumber + 1} attempted)");
+            if (CurrentRowNumber == Limits.MaxRowCount)
+                throw new InvalidOperationException($"A worksheet can contain at most {Limits.MaxRowCount} rows ({CurrentRowNumber + 1} attempted)");
             CurrentRowNumber++;
             _stringedCurrentRowNumber = null;
             CurrentColumnNumber = 1;
@@ -151,8 +148,8 @@ namespace LargeXlsx
         {
             CloseLastRow();
             _needsRef = true;
-            if (CurrentRowNumber + rowCount > MaxRowNumbers)
-                throw new InvalidOperationException($"A worksheet can contain at most {MaxRowNumbers} rows ({CurrentRowNumber + rowCount} attempted)");
+            if (CurrentRowNumber + rowCount > Limits.MaxRowCount)
+                throw new InvalidOperationException($"A worksheet can contain at most {Limits.MaxRowCount} rows ({CurrentRowNumber + rowCount} attempted)");
             CurrentRowNumber += rowCount;
         }
 
@@ -289,29 +286,19 @@ namespace LargeXlsx
             var toColumnName = Util.GetColumnName(fromColumn + columnCount - 1);
             _mergedCellRefs.Add($"{fromColumnName}{fromRow}:{toColumnName}{toRow}");
         }
-       
-        public void AddRowPageBreak()
+
+        public void AddRowPageBreakBefore(int rowNumber)
         {
-            if (CurrentRowNumber <= 0)
-                throw new InvalidOperationException("Cannot add row page break before starting a row");
-            
-            if (!_rowBreaks.Contains(CurrentRowNumber))
-                _rowBreaks.Add(CurrentRowNumber);
+            if (rowNumber <= 1 || rowNumber > Limits.MaxRowCount)
+                throw new ArgumentOutOfRangeException(nameof(rowNumber));
+            _pageBreakRowNumbers.Add(rowNumber - 1);
         }
 
-        public void AddColumnPageBreak()
+        public void AddColumnPageBreakBefore(int columnNumber)
         {
-            if (CurrentColumnNumber <= 0)
-                throw new InvalidOperationException("Cannot add column page break before starting a column");
-            
-            if (!_columnBreaks.Contains(CurrentColumnNumber))
-                _columnBreaks.Add(CurrentColumnNumber);
-        }
-
-        public void AddPageBreak()
-        {
-            AddRowPageBreak();
-            AddColumnPageBreak();
+            if (columnNumber <= 1 || columnNumber > Limits.MaxColumnCount)
+                throw new ArgumentOutOfRangeException(nameof(columnNumber));
+            _pageBreakColumnNumbers.Add(columnNumber - 1);
         }
 
         public void SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount)
@@ -342,7 +329,7 @@ namespace LargeXlsx
 
         public void SetSheetProtection(XlsxSheetProtection sheetProtection)
         {
-            if (sheetProtection.Password.Length < MinSheetProtectionPasswordLength || sheetProtection.Password.Length > MaxSheetProtectionPasswordLength)
+            if (sheetProtection.Password.Length < Limits.MinSheetProtectionPasswordLength || sheetProtection.Password.Length > Limits.MaxSheetProtectionPasswordLength)
                 throw new ArgumentException("Invalid password length");
             _sheetProtection = sheetProtection;
         }
@@ -462,30 +449,6 @@ namespace LargeXlsx
             _streamWriter.Write("</mergeCells>\n");
         }
 
-        private void WritePageBreaks()
-        {
-            // Write row breaks (horizontal)
-            if (_rowBreaks.Count > 0)
-            {
-                _streamWriter.Write($"<rowBreaks count=\"{_rowBreaks.Count}\" manualBreakCount=\"{_rowBreaks.Count}\">");
-                foreach (var rowNum in _rowBreaks.OrderBy(r => r))
-                {
-                    _streamWriter.Write($"<brk id=\"{rowNum}\" max=\"16383\" man=\"1\"/>");
-                }
-                _streamWriter.Write("</rowBreaks>");
-            }
-
-            // Write column breaks (vertical)
-            if (_columnBreaks.Count > 0)
-            {
-                _streamWriter.Write($"<colBreaks count=\"{_columnBreaks.Count}\" manualBreakCount=\"{_columnBreaks.Count}\">");
-                foreach (var colNum in _columnBreaks.OrderBy(c => c))
-                {
-                    _streamWriter.Write($"<brk id=\"{colNum}\" max=\"1048575\" man=\"1\"/>");
-                }
-                _streamWriter.Write("</colBreaks>");
-            }
-        }
         private void WriteDataValidations()
         {
             if (!_cellRefsByDataValidation.Any())
@@ -559,24 +522,42 @@ namespace LargeXlsx
             var differentFirst = _headerFooter.FirstHeader != null || _headerFooter.FirstFooter != null;
             var differentOddEven = _headerFooter.EvenHeader != null || _headerFooter.EvenFooter != null;
             _streamWriter.Write(
-                "<headerFooter alignWithMargins=\"{0}\" differentFirst=\"{1}\" differentOddEven=\"{2}\" scaleWithDoc=\"{3}\">",
+                "<headerFooter alignWithMargins=\"{0}\" differentFirst=\"{1}\" differentOddEven=\"{2}\" scaleWithDoc=\"{3}\">\n",
                 Util.BoolToInt(_headerFooter.AlignWithMargins),
                 Util.BoolToInt(differentFirst),
                 Util.BoolToInt(differentOddEven),
                 Util.BoolToInt(_headerFooter.ScaleWithDoc));
             if (_headerFooter.OddHeader != null)
-                _streamWriter.Append("<oddHeader>").AppendEscapedXmlText(_headerFooter.OddHeader, _skipInvalidCharacters).Append("</oddHeader>");
+                _streamWriter.Append("<oddHeader>").AppendEscapedXmlText(_headerFooter.OddHeader, _skipInvalidCharacters).Append("</oddHeader>\n");
             if (_headerFooter.OddFooter != null)
-                _streamWriter.Append("<oddFooter>").AppendEscapedXmlText(_headerFooter.OddFooter, _skipInvalidCharacters).Append("</oddFooter>");
+                _streamWriter.Append("<oddFooter>").AppendEscapedXmlText(_headerFooter.OddFooter, _skipInvalidCharacters).Append("</oddFooter>\n");
             if (_headerFooter.EvenHeader != null)
-                _streamWriter.Append("<evenHeader>").AppendEscapedXmlText(_headerFooter.EvenHeader, _skipInvalidCharacters).Append("</evenHeader>");
+                _streamWriter.Append("<evenHeader>").AppendEscapedXmlText(_headerFooter.EvenHeader, _skipInvalidCharacters).Append("</evenHeader>\n");
             if (_headerFooter.EvenFooter != null)
-                _streamWriter.Append("<evenFooter>").AppendEscapedXmlText(_headerFooter.EvenFooter, _skipInvalidCharacters).Append("</evenFooter>");
+                _streamWriter.Append("<evenFooter>").AppendEscapedXmlText(_headerFooter.EvenFooter, _skipInvalidCharacters).Append("</evenFooter>\n");
             if (_headerFooter.FirstHeader != null)
-                _streamWriter.Append("<firstHeader>").AppendEscapedXmlText(_headerFooter.FirstHeader, _skipInvalidCharacters).Append("</firstHeader>");
+                _streamWriter.Append("<firstHeader>").AppendEscapedXmlText(_headerFooter.FirstHeader, _skipInvalidCharacters).Append("</firstHeader>\n");
             if (_headerFooter.FirstFooter != null)
-                _streamWriter.Append("<firstFooter>").AppendEscapedXmlText(_headerFooter.FirstFooter, _skipInvalidCharacters).Append("</firstFooter>");
-            _streamWriter.Write("</headerFooter>");
+                _streamWriter.Append("<firstFooter>").AppendEscapedXmlText(_headerFooter.FirstFooter, _skipInvalidCharacters).Append("</firstFooter>\n");
+            _streamWriter.Write("</headerFooter>\n");
+        }
+
+        private void WritePageBreaks()
+        {
+            if (_pageBreakRowNumbers.Count > 0)
+            {
+                _streamWriter.Write($"<rowBreaks count=\"{_pageBreakRowNumbers.Count}\" manualBreakCount=\"{_pageBreakRowNumbers.Count}\">\n");
+                foreach (var i in _pageBreakRowNumbers.OrderBy(r => r))
+                    _streamWriter.Write($"<brk id=\"{i}\" max=\"{Limits.MaxColumnCount}\" man=\"1\"/>\n");
+                _streamWriter.Write("</rowBreaks>\n");
+            }
+            if (_pageBreakColumnNumbers.Count > 0)
+            {
+                _streamWriter.Write($"<colBreaks count=\"{_pageBreakColumnNumbers.Count}\" manualBreakCount=\"{_pageBreakColumnNumbers.Count}\">\n");
+                foreach (var i in _pageBreakColumnNumbers.OrderBy(c => c))
+                    _streamWriter.Write($"<brk id=\"{i}\" max=\"{Limits.MaxRowCount}\" man=\"1\"/>\n");
+                _streamWriter.Write("</colBreaks>\n");
+            }
         }
     }
 }

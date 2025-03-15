@@ -19,7 +19,7 @@ Currently the library supports:
 * cell validation, such as dropdown list of allowed values
 * right-to-left worksheets, to support languages such as Arabic and Hebrew
 * password protection of sheets against accidental modification
-* headers and footers for worksheet printout
+* headers, footers and page breaks for worksheet printout
 
 
 ## Example
@@ -96,6 +96,7 @@ The output is like:
     - [Headers and footers](#headers-and-footers)
       - [Left, center and right sections of header and footer](#left-center-and-right-sections-of-header-and-footer)
       - [Header and footer formatting codes](#header-and-footer-formatting-codes)
+    - [Page breaks](#page-breaks)
     - [Styling](#styling)
       - [The default style](#the-default-style)
       - [Fonts](#fonts)
@@ -109,6 +110,7 @@ The output is like:
 
 ## Changelog
 
+* 1.12: Page breaks for printing, inspired by [Nael Al Abbasi](https://github.com/thedude61636)
 * 1.11: Validation and optional skipping of invalid XML characters, inspired by [Anton Mihai](https://github.com/mike101200)
 * 1.10: Ability to hide worksheets, thanks to [Micha Voße](https://github.com/piwonesien)
 * 1.9: Optionally force writing cell references for compatibility with some readers, thanks to [Mikk182](https://github.com/Mikk182); header and footer functionality thanks to [soend](https://github.com/soend)
@@ -333,15 +335,6 @@ For example, if merging the 2 rows x 3 columns range `A7:C8` using `AddMergedCel
 
 **Note**: due to the structure of the XLSX file format, the ranges for all merged cells of a worksheet must be accumulated in RAM, because they must be written to the file after the content of the whole worksheet. **Using a large number of merged cells may cause high memory consumption**. This also means that you may call `AddMergedCell` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or cells you won't write content to.
 
-### PageBreaks
-Page breaks can be specified in rows or columns or both
-```csharp
-// class XlsxWriter
-public XlsxWriter AddPageBreak(); //adds a page break at the current index and column
-public XlsxWriter AddRowPageBreak(); //adds a horizontal page break at the current row
-public XlsxWriter AddColumnPageBreak(); //adds a vertical page break at the current column
-```
-adding page breaks does not advance the insertion point 
 
 ### Auto filter
 
@@ -539,6 +532,28 @@ public class XlsxHeaderFooterBuilder
 ```
 
 When writing the `&"font,type"` and `&"-,type"` codes manually, the type field can assume one of the following values: `Regular`, `Bold`, `Italic` and `Bold Italic`.
+
+
+### Page breaks
+
+The following methods of `XlsxWriter` can be used to control how to split a worksheet printout either horizontally or vertically (since version 1.12):
+
+```csharp
+// class XlsxWriter
+public XlsxWriter AddRowPageBreakBefore(int rowNumber);
+public XlsxWriter AddColumnPageBreakBefore(int columnNumber);
+public XlsxWriter AddRowPageBreak();
+public XlsxWriter AddColumnPageBreak();
+```
+
+The former two methods let you specify the row and column number where to place an horizontal or vertical page break before, respectively.
+
+The latter two place a horizontal or vertical page break before the current row or column number, respectively (see [The insertion point](#the-insertion-point)), and make sense when writing content fluently.
+
+Trying to place a break before row 1 or column 1 (that is, column A) will result in an `ArgumentOutOfRangeException`.
+
+**Note**: due to the structure of the XLSX file format, page breaks of a worksheet must be accumulated in RAM, because they must be written to the file after the content of the whole worksheet. **Using a very large number of distinct page breaks may cause high memory consumption**.
+
 
 ### Styling
 

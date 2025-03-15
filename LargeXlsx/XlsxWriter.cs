@@ -323,7 +323,7 @@ namespace LargeXlsx
 
             return AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
-     
+
         public XlsxWriter Write(DateTime value, XlsxStyle style = null, int columnSpan = 1)
         {
             return Write(Util.DateToDouble(value), style, columnSpan);
@@ -373,28 +373,28 @@ namespace LargeXlsx
             return this;
         }
 
-        public XlsxWriter AddMergedCell(int rowCount, int columnCount)
-        {
-            return AddMergedCell(CurrentRowNumber, CurrentColumnNumber, rowCount, columnCount);
-        }  
-        public XlsxWriter AddPageBreak()
-        {
-            CheckInWorksheet();
-            _currentWorksheet.AddPageBreak();
-            return this;
-        }
-        public XlsxWriter AddRowPageBreak()
+        public XlsxWriter AddMergedCell(int rowCount, int columnCount) =>
+            AddMergedCell(CurrentRowNumber, CurrentColumnNumber, rowCount, columnCount);
+
+        public XlsxWriter AddRowPageBreakBefore(int rowNumber)
         {
             CheckInWorksheet();
-            _currentWorksheet.AddRowPageBreak();
+            _currentWorksheet.AddRowPageBreakBefore(rowNumber);
             return this;
         }
-        public XlsxWriter AddColumnPageBreak()
+
+        public XlsxWriter AddColumnPageBreakBefore(int columnNumber)
         {
             CheckInWorksheet();
-            _currentWorksheet.AddColumnPageBreak();
+            _currentWorksheet.AddColumnPageBreakBefore(columnNumber);
             return this;
         }
+
+        public XlsxWriter AddRowPageBreak() =>
+            AddRowPageBreakBefore(CurrentRowNumber);
+
+        public XlsxWriter AddColumnPageBreak() =>
+            AddColumnPageBreakBefore(CurrentColumnNumber);
 
         public XlsxWriter SetAutoFilter(int fromRow, int fromColumn, int rowCount, int columnCount)
         {

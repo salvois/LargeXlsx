@@ -66,7 +66,6 @@ public static class Simple
             .BeginRow().Write("Underline").Write().Write("Double", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.Double)))
             .BeginRow().Write("Underline").Write().Write("SingleAccounting", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.SingleAccounting)))
             .BeginRow().Write("Underline").Write().Write("DoubleAccounting", XlsxStyle.Default.With(XlsxFont.Default.WithUnderline(XlsxFont.Underline.DoubleAccounting)))
-            .AddPageBreak()
             .BeginRow().Write("Hyperlink").Write().WriteFormula("HYPERLINK(\"https://github.com/salvois/LargeXlsx\")", hyperlinkStyle)
             .BeginRow().Write("Hyperlink w/alias").Write().WriteFormula("HYPERLINK(\"https://github.com/salvois/LargeXlsx\", \"LargeXlsx on GitHub\")", hyperlinkStyle)
             .BeginRow().Write("Boolean").Write(false).Write(true)

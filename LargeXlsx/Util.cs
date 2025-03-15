@@ -35,10 +35,9 @@ namespace LargeXlsx
 {
     internal static class Util
     {
-        private const int MaxColumnCount = 16384;
         private static readonly DateTime ExcelEpoch = new DateTime(1900, 1, 1);
         private static readonly DateTime Date19000301 = new DateTime(1900, 3, 1);
-        private static readonly string[] CachedColumnNames = new string[MaxColumnCount];
+        private static readonly string[] CachedColumnNames = new string[Limits.MaxColumnCount];
 
         public static TextWriter Append(this TextWriter textWriter, string value)
         {
@@ -118,8 +117,8 @@ namespace LargeXlsx
 
         public static string GetColumnName(int columnIndex)
         {
-            if (columnIndex < 1 || columnIndex > MaxColumnCount)
-                throw new InvalidOperationException($"A worksheet can contain at most {MaxColumnCount} columns ({columnIndex} attempted)");
+            if (columnIndex < 1 || columnIndex > Limits.MaxColumnCount)
+                throw new InvalidOperationException($"A worksheet can contain at most {Limits.MaxColumnCount} columns ({columnIndex} attempted)");
             var columnName = CachedColumnNames[columnIndex - 1];
             if (columnName == null)
             {
