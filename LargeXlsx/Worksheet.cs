@@ -119,7 +119,7 @@ namespace LargeXlsx
             _stream.Dispose();
         }
 
-        public void BeginRow(double? height, bool hidden, XlsxStyle style)
+        public void BeginRow(double? height, bool hidden, XlsxStyle style, bool collapsed, int? groupLevel)
         {
             CloseLastRow();
             if (CurrentRowNumber == Limits.MaxRowCount)
@@ -135,6 +135,10 @@ namespace LargeXlsx
                 _streamWriter.Write("\"");
                 _needsRef = false;
             }
+            if (collapsed)
+                _streamWriter.Write(" collapsed=\"1\"");
+            if (groupLevel != null)
+                _streamWriter.Write(" outlineLevel=\"{0}\"", groupLevel);
             if (height.HasValue)
                 _streamWriter.Write(" ht=\"{0}\" customHeight=\"1\"", height);
             if (hidden)
