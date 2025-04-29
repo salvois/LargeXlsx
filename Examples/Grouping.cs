@@ -1,4 +1,4 @@
-﻿/*
+/*
 LargeXlsx - Minimalistic .net library to write large XLSX files
 
 Copyright 2020-2025 Salvatore ISAJA. All rights reserved.
@@ -24,37 +24,23 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-using System;
+using System.IO;
+using LargeXlsx;
 
 namespace Examples;
 
-public static class Program
+public static class Grouping
 {
-    public static void Main(string[] _)
+    public static void Run()
     {
-        Simple.Run();
-        MultipleSheet.Run();
-        FrozenPanes.Run();
-        HideGridlines.Run();
-        WorksheetVisibility.Run();
-        NumberFormats.Run();
-        ColumnFormatting.Run();
-        RowFormatting.Run();
-        Alignment.Run();
-        Border.Run();
-        DataValidation.Run();
-        RightToLeft.Run();
-        Zip64Small.Run();
-        SheetProtection.Run();
-        HeaderFooterPageBreaks.Run();
-        InvalidXmlChars.Run();
-        InlineStrings.Run();
-        SharedStrings.Run();
-        Large.Run();
-        StyledLarge.Run();
-        StyledLargeCreateStyles.Run();
-        Zip64Huge.Run();
-        Grouping.Run();
-        Console.WriteLine($"Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)} TotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
+        using var stream = new FileStream($"{nameof(Grouping)}.xlsx", FileMode.Create, FileAccess.Write);
+        using var xlsxWriter = new XlsxWriter(stream);
+
+        xlsxWriter
+            .BeginWorksheet("Sheet 1")
+            .BeginRow().Write("Header 1").Write("Header 2").Write("Header 3")
+            .BeginRow(groupLevel: 1).Write("Test 1").Write("Test 2").Write("Test 3")
+            .BeginRow(groupLevel: 1).Write("Test 4").Write("Test 5").Write("Test 6");
+
     }
 }

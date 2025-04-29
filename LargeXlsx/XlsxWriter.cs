@@ -248,10 +248,10 @@ namespace LargeXlsx
             return this;
         }
 
-        public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null)
+        public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null, bool collapsed = false, int? groupLevel = null)
         {
             CheckInWorksheet();
-            _currentWorksheet.BeginRow(height, hidden, style);
+            _currentWorksheet.BeginRow(height, hidden, style, collapsed, groupLevel);
             return this;
         }
 
