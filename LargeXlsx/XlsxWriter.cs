@@ -63,7 +63,7 @@ namespace LargeXlsx
             _skipInvalidCharacters = skipInvalidCharacters;
             DefaultStyle = XlsxStyle.Default;
 
-            _zipArchive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: false);
+            _zipArchive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true);
         }
 
         public void Dispose()
