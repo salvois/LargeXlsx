@@ -26,9 +26,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
@@ -55,16 +55,15 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipWriter zipWriter)
+        public void Save(ZipArchive zipArchive)
         {
-            using (var stream = zipWriter.WriteToStream("xl/sharedStrings.xml", new ZipWriterEntryOptions()))
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+            var entry = zipArchive.CreateEntry("xl/sharedStrings.xml", CompressionLevel.Optimal);
+            using (var streamWriter = new StreamWriter(entry.Open(), Encoding.UTF8))
             {
                 streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
                 foreach (var si in _stringItems.OrderBy(s => s.Value))
                 {
-                    // <si><t xml:space="preserve">{0}</t></si>
                     streamWriter
                         .Append("<si><t")
                         .AddSpacePreserveIfNeeded(si.Key)

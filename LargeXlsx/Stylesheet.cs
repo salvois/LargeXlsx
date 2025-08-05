@@ -27,8 +27,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
@@ -108,10 +108,10 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipWriter zipWriter)
+        public void Save(ZipArchive zipArchive)
         {
-            using (var stream = zipWriter.WriteToStream("xl/styles.xml", new ZipWriterEntryOptions()))
-            using (var streamWriter = new InvariantCultureStreamWriter(stream))
+            var entry = zipArchive.CreateEntry("xl/styles.xml", CompressionLevel.Optimal);
+            using (var streamWriter = new InvariantCultureStreamWriter(entry.Open()))
             {
                 streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");

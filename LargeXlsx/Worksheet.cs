@@ -28,8 +28,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
@@ -60,7 +60,7 @@ namespace LargeXlsx
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
         public Worksheet(
-            ZipWriter zipWriter,
+            ZipArchive zipArchive,
             int id,
             string name,
             int splitRow,
@@ -88,7 +88,8 @@ namespace LargeXlsx
             _pageBreakRowNumbers = new HashSet<int>();
             _pageBreakColumnNumbers = new HashSet<int>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
-            _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
+            var entry = zipArchive.CreateEntry($"xl/worksheets/sheet{id}.xml", CompressionLevel.Optimal);
+            _stream = entry.Open();
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 
             _streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
