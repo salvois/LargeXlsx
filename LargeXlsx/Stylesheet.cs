@@ -108,9 +108,9 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipArchive zipArchive)
+        public void Save(ZipArchive zipArchive, CompressionLevel compressionLevel)
         {
-            var entry = zipArchive.CreateEntry("xl/styles.xml", CompressionLevel.Optimal);
+            var entry = zipArchive.CreateEntry("xl/styles.xml", compressionLevel);
             using (var streamWriter = new InvariantCultureStreamWriter(entry.Open()))
             {
                 streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"

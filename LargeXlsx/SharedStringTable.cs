@@ -55,9 +55,9 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipArchive zipArchive)
+        public void Save(ZipArchive zipArchive, CompressionLevel compressionLevel)
         {
-            var entry = zipArchive.CreateEntry("xl/sharedStrings.xml", CompressionLevel.Optimal);
+            var entry = zipArchive.CreateEntry("xl/sharedStrings.xml", compressionLevel);
             using (var streamWriter = new StreamWriter(entry.Open(), Encoding.UTF8))
             {
                 streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"

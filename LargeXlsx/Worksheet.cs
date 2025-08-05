@@ -61,6 +61,7 @@ namespace LargeXlsx
 
         public Worksheet(
             ZipArchive zipArchive,
+            CompressionLevel compressionLevel,
             int id,
             string name,
             int splitRow,
@@ -88,7 +89,7 @@ namespace LargeXlsx
             _pageBreakRowNumbers = new HashSet<int>();
             _pageBreakColumnNumbers = new HashSet<int>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
-            var entry = zipArchive.CreateEntry($"xl/worksheets/sheet{id}.xml", CompressionLevel.Optimal);
+            var entry = zipArchive.CreateEntry($"xl/worksheets/sheet{id}.xml", compressionLevel);
             _stream = entry.Open();
             _streamWriter = new InvariantCultureStreamWriter(_stream);
 

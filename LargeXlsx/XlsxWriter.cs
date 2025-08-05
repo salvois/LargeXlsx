@@ -46,6 +46,7 @@ namespace LargeXlsx
         private Worksheet _currentWorksheet;
         private bool _hasFormulasWithoutResult;
         private bool _disposed;
+        private CompressionLevel _compressionLevel;
 
         public XlsxStyle DefaultStyle { get; private set; }
         public int CurrentRowNumber => _currentWorksheet.CurrentRowNumber;
@@ -54,8 +55,13 @@ namespace LargeXlsx
         public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
         public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
 
-        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Optimal, bool useZip64 = false, bool requireCellReferences = true, bool skipInvalidCharacters = false)
+        public XlsxWriter(
+            Stream stream, 
+            CompressionLevel compressionLevel = CompressionLevel.Optimal, 
+            bool requireCellReferences = true, 
+            bool skipInvalidCharacters = false)
         {
+            _compressionLevel = compressionLevel;
             _worksheets = new List<Worksheet>();
             _stylesheet = new Stylesheet();
             _sharedStringTable = new SharedStringTable(skipInvalidCharacters);
@@ -71,8 +77,8 @@ namespace LargeXlsx
             if (!_disposed)
             {
                 _currentWorksheet?.Dispose();
-                _stylesheet.Save(_zipArchive);
-                _sharedStringTable.Save(_zipArchive);
+                _stylesheet.Save(_zipArchive, _compressionLevel);
+                _sharedStringTable.Save(_zipArchive, _compressionLevel);
                 SaveDocProps();
                 SaveContentTypes();
                 SaveRels();
@@ -86,7 +92,7 @@ namespace LargeXlsx
         private void SaveDocProps()
         {
             var assemblyName = Assembly.GetExecutingAssembly().GetName();
-            var entry = _zipArchive.CreateEntry("docProps/app.xml", CompressionLevel.Optimal);
+            var entry = _zipArchive.CreateEntry("docProps/app.xml", _compressionLevel);
             using (var streamWriter = new StreamWriter(entry.Open(), Encoding.UTF8))
             {
                 // Looks some applications (e.g. Microsoft's) may consider a file invalid if a specific version number is not found.
@@ -104,7 +110,7 @@ namespace LargeXlsx
 
         private void SaveContentTypes()
         {
-            var entry = _zipArchive.CreateEntry("[Content_Types].xml", CompressionLevel.Optimal);
+            var entry = _zipArchive.CreateEntry("[Content_Types].xml", _compressionLevel);
             using (var streamWriter = new StreamWriter(entry.Open(), Encoding.UTF8))
             {
                 var worksheetTags = new StringBuilder();
@@ -127,7 +133,7 @@ namespace LargeXlsx
 
         private void SaveRels()
         {
-            var entry = _zipArchive.CreateEntry("_rels/.rels", CompressionLevel.Optimal);
+            var entry = _zipArchive.CreateEntry("_rels/.rels", _compressionLevel);
             using (var streamWriter = new StreamWriter(entry.Open(), Encoding.UTF8))
             {
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
@@ -140,7 +146,7 @@ namespace LargeXlsx
 
         private void SaveWorkbook()
         {
-            var entry = _zipArchive.CreateEntry("xl/workbook.xml", CompressionLevel.Optimal);
+            var entry = _zipArchive.CreateEntry("xl/workbook.xml", _compressionLevel);
             using (var streamWriter = new StreamWriter(entry.Open(), Encoding.UTF8))
             {
                 var worksheetTags = new StringWriter();
@@ -189,7 +195,7 @@ namespace LargeXlsx
 
         private void SaveWorkbookRels()
         {
-            var entry = _zipArchive.CreateEntry("xl/_rels/workbook.xml.rels", CompressionLevel.Optimal);
+            var entry = _zipArchive.CreateEntry("xl/_rels/workbook.xml.rels", _compressionLevel);
             using (var streamWriter = new StreamWriter(entry.Open(), Encoding.UTF8))
             {
                 var worksheetTags = new StringBuilder();
@@ -221,6 +227,7 @@ namespace LargeXlsx
             _currentWorksheet?.Dispose();
             _currentWorksheet = new Worksheet(
                 zipArchive: _zipArchive,
+                compressionLevel: _compressionLevel,
                 id: _worksheets.Count + 1,
                 name: name,
                 splitRow: splitRow,
