@@ -28,6 +28,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using LargeXlsx;
 
@@ -56,7 +57,7 @@ public static class StyledLargeCreateStyles
     {
         var rnd = new Random();
         using var stream = new FileStream($"{nameof(StyledLargeCreateStyles)}_{requireCellReferences}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, requireCellReferences: requireCellReferences);
+        using var xlsxWriter = new XlsxWriter(stream, requireCellReferences: requireCellReferences, compressionLevel: CompressionLevel.Fastest);
         var colors = Enumerable.Repeat(0, 100).Select(_ => Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256))).ToList();
         var headerStyle = new XlsxStyle(
             new XlsxFont("Calibri", 10.5, Color.White, bold: true),

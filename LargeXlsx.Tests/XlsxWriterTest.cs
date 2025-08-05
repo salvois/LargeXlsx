@@ -388,10 +388,10 @@ public static class XlsxWriterTest
     }
 
     [Theory]
-    public static void Zip64(bool useZip64)
+    public static void Zip64()
     {
         using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream, useZip64: useZip64))
+        using (var xlsxWriter = new XlsxWriter(stream))
         {
             xlsxWriter
                 .BeginWorksheet("Sheet1")
