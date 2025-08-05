@@ -46,7 +46,7 @@ namespace LargeXlsx
         private Worksheet _currentWorksheet;
         private bool _hasFormulasWithoutResult;
         private bool _disposed;
-        private CompressionLevel _compressionLevel;
+        private readonly CompressionLevel _compressionLevel;
 
         public XlsxStyle DefaultStyle { get; private set; }
         public int CurrentRowNumber => _currentWorksheet.CurrentRowNumber;
