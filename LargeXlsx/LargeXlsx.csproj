@@ -12,7 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SharpCompress" Version="0.39.0" />
     <None Include="../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
   </ItemGroup>
 

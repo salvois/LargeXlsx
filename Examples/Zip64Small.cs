@@ -25,8 +25,8 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.IO;
+using System.IO.Compression;
 using LargeXlsx;
-using SharpCompress.Compressors.Deflate;
 
 namespace Examples;
 
@@ -35,7 +35,7 @@ public static class Zip64Small
     public static void Run()
     {
         using var stream = new FileStream($"{nameof(Zip64Small)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.BestSpeed, useZip64: true);
+        using var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.Fastest);
         xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("A1").Write("B1").BeginRow().Write("A2").Write("B2");
     }
 }
