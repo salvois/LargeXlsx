@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
@@ -73,7 +74,8 @@ namespace LargeXlsx
             bool showHeaders,
             bool requireCellReferences,
             bool skipInvalidCharacters,
-            XlsxWorksheetState state)
+            XlsxWorksheetState state,
+            int streamBufferSize = 8192)
         {
             Id = id;
             Name = name;
@@ -89,7 +91,7 @@ namespace LargeXlsx
             _pageBreakColumnNumbers = new HashSet<int>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
             _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
-            _streamWriter = new InvariantCultureStreamWriter(_stream);
+            _streamWriter = new InvariantCultureStreamWriter(_stream, streamBufferSize);
 
             _streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                 + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
@@ -102,6 +104,11 @@ namespace LargeXlsx
             _streamWriter.Write("</sheetView></sheetViews>\n");
             WriteColumns(columns);
             _streamWriter.Write("<sheetData>\n");
+        }
+
+        public async Task FlushAsync()
+        {
+            await _streamWriter.FlushAsync().ConfigureAwait(false);
         }
 
         public void Dispose()

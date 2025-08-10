@@ -30,6 +30,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using SharpCompress.Common;
 using SharpCompress.Compressors.Deflate;
 using SharpCompress.Writers;
@@ -46,6 +47,7 @@ namespace LargeXlsx
         private readonly SharedStringTable _sharedStringTable;
         private readonly bool _requireCellReferences;
         private readonly bool _skipInvalidCharacters;
+        private readonly int _streamBufferSize;
         private Worksheet _currentWorksheet;
         private bool _hasFormulasWithoutResult;
         private bool _disposed;
@@ -57,16 +59,23 @@ namespace LargeXlsx
         public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
         public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
 
-        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3, bool useZip64 = false, bool requireCellReferences = true, bool skipInvalidCharacters = false)
+        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3, bool useZip64 = false, bool requireCellReferences = true, bool skipInvalidCharacters = false, int streamBufferSize = 8192)
         {
             _worksheets = new List<Worksheet>();
             _stylesheet = new Stylesheet();
             _sharedStringTable = new SharedStringTable(skipInvalidCharacters);
             _requireCellReferences = requireCellReferences;
             _skipInvalidCharacters = skipInvalidCharacters;
+            _streamBufferSize = streamBufferSize;
             DefaultStyle = XlsxStyle.Default;
 
             _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate) { DeflateCompressionLevel = compressionLevel, UseZip64 = useZip64 });
+        }
+
+        public async Task FlushAsync()
+        {
+            if (_currentWorksheet != null)
+                await _currentWorksheet.FlushAsync().ConfigureAwait(false);
         }
 
         public void Dispose()
@@ -236,7 +245,8 @@ namespace LargeXlsx
                 showGridLines: showGridLines,
                 showHeaders: showHeaders,
                 requireCellReferences: _requireCellReferences,
-                skipInvalidCharacters: _skipInvalidCharacters);
+                skipInvalidCharacters: _skipInvalidCharacters,
+                streamBufferSize: _streamBufferSize);
             _worksheets.Add(_currentWorksheet);
             return this;
         }
