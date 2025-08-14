@@ -549,4 +549,27 @@ public static class XlsxWriterTest
         dataValidation.Prompt.ShouldBe("A very enlightening prompt");
         dataValidation.Formula.Values.ShouldBe(["Choice1", "Choice2"]);
     }
+
+    [Test]
+    public static void Write_NegativeZeroDouble_WritesZeroInXml()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = new XlsxWriter(stream))
+        {
+            xlsxWriter
+                .BeginWorksheet("Sheet1")
+                .BeginRow()
+                .Write(-0.0);
+        }
+
+        // Rewind and open the XLSX as a ZIP archive
+        stream.Position = 0;
+        using var zip = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read, leaveOpen: true);
+        var entry = zip.GetEntry("xl/worksheets/sheet1.xml");
+        entry.ShouldNotBeNull();
+        using var reader = new StreamReader(entry.Open());
+        var xml = reader.ReadToEnd();
+        
+        xml.ShouldNotContain("<v>-0</v>");
+    }
 }
