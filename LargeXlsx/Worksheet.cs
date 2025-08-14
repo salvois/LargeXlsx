@@ -204,7 +204,9 @@ namespace LargeXlsx
             _streamWriter.Write("<c");
             WriteCellRef();
             WriteStyle(style);
-            _streamWriter.Append("><v>").Append(value).Append("</v></c>\n");
+            // Normalize -0.0 to 0.0 for Excel compatibility
+            double normalized = value == 0.0 ? 0.0 : value;
+            _streamWriter.Append("><v>").Append(normalized).Append("</v></c>\n");
             CurrentColumnNumber++;
         }
 
