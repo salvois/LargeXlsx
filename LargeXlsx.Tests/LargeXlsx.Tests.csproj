@@ -1,23 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <IsPackable>false</IsPackable>
-    <Nullable>enable</Nullable>
-    <WarningsAsErrors>Nullable</WarningsAsErrors>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net48;net6.0;net8.0</TargetFrameworks>
+		<IsPackable>false</IsPackable>
+		<Nullable>enable</Nullable>
+		<WarningsAsErrors>Nullable</WarningsAsErrors>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
-    <PackageReference Include="EPPlus" Version="[4.5.3.3,5.0.0)" />
-    <PackageReference Include="nunit" Version="4.3.2" />
-    <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
-    <PackageReference Include="Shouldly" Version="4.3.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
+		<PackageReference Include="EPPlus" Version="[4.5.3.3,5.0.0)" />
+		<PackageReference Include="nunit" Version="4.3.2" />
+		<PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+		<PackageReference Include="Shouldly" Version="4.3.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\LargeXlsx\LargeXlsx.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\LargeXlsx\LargeXlsx.csproj" />
+	</ItemGroup>
 
 </Project>
