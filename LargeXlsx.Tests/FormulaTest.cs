@@ -29,32 +29,43 @@ using NUnit.Framework;
 using OfficeOpenXml;
 using Shouldly;
 
-namespace LargeXlsx.Tests;
 
-[TestFixture]
-public static class FormulaTest
+namespace LargeXlsx.Tests
 {
-    [Test]
-    public static void FormulaWithResult()
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().WriteFormula("41.5+1", result: 42.5);
-        using var package = new ExcelPackage(stream);
-        // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
-        package.Workbook.Worksheets[0].Cells["A1"].Formula.ShouldBe("41.5+1");
-        package.Workbook.Worksheets[0].Cells["A1"].Value.ShouldBe("42.5");
-    }
 
-    [Test]
-    public static void FormulaWithoutResult()
+    [TestFixture]
+    public static class FormulaTest
     {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().WriteFormula("41+1");
-        using var package = new ExcelPackage(stream);
-        // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
-        package.Workbook.Worksheets[0].Cells["A1"].Formula.ShouldBe("41+1");
-        package.Workbook.Worksheets[0].Cells["A1"].Value.ShouldBeNull();
+        [Test]
+        public static void FormulaWithResult()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().WriteFormula("41.5+1", result: 42.5);
+                using (var package = new ExcelPackage(stream))
+                {
+                    // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
+                    package.Workbook.Worksheets[0].Cells["A1"].Formula.ShouldBe("41.5+1");
+                    package.Workbook.Worksheets[0].Cells["A1"].Value.ShouldBe("42.5");
+                }
+            }
+        }
+
+        [Test]
+        public static void FormulaWithoutResult()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().WriteFormula("41+1");
+                using (var package = new ExcelPackage(stream))
+                {
+                    // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
+                    package.Workbook.Worksheets[0].Cells["A1"].Formula.ShouldBe("41+1");
+                    package.Workbook.Worksheets[0].Cells["A1"].Value.ShouldBeNull();
+                }
+            }
+        }
     }
 }

@@ -31,56 +31,69 @@ using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using Shouldly;
 
-namespace LargeXlsx.Tests;
 
-[TestFixture]
-public static class BorderTest
+namespace LargeXlsx.Tests
 {
-    [TestCase(XlsxBorder.Style.None, ExcelBorderStyle.None)]
-    [TestCase(XlsxBorder.Style.Thin, ExcelBorderStyle.Thin)]
-    [TestCase(XlsxBorder.Style.Medium, ExcelBorderStyle.Medium)]
-    [TestCase(XlsxBorder.Style.Dashed, ExcelBorderStyle.Dashed)]
-    [TestCase(XlsxBorder.Style.Dotted, ExcelBorderStyle.Dotted)]
-    [TestCase(XlsxBorder.Style.Thick, ExcelBorderStyle.Thick)]
-    [TestCase(XlsxBorder.Style.Double, ExcelBorderStyle.Double)]
-    [TestCase(XlsxBorder.Style.Hair, ExcelBorderStyle.Hair)]
-    [TestCase(XlsxBorder.Style.MediumDashed, ExcelBorderStyle.MediumDashed)]
-    [TestCase(XlsxBorder.Style.DashDot, ExcelBorderStyle.DashDot)]
-    [TestCase(XlsxBorder.Style.MediumDashDot, ExcelBorderStyle.MediumDashDot)]
-    [TestCase(XlsxBorder.Style.DashDotDot, ExcelBorderStyle.DashDotDot)]
-    [TestCase(XlsxBorder.Style.MediumDashDotDot, ExcelBorderStyle.MediumDashDotDot)]
-    public static void HorizontalAlignment(XlsxBorder.Style borderStyle, ExcelBorderStyle expected)
+
+    [TestFixture]
+    public static class BorderTest
     {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
-                .Write("Test", XlsxStyle.Default.With(new XlsxBorder(top: new XlsxBorder.Line(Color.DeepPink, borderStyle))));
-        using var package = new ExcelPackage(stream);
-        var border = package.Workbook.Worksheets[0].Cells["A1"].Style.Border;
-        border.Top.Color.Rgb.ShouldBe("FFFF1493");
-        border.Top.Style.ShouldBe(expected);
-    }
+        [TestCase(XlsxBorder.Style.None, ExcelBorderStyle.None)]
+        [TestCase(XlsxBorder.Style.Thin, ExcelBorderStyle.Thin)]
+        [TestCase(XlsxBorder.Style.Medium, ExcelBorderStyle.Medium)]
+        [TestCase(XlsxBorder.Style.Dashed, ExcelBorderStyle.Dashed)]
+        [TestCase(XlsxBorder.Style.Dotted, ExcelBorderStyle.Dotted)]
+        [TestCase(XlsxBorder.Style.Thick, ExcelBorderStyle.Thick)]
+        [TestCase(XlsxBorder.Style.Double, ExcelBorderStyle.Double)]
+        [TestCase(XlsxBorder.Style.Hair, ExcelBorderStyle.Hair)]
+        [TestCase(XlsxBorder.Style.MediumDashed, ExcelBorderStyle.MediumDashed)]
+        [TestCase(XlsxBorder.Style.DashDot, ExcelBorderStyle.DashDot)]
+        [TestCase(XlsxBorder.Style.MediumDashDot, ExcelBorderStyle.MediumDashDot)]
+        [TestCase(XlsxBorder.Style.DashDotDot, ExcelBorderStyle.DashDotDot)]
+        [TestCase(XlsxBorder.Style.MediumDashDotDot, ExcelBorderStyle.MediumDashDotDot)]
+        public static void HorizontalAlignment(XlsxBorder.Style borderStyle, ExcelBorderStyle expected)
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
+                        .Write("Test",
+                            XlsxStyle.Default.With(
+                                new XlsxBorder(top: new XlsxBorder.Line(Color.DeepPink, borderStyle))));
+                using (var package = new ExcelPackage(stream))
+                {
+                    var border = package.Workbook.Worksheets[0].Cells["A1"].Style.Border;
+                    border.Top.Color.Rgb.ShouldBe("FFFF1493");
+                    border.Top.Style.ShouldBe(expected);
+                }
+            }
+        }
 
 
-    [Test]
-    public static void Defaults()
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().Write("Test");
-        using var package = new ExcelPackage(stream);
-        var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
-        style.Border.Top.Color.Rgb.ShouldBeNull();
-        style.Border.Top.Style.ShouldBe(ExcelBorderStyle.None);
-        style.Border.Right.Color.Rgb.ShouldBeNull();
-        style.Border.Right.Style.ShouldBe(ExcelBorderStyle.None);
-        style.Border.Bottom.Color.Rgb.ShouldBeNull();
-        style.Border.Bottom.Style.ShouldBe(ExcelBorderStyle.None);
-        style.Border.Left.Color.Rgb.ShouldBeNull();
-        style.Border.Left.Style.ShouldBe(ExcelBorderStyle.None);
-        style.Border.Diagonal.Color.Rgb.ShouldBeNull();
-        style.Border.Diagonal.Style.ShouldBe(ExcelBorderStyle.None);
-        style.Border.DiagonalDown.ShouldBeFalse();
-        style.Border.DiagonalUp.ShouldBeFalse();
+        [Test]
+        public static void Defaults()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().Write("Test");
+                using (var package = new ExcelPackage(stream))
+                {
+                    var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
+                    style.Border.Top.Color.Rgb.ShouldBeNull();
+                    style.Border.Top.Style.ShouldBe(ExcelBorderStyle.None);
+                    style.Border.Right.Color.Rgb.ShouldBeNull();
+                    style.Border.Right.Style.ShouldBe(ExcelBorderStyle.None);
+                    style.Border.Bottom.Color.Rgb.ShouldBeNull();
+                    style.Border.Bottom.Style.ShouldBe(ExcelBorderStyle.None);
+                    style.Border.Left.Color.Rgb.ShouldBeNull();
+                    style.Border.Left.Style.ShouldBe(ExcelBorderStyle.None);
+                    style.Border.Diagonal.Color.Rgb.ShouldBeNull();
+                    style.Border.Diagonal.Style.ShouldBe(ExcelBorderStyle.None);
+                    style.Border.DiagonalDown.ShouldBeFalse();
+                    style.Border.DiagonalUp.ShouldBeFalse();
+                }
+            }
+        }
     }
 }

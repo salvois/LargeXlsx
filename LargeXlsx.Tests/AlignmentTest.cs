@@ -30,117 +30,143 @@ using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using Shouldly;
 
-namespace LargeXlsx.Tests;
-
-[TestFixture]
-public static class AlignmentTest
+namespace LargeXlsx.Tests
 {
-    [TestCase(XlsxAlignment.Horizontal.General, ExcelHorizontalAlignment.General)]
-    [TestCase(XlsxAlignment.Horizontal.Left, ExcelHorizontalAlignment.Left)]
-    [TestCase(XlsxAlignment.Horizontal.Center, ExcelHorizontalAlignment.Center)]
-    [TestCase(XlsxAlignment.Horizontal.Right, ExcelHorizontalAlignment.Right)]
-    [TestCase(XlsxAlignment.Horizontal.Fill, ExcelHorizontalAlignment.Fill)]
-    [TestCase(XlsxAlignment.Horizontal.Justify, ExcelHorizontalAlignment.Justify)]
-    [TestCase(XlsxAlignment.Horizontal.CenterContinuous, ExcelHorizontalAlignment.CenterContinuous)]
-    [TestCase(XlsxAlignment.Horizontal.Distributed, ExcelHorizontalAlignment.Distributed)]
-    public static void HorizontalAlignment(XlsxAlignment.Horizontal alignment, ExcelHorizontalAlignment expected)
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
-                .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(horizontal: alignment)));
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.HorizontalAlignment.ShouldBe(expected);
-    }
 
-    [TestCase(XlsxAlignment.Vertical.Top, ExcelVerticalAlignment.Top)]
-    [TestCase(XlsxAlignment.Vertical.Center, ExcelVerticalAlignment.Center)]
-    [TestCase(XlsxAlignment.Vertical.Bottom, ExcelVerticalAlignment.Bottom)]
-    [TestCase(XlsxAlignment.Vertical.Justify, ExcelVerticalAlignment.Justify)]
-    [TestCase(XlsxAlignment.Vertical.Distributed, ExcelVerticalAlignment.Distributed)]
-    public static void VerticalAlignment(XlsxAlignment.Vertical alignment, ExcelVerticalAlignment expected)
+    [TestFixture]
+    public static class AlignmentTest
     {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
-                .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(vertical: alignment)));
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.VerticalAlignment.ShouldBe(expected);
-    }
-
-    [Test]
-    public static void TextRotation()
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
-                .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(textRotation: 45)));
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.TextRotation.ShouldBe(45);
-    }
-
-    [Test]
-    public static void Indent()
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
-                .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(indent: 2)));
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.Indent.ShouldBe(2);
-    }
-
-    [Test]
-    public static void WrapText()
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
-                .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(wrapText: true)));
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.WrapText.ShouldBe(true);
-    }
-
-    [Test]
-    public static void ShrinkToFit()
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
-                .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(shrinkToFit: true)));
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.ShrinkToFit.ShouldBe(true);
-    }
-
-    [TestCase(XlsxAlignment.ReadingOrder.ContextDependent, ExcelReadingOrder.ContextDependent)]
-    [TestCase(XlsxAlignment.ReadingOrder.LeftToRight, ExcelReadingOrder.LeftToRight)]
-    [TestCase(XlsxAlignment.ReadingOrder.RightToLeft, ExcelReadingOrder.RightToLeft)]
-    public static void ReadingOrder(XlsxAlignment.ReadingOrder readingOrder, ExcelReadingOrder expected)
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
-                .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(readingOrder: readingOrder)));
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Cells["A1"].Style.ReadingOrder.ShouldBe(expected);
-    }
-
-    [Test]
-    public static void Defaults()
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().Write("Test");
-        using (var package = new ExcelPackage(stream))
+        [TestCase(XlsxAlignment.Horizontal.General, ExcelHorizontalAlignment.General)]
+        [TestCase(XlsxAlignment.Horizontal.Left, ExcelHorizontalAlignment.Left)]
+        [TestCase(XlsxAlignment.Horizontal.Center, ExcelHorizontalAlignment.Center)]
+        [TestCase(XlsxAlignment.Horizontal.Right, ExcelHorizontalAlignment.Right)]
+        [TestCase(XlsxAlignment.Horizontal.Fill, ExcelHorizontalAlignment.Fill)]
+        [TestCase(XlsxAlignment.Horizontal.Justify, ExcelHorizontalAlignment.Justify)]
+        [TestCase(XlsxAlignment.Horizontal.CenterContinuous, ExcelHorizontalAlignment.CenterContinuous)]
+        [TestCase(XlsxAlignment.Horizontal.Distributed, ExcelHorizontalAlignment.Distributed)]
+        public static void HorizontalAlignment(XlsxAlignment.Horizontal alignment, ExcelHorizontalAlignment expected)
         {
-            var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
-            style.HorizontalAlignment.ShouldBe(ExcelHorizontalAlignment.General);
-            style.VerticalAlignment.ShouldBe(ExcelVerticalAlignment.Bottom);
-            style.ShrinkToFit.ShouldBeFalse();
-            style.WrapText.ShouldBeFalse();
-            style.TextRotation.ShouldBe(0);
-            style.Indent.ShouldBe(0);
-            style.ReadingOrder.ShouldBe(ExcelReadingOrder.ContextDependent);
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
+                        .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(horizontal: alignment)));
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].Cells["A1"].Style.HorizontalAlignment.ShouldBe(expected);
+            }
+        }
+
+        [TestCase(XlsxAlignment.Vertical.Top, ExcelVerticalAlignment.Top)]
+        [TestCase(XlsxAlignment.Vertical.Center, ExcelVerticalAlignment.Center)]
+        [TestCase(XlsxAlignment.Vertical.Bottom, ExcelVerticalAlignment.Bottom)]
+        [TestCase(XlsxAlignment.Vertical.Justify, ExcelVerticalAlignment.Justify)]
+        [TestCase(XlsxAlignment.Vertical.Distributed, ExcelVerticalAlignment.Distributed)]
+        public static void VerticalAlignment(XlsxAlignment.Vertical alignment, ExcelVerticalAlignment expected)
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
+                        .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(vertical: alignment)));
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].Cells["A1"].Style.VerticalAlignment.ShouldBe(expected);
+            }
+        }
+
+        [Test]
+        public static void TextRotation()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
+                        .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(textRotation: 45)));
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].Cells["A1"].Style.TextRotation.ShouldBe(45);
+            }
+        }
+
+        [Test]
+        public static void Indent()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
+                        .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(indent: 2)));
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].Cells["A1"].Style.Indent.ShouldBe(2);
+            }
+        }
+
+        [Test]
+        public static void WrapText()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
+                        .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(wrapText: true)));
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].Cells["A1"].Style.WrapText.ShouldBe(true);
+            }
+        }
+
+        [Test]
+        public static void ShrinkToFit()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
+                        .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(shrinkToFit: true)));
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].Cells["A1"].Style.ShrinkToFit.ShouldBe(true);
+            }
+        }
+
+        [TestCase(XlsxAlignment.ReadingOrder.ContextDependent, ExcelReadingOrder.ContextDependent)]
+        [TestCase(XlsxAlignment.ReadingOrder.LeftToRight, ExcelReadingOrder.LeftToRight)]
+        [TestCase(XlsxAlignment.ReadingOrder.RightToLeft, ExcelReadingOrder.RightToLeft)]
+        public static void ReadingOrder(XlsxAlignment.ReadingOrder readingOrder, ExcelReadingOrder expected)
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
+                        .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(readingOrder: readingOrder)));
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].Cells["A1"].Style.ReadingOrder.ShouldBe(expected);
+            }
+        }
+
+        [Test]
+        public static void Defaults()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().Write("Test");
+                }
+
+                stream.Flush();
+                stream.Position = 0; // <-- Add this line
+
+                using (var package = new ExcelPackage(stream))
+                {
+                    var count = package.Workbook.Worksheets.Count;
+
+                    var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
+                    style.HorizontalAlignment.ShouldBe(ExcelHorizontalAlignment.General);
+                    style.VerticalAlignment.ShouldBe(ExcelVerticalAlignment.Bottom);
+                    style.ShrinkToFit.ShouldBeFalse();
+                    style.WrapText.ShouldBeFalse();
+                    style.TextRotation.ShouldBe(0);
+                    style.Indent.ShouldBe(0);
+                    style.ReadingOrder.ShouldBe(ExcelReadingOrder.ContextDependent);
+                }
+            }
         }
     }
 }

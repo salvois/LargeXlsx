@@ -34,77 +34,103 @@ using OfficeOpenXml.Style;
 using Shouldly;
 using Color = System.Drawing.Color;
 
-namespace LargeXlsx.Tests;
 
-[TestFixture]
-public static class ColumnFormattingTest
+namespace LargeXlsx.Tests
 {
-    [Test]
-    public static void Width()
+    [TestFixture]
+    public static class ColumnFormattingTest
     {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 20) });
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Column(1).Width.ShouldBe(20);
-    }
-
-    [Test]
-    public static void Style()
-    {
-        var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White), new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 20, style: blueStyle) });
-        using var package = new ExcelPackage(stream);
-        var style = package.Workbook.Worksheets[0].Column(1).Style;
-        style.Fill.PatternType.ShouldBe(ExcelFillStyle.Solid);
-        style.Fill.BackgroundColor.Rgb.ShouldBe("FF004586");
-        style.Font.Color.Rgb.ShouldBe("FFFFFFFF");
-    }
-
-    [Test]
-    public static void Hidden()
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 0, hidden: true) });
-        using (var package = new ExcelPackage(stream))
-            package.Workbook.Worksheets[0].Column(1).Hidden.ShouldBeTrue();
-    }
-
-    [Test]
-    public static void SkipUnformatted()
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1", columns: new[]
+        [Test]
+        public static void Width()
+        {
+            using (var stream = new MemoryStream())
             {
-                XlsxColumn.Formatted(count: 2, width: 0, hidden: true),
-                XlsxColumn.Unformatted(count: 3),
-                XlsxColumn.Formatted(count: 1, width: 0, hidden: true)
-            });
-        using var package = new ExcelPackage(stream);
-        var worksheet = package.Workbook.Worksheets[0];
-        worksheet.Column(1).Hidden.ShouldBeTrue();
-        worksheet.Column(2).Hidden.ShouldBeTrue();
-        worksheet.Column(3).Hidden.ShouldBeFalse();
-        worksheet.Column(4).Hidden.ShouldBeFalse();
-        worksheet.Column(5).Hidden.ShouldBeFalse();
-        worksheet.Column(6).Hidden.ShouldBeTrue();
-        worksheet.Column(7).Hidden.ShouldBeFalse();
-    }
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] {XlsxColumn.Formatted(width: 20)});
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].Column(1).Width.ShouldBe(20);
+            }
+        }
 
-    [Test]
-    public static void OnlyUnformatted()
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
-            xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Unformatted() });
+        [Test]
+        public static void Style()
+        {
+            var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White),
+                new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General,
+                XlsxAlignment.Default);
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1",
+                        columns: new[] {XlsxColumn.Formatted(width: 20, style: blueStyle)});
+                using (var package = new ExcelPackage(stream))
+                {
+                    var style = package.Workbook.Worksheets[0].Column(1).Style;
+                    style.Fill.PatternType.ShouldBe(ExcelFillStyle.Solid);
+                    style.Fill.BackgroundColor.Rgb.ShouldBe("FF004586");
+                    style.Font.Color.Rgb.ShouldBe("FFFFFFFF");
+                }
+            }
+        }
 
-        using var spreadsheetDocument = SpreadsheetDocument.Open(stream, false);
-        var sheetId = spreadsheetDocument.WorkbookPart!.Workbook.Sheets!.Elements<Sheet>().Single(s => s.Name == "Sheet 1").Id!.ToString()!;
-        var worksheetPart = (WorksheetPart)spreadsheetDocument.WorkbookPart!.GetPartById(sheetId);
-        worksheetPart.Worksheet.Descendants<Columns>().ShouldBeEmpty();
+        [Test]
+        public static void Hidden()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] {XlsxColumn.Formatted(width: 0, hidden: true)});
+                using (var package = new ExcelPackage(stream))
+                    package.Workbook.Worksheets[0].Column(1).Hidden.ShouldBeTrue();
+            }
+        }
+
+        [Test]
+        public static void SkipUnformatted()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1", columns: new[]
+                    {
+                        XlsxColumn.Formatted(count: 2, width: 0, hidden: true),
+                        XlsxColumn.Unformatted(count: 3),
+                        XlsxColumn.Formatted(count: 1, width: 0, hidden: true)
+                    });
+                using (var package = new ExcelPackage(stream))
+                {
+                    var worksheet = package.Workbook.Worksheets[0];
+                    worksheet.Column(1).Hidden.ShouldBeTrue();
+                    worksheet.Column(2).Hidden.ShouldBeTrue();
+                    worksheet.Column(3).Hidden.ShouldBeFalse();
+                    worksheet.Column(4).Hidden.ShouldBeFalse();
+                    worksheet.Column(5).Hidden.ShouldBeFalse();
+                    worksheet.Column(6).Hidden.ShouldBeTrue();
+                    worksheet.Column(7).Hidden.ShouldBeFalse();
+                }
+            }
+        }
+
+        [Test]
+        public static void OnlyUnformatted()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] {XlsxColumn.Unformatted()});
+
+                using (var spreadsheetDocument = SpreadsheetDocument.Open(stream, false))
+                {
+                    var sheetId = spreadsheetDocument.WorkbookPart?.Workbook.Sheets?.Elements<Sheet>()
+                        .Single(s => s.Name == "Sheet 1").Id?.ToString();
+                    sheetId.ShouldNotBeNull();
+
+                    var worksheetPart = spreadsheetDocument.WorkbookPart?.GetPartById(sheetId) as WorksheetPart;
+                    worksheetPart.ShouldNotBeNull();
+
+                    worksheetPart.Worksheet.Descendants<Columns>().ShouldBeEmpty();
+                }
+            }
+        }
     }
 }
