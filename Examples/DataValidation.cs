@@ -29,36 +29,51 @@ using System.Drawing;
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class DataValidation
+namespace Examples
 {
-    public static void Run()
+    public static class DataValidation
     {
-        using var stream = new FileStream($"{nameof(DataValidation)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        xlsxWriter.BeginWorksheet("Sheet 1")
-            .BeginRow()
-            .AddDataValidation(new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.List, formula1: "\"Lorem,Ipsum,Dolor\""))
-            .Write(XlsxStyle.Default.With(new XlsxFill(Color.OldLace)))
-            .SkipColumns(1)
-            .AddDataValidation(1, 2, new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.List, formula1: "\"Lorem,Ipsum,Dolor\""))
-            .Write(XlsxStyle.Default.With(new XlsxFill(Color.OldLace)), repeatCount: 2)
-            .BeginRow()
-            .AddDataValidation(XlsxDataValidation.List(new[] { "Lorem", "Ipsum", "Dolor" }))
-            .Write(XlsxStyle.Default.With(new XlsxFill(Color.OldLace)))
-            .BeginRow()
-            .AddDataValidation(XlsxDataValidation.List(new[] { "1", "3.141592", "Sit" },
-                showErrorMessage: true, showInputMessage: true, errorStyle: XlsxDataValidation.ErrorStyle.Warning))
-            .Write(XlsxStyle.Default.With(new XlsxFill(Color.AliceBlue)))
-            .BeginRow()
-            .AddDataValidation(XlsxDataValidation.List(new[] { "1", "\"2\"", "\"3.141592\"", "\"3,141592\"", "3,,141592", "\"Sit, Amet\"" },
-                showErrorMessage: true, showInputMessage: true, errorTitle: "Error title", error: "A very informative error message",
-                promptTitle: "Prompt title", prompt: "A very enlightening prompt"))
-            .Write(XlsxStyle.Default.With(new XlsxFill(Color.BlueViolet)))
-            .BeginRow()
-            .AddDataValidation(new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.List, formula1: "=Choices!A1:A3"))
-            .Write(XlsxStyle.Default.With(new XlsxFill(Color.PaleGreen)))
-            .BeginWorksheet("Choices").BeginRow().Write(3.141592).BeginRow().Write("Lorem").BeginRow().Write("Ipsum, Dolor");
+        public static void Run()
+        {
+            using (var stream = new FileStream($"{nameof(DataValidation)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    xlsxWriter.BeginWorksheet("Sheet 1")
+                        .BeginRow()
+                        .AddDataValidation(new XlsxDataValidation(
+                            validationType: XlsxDataValidation.ValidationType.List,
+                            formula1: "\"Lorem,Ipsum,Dolor\""))
+                        .Write(XlsxStyle.Default.With(new XlsxFill(Color.OldLace)))
+                        .SkipColumns(1)
+                        .AddDataValidation(1, 2,
+                            new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.List,
+                                formula1: "\"Lorem,Ipsum,Dolor\""))
+                        .Write(XlsxStyle.Default.With(new XlsxFill(Color.OldLace)), repeatCount: 2)
+                        .BeginRow()
+                        .AddDataValidation(XlsxDataValidation.List(new[] {"Lorem", "Ipsum", "Dolor"}))
+                        .Write(XlsxStyle.Default.With(new XlsxFill(Color.OldLace)))
+                        .BeginRow()
+                        .AddDataValidation(XlsxDataValidation.List(new[] {"1", "3.141592", "Sit"},
+                            showErrorMessage: true, showInputMessage: true,
+                            errorStyle: XlsxDataValidation.ErrorStyle.Warning))
+                        .Write(XlsxStyle.Default.With(new XlsxFill(Color.AliceBlue)))
+                        .BeginRow()
+                        .AddDataValidation(XlsxDataValidation.List(
+                            new[] {"1", "\"2\"", "\"3.141592\"", "\"3,141592\"", "3,,141592", "\"Sit, Amet\""},
+                            showErrorMessage: true, showInputMessage: true, errorTitle: "Error title",
+                            error: "A very informative error message",
+                            promptTitle: "Prompt title", prompt: "A very enlightening prompt"))
+                        .Write(XlsxStyle.Default.With(new XlsxFill(Color.BlueViolet)))
+                        .BeginRow()
+                        .AddDataValidation(new XlsxDataValidation(
+                            validationType: XlsxDataValidation.ValidationType.List,
+                            formula1: "=Choices!A1:A3"))
+                        .Write(XlsxStyle.Default.With(new XlsxFill(Color.PaleGreen)))
+                        .BeginWorksheet("Choices").BeginRow().Write(3.141592).BeginRow().Write("Lorem").BeginRow()
+                        .Write("Ipsum, Dolor");
+                }
+            }
+        }
     }
 }

@@ -30,33 +30,38 @@ using System.IO;
 using LargeXlsx;
 using SharpCompress.Compressors.Deflate;
 
-namespace Examples;
-
-public static class Zip64Huge
+namespace Examples
 {
-    private const int RowCount = 1000000;
-    private const int ColumnCount = 200;
-
-    public static void Run()
+    public static class Zip64Huge
     {
-        var stopwatch = Stopwatch.StartNew();
-        using (var stream = new FileStream($"{nameof(Zip64Huge)}.xlsx", FileMode.Create, FileAccess.Write))
-        using (var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.BestSpeed, useZip64: true))
+        private const int RowCount = 1000000;
+        private const int ColumnCount = 200;
+
+        public static void Run()
         {
-            xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
-            xlsxWriter.BeginRow();
-            for (var j = 0; j < ColumnCount; j++)
-                xlsxWriter.Write($"Column {j}");
-            for (var i = 0; i < RowCount; i++)
+            var stopwatch = Stopwatch.StartNew();
+            using (var stream = new FileStream($"{nameof(Zip64Huge)}.xlsx", FileMode.Create, FileAccess.Write))
+            using (var xlsxWriter =
+                   new XlsxWriter(stream, compressionLevel: CompressionLevel.BestSpeed, useZip64: true))
             {
-                xlsxWriter.BeginRow().Write($"Row {i}");
-                for (var j = 1; j < ColumnCount; j++)
-                    xlsxWriter.Write(i * 100 + j);
-                if (i % 50000 == 0)
-                    Console.WriteLine($"{nameof(Zip64Huge)} wrote {i} rows in {stopwatch.ElapsedMilliseconds} ms...");
+                xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
+                xlsxWriter.BeginRow();
+                for (var j = 0; j < ColumnCount; j++)
+                    xlsxWriter.Write($"Column {j}");
+                for (var i = 0; i < RowCount; i++)
+                {
+                    xlsxWriter.BeginRow().Write($"Row {i}");
+                    for (var j = 1; j < ColumnCount; j++)
+                        xlsxWriter.Write(i * 100 + j);
+                    if (i % 50000 == 0)
+                        Console.WriteLine(
+                            $"{nameof(Zip64Huge)} wrote {i} rows in {stopwatch.ElapsedMilliseconds} ms...");
+                }
             }
+
+            stopwatch.Stop();
+            Console.WriteLine(
+                $"{nameof(Zip64Huge)} completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
         }
-        stopwatch.Stop();
-        Console.WriteLine($"{nameof(Zip64Huge)} completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
     }
 }

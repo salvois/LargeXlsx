@@ -29,24 +29,29 @@ using System.Diagnostics;
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class InvalidXmlChars
+namespace Examples
 {
-    public static void Run()
+    public static class InvalidXmlChars
     {
-        var stopwatch = Stopwatch.StartNew();
-        DoRun();
-        stopwatch.Stop();
-        Console.WriteLine($"{nameof(InvalidXmlChars)} completed in {stopwatch.ElapsedMilliseconds} ms.");
-    }
+        public static void Run()
+        {
+            var stopwatch = Stopwatch.StartNew();
+            DoRun();
+            stopwatch.Stop();
+            Console.WriteLine($"{nameof(InvalidXmlChars)} completed in {stopwatch.ElapsedMilliseconds} ms.");
+        }
 
-    private static void DoRun()
-    {
-        using var stream = new FileStream($"{nameof(InvalidXmlChars)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, skipInvalidCharacters: true);
-        xlsxWriter.BeginWorksheet("Sheet1")
-            .BeginRow().Write("Inline str\u0002ing")
-            .BeginRow().WriteSharedString("Shared str\u0002ing");
+        private static void DoRun()
+        {
+            using (var stream = new FileStream($"{nameof(InvalidXmlChars)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream, skipInvalidCharacters: true))
+                {
+                    xlsxWriter.BeginWorksheet("Sheet1")
+                        .BeginRow().Write("Inline str\u0002ing")
+                        .BeginRow().WriteSharedString("Shared str\u0002ing");
+                }
+            }
+        }
     }
 }

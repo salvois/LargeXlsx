@@ -27,26 +27,31 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class FrozenPanes
+namespace Examples
 {
-    public static void Run()
+    public static class FrozenPanes
     {
-        using var stream = new FileStream($"{nameof(FrozenPanes)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        xlsxWriter
-            .BeginWorksheet("SplitRow", splitRow: 1)
-            .BeginRow().Write("A1").Write("B1").Write("C1")
-            .BeginRow().Write("A2").Write("B2").Write("C2")
-            .BeginRow().Write("A3").Write("B3").Write("C3")
-            .BeginWorksheet("SplitColumn", splitColumn: 1)
-            .BeginRow().Write("A1").Write("B1").Write("C1")
-            .BeginRow().Write("A2").Write("B2").Write("C2")
-            .BeginRow().Write("A3").Write("B3").Write("C3")
-            .BeginWorksheet("SplitBoth", splitRow: 10, splitColumn: 20)
-            .BeginRow().Write("A1").Write("B1").Write("C1")
-            .BeginRow().Write("A2").Write("B2").Write("C2")
-            .BeginRow().Write("A3").Write("B3").Write("C3");
+        public static void Run()
+        {
+            using (var stream = new FileStream($"{nameof(FrozenPanes)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    xlsxWriter
+                        .BeginWorksheet("SplitRow", splitRow: 1)
+                        .BeginRow().Write("A1").Write("B1").Write("C1")
+                        .BeginRow().Write("A2").Write("B2").Write("C2")
+                        .BeginRow().Write("A3").Write("B3").Write("C3")
+                        .BeginWorksheet("SplitColumn", splitColumn: 1)
+                        .BeginRow().Write("A1").Write("B1").Write("C1")
+                        .BeginRow().Write("A2").Write("B2").Write("C2")
+                        .BeginRow().Write("A3").Write("B3").Write("C3")
+                        .BeginWorksheet("SplitBoth", splitRow: 10, splitColumn: 20)
+                        .BeginRow().Write("A1").Write("B1").Write("C1")
+                        .BeginRow().Write("A2").Write("B2").Write("C2")
+                        .BeginRow().Write("A3").Write("B3").Write("C3");
+                }
+            }
+        }
     }
 }

@@ -28,14 +28,21 @@ using System.IO;
 using LargeXlsx;
 using SharpCompress.Compressors.Deflate;
 
-namespace Examples;
-
-public static class Zip64Small
+namespace Examples
 {
-    public static void Run()
+    public static class Zip64Small
     {
-        using var stream = new FileStream($"{nameof(Zip64Small)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, compressionLevel: CompressionLevel.BestSpeed, useZip64: true);
-        xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("A1").Write("B1").BeginRow().Write("A2").Write("B2");
+        public static void Run()
+        {
+            using (var stream = new FileStream($"{nameof(Zip64Small)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter =
+                       new XlsxWriter(stream, compressionLevel: CompressionLevel.BestSpeed, useZip64: true))
+                {
+                    xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("A1").Write("B1").BeginRow().Write("A2")
+                        .Write("B2");
+                }
+            }
+        }
     }
 }

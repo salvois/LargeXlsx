@@ -31,52 +31,62 @@ using System.IO;
 using System.Linq;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class StyledLargeCreateStyles
+namespace Examples
 {
-    private const int RowCount = 50000;
-    private const int ColumnCount = 180;
-    private const int ColorCount = 100;
-
-    public static void Run()
+    public static class StyledLargeCreateStyles
     {
-        var stopwatch = Stopwatch.StartNew();
-        DoRun(requireCellReferences: true);
-        stopwatch.Stop();
-        Console.WriteLine($"{nameof(StyledLargeCreateStyles)} requiring references completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+        private const int RowCount = 50000;
+        private const int ColumnCount = 180;
+        private const int ColorCount = 100;
 
-        stopwatch.Restart();
-        DoRun(requireCellReferences: false);
-        stopwatch.Stop();
-        Console.WriteLine($"{nameof(StyledLargeCreateStyles)} omitting references completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
-    }
-
-    private static void DoRun(bool requireCellReferences)
-    {
-        var rnd = new Random();
-        using var stream = new FileStream($"{nameof(StyledLargeCreateStyles)}_{requireCellReferences}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, requireCellReferences: requireCellReferences);
-        var colors = Enumerable.Repeat(0, 100).Select(_ => Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256))).ToList();
-        var headerStyle = new XlsxStyle(
-            new XlsxFont("Calibri", 10.5, Color.White, bold: true),
-            new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
-            XlsxBorder.None,
-            XlsxNumberFormat.General,
-            XlsxAlignment.Default);
-
-        xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
-        xlsxWriter.BeginRow();
-        for (var j = 0; j < ColumnCount; j++)
-            xlsxWriter.Write($"Column {j}", headerStyle);
-        var colorIndex = 0;
-        for (var i = 0; i < RowCount; i++)
+        public static void Run()
         {
-            xlsxWriter.BeginRow().Write($"Row {i}");
-            for (var j = 1; j < 180; j++)
+            var stopwatch = Stopwatch.StartNew();
+            DoRun(requireCellReferences: true);
+            stopwatch.Stop();
+            Console.WriteLine(
+                $"{nameof(StyledLargeCreateStyles)} requiring references completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+
+            stopwatch.Restart();
+            DoRun(requireCellReferences: false);
+            stopwatch.Stop();
+            Console.WriteLine(
+                $"{nameof(StyledLargeCreateStyles)} omitting references completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+        }
+
+        private static void DoRun(bool requireCellReferences)
+        {
+            var rnd = new Random();
+            using (var stream = new FileStream($"{nameof(StyledLargeCreateStyles)}_{requireCellReferences}.xlsx",
+                       FileMode.Create, FileAccess.Write))
             {
-                xlsxWriter.Write(i * ColumnCount + j, XlsxStyle.Default.With(new XlsxFill(colors[colorIndex])));
-                colorIndex = (colorIndex + 1) % colors.Count;
+                using (var xlsxWriter = new XlsxWriter(stream, requireCellReferences: requireCellReferences))
+                {
+                    var colors = Enumerable.Repeat(0, 100)
+                        .Select(_ => Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256))).ToList();
+                    var headerStyle = new XlsxStyle(
+                        new XlsxFont("Calibri", 10.5, Color.White, bold: true),
+                        new XlsxFill(Color.FromArgb(0, 0x45, 0x86)),
+                        XlsxBorder.None,
+                        XlsxNumberFormat.General,
+                        XlsxAlignment.Default);
+
+                    xlsxWriter.BeginWorksheet("Sheet1", 1, 1);
+                    xlsxWriter.BeginRow();
+                    for (var j = 0; j < ColumnCount; j++)
+                        xlsxWriter.Write($"Column {j}", headerStyle);
+                    var colorIndex = 0;
+                    for (var i = 0; i < RowCount; i++)
+                    {
+                        xlsxWriter.BeginRow().Write($"Row {i}");
+                        for (var j = 1; j < 180; j++)
+                        {
+                            xlsxWriter.Write(i * ColumnCount + j,
+                                XlsxStyle.Default.With(new XlsxFill(colors[colorIndex])));
+                            colorIndex = (colorIndex + 1) % colors.Count;
+                        }
+                    }
+                }
             }
         }
     }

@@ -29,39 +29,45 @@ using System.Diagnostics;
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class SharedStrings
+namespace Examples
 {
-    private const int RowCount = 1_000_000;
-
-    public static void Run()
+    public static class SharedStrings
     {
-        var stopwatch = Stopwatch.StartNew();
-        DoRun();
-        stopwatch.Stop();
-        Console.WriteLine($"{nameof(SharedStrings)} completed in {stopwatch.ElapsedMilliseconds} ms.");
-    }
+        private const int RowCount = 1_000_000;
 
-    private static void DoRun()
-    {
-        using var stream = new FileStream($"{nameof(SharedStrings)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("This string is not shared");
-        for (var i = 0; i < RowCount; i++)
+        public static void Run()
         {
-            xlsxWriter.BeginRow()
-                .WriteSharedString("Lorem ipsum dolor sit amet")
-                .WriteSharedString("consectetur adipiscing elit")
-                .WriteSharedString("sed do eiusmod tempor incididunt ut labore et dolore magna aliqua");
+            var stopwatch = Stopwatch.StartNew();
+            DoRun();
+            stopwatch.Stop();
+            Console.WriteLine($"{nameof(SharedStrings)} completed in {stopwatch.ElapsedMilliseconds} ms.");
         }
-        xlsxWriter.BeginWorksheet("Sheet2").BeginRow().Write("This string is not shared either");
-        for (var i = 0; i < RowCount; i++)
+
+        private static void DoRun()
         {
-            xlsxWriter.BeginRow()
-                .WriteSharedString("  Leading spaces")
-                .WriteSharedString("Trailing spaces   ")
-                .WriteSharedString("Spaces  in   between");
+            using (var stream = new FileStream($"{nameof(SharedStrings)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("This string is not shared");
+                    for (var i = 0; i < RowCount; i++)
+                    {
+                        xlsxWriter.BeginRow()
+                            .WriteSharedString("Lorem ipsum dolor sit amet")
+                            .WriteSharedString("consectetur adipiscing elit")
+                            .WriteSharedString("sed do eiusmod tempor incididunt ut labore et dolore magna aliqua");
+                    }
+
+                    xlsxWriter.BeginWorksheet("Sheet2").BeginRow().Write("This string is not shared either");
+                    for (var i = 0; i < RowCount; i++)
+                    {
+                        xlsxWriter.BeginRow()
+                            .WriteSharedString("  Leading spaces")
+                            .WriteSharedString("Trailing spaces   ")
+                            .WriteSharedString("Spaces  in   between");
+                    }
+                }
+            }
         }
     }
 }

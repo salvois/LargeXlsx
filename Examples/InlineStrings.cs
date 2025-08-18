@@ -3,31 +3,36 @@ using System.Diagnostics;
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class InlineStrings
+namespace Examples
 {
-    private const int RowCount = 1_000_000;
-
-    public static void Run()
+    public static class InlineStrings
     {
-        var stopwatch = Stopwatch.StartNew();
-        DoRun();
-        stopwatch.Stop();
-        Console.WriteLine($"{nameof(InlineStrings)} completed in {stopwatch.ElapsedMilliseconds} ms.");
-    }
+        private const int RowCount = 1_000_000;
 
-    private static void DoRun()
-    {
-        using var stream = new FileStream($"{nameof(InlineStrings)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        xlsxWriter.BeginWorksheet("Sheet1");
-        for (var i = 0; i < RowCount; i++)
+        public static void Run()
         {
-            xlsxWriter.BeginRow()
-                .Write("  Leading spaces")
-                .Write("Trailing spaces   ")
-                .Write("Spaces  in   between");
+            var stopwatch = Stopwatch.StartNew();
+            DoRun();
+            stopwatch.Stop();
+            Console.WriteLine($"{nameof(InlineStrings)} completed in {stopwatch.ElapsedMilliseconds} ms.");
+        }
+
+        private static void DoRun()
+        {
+            using (var stream = new FileStream($"{nameof(InlineStrings)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    xlsxWriter.BeginWorksheet("Sheet1");
+                    for (var i = 0; i < RowCount; i++)
+                    {
+                        xlsxWriter.BeginRow()
+                            .Write("  Leading spaces")
+                            .Write("Trailing spaces   ")
+                            .Write("Spaces  in   between");
+                    }
+                }
+            }
         }
     }
 }

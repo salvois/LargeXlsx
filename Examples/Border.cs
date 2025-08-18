@@ -28,24 +28,39 @@ using System.Drawing;
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class Border
+namespace Examples
 {
-    public static void Run()
+    public static class Border
     {
-        using var stream = new FileStream($"{nameof(Border)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        var leftBorderStyle = XlsxStyle.Default.With(new XlsxBorder(left: new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Thin)));
-        var allBorderStyle = XlsxStyle.Default.With(XlsxBorder.Around(new XlsxBorder.Line(Color.CornflowerBlue, XlsxBorder.Style.Dashed)));
-        var diagonalBorderStyle = XlsxStyle.Default.With(
-            new XlsxBorder(diagonal: new XlsxBorder.Line(Color.Red, XlsxBorder.Style.Dotted), diagonalDown: true, diagonalUp: true));
+        public static void Run()
+        {
+            using (var stream = new FileStream($"{nameof(Border)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    var leftBorderStyle =
+                        XlsxStyle.Default.With(
+                            new XlsxBorder(left: new XlsxBorder.Line(Color.DeepPink, XlsxBorder.Style.Thin)));
+                    var allBorderStyle =
+                        XlsxStyle.Default.With(
+                            XlsxBorder.Around(new XlsxBorder.Line(Color.CornflowerBlue, XlsxBorder.Style.Dashed)));
+                    var diagonalBorderStyle = XlsxStyle.Default.With(
+                        new XlsxBorder(diagonal: new XlsxBorder.Line(Color.Red, XlsxBorder.Style.Dotted),
+                            diagonalDown: true,
+                            diagonalUp: true));
 
-        xlsxWriter
-            .BeginWorksheet("Sheet1")
-            .SkipRows(1)
-            .BeginRow(height: 50).SkipColumns(1).Write("B1", leftBorderStyle).SkipColumns(1).Write("D1", allBorderStyle).Write("E1", diagonalBorderStyle)
-            .BeginRow().SkipColumns(1).Write("B2", leftBorderStyle).SkipColumns(1).Write("D2", allBorderStyle).Write("E2", diagonalBorderStyle)
-            .BeginRow().SkipColumns(1).Write(leftBorderStyle).SkipColumns(1).Write(allBorderStyle).Write(diagonalBorderStyle);
+                    xlsxWriter
+                        .BeginWorksheet("Sheet1")
+                        .SkipRows(1)
+                        .BeginRow(height: 50).SkipColumns(1).Write("B1", leftBorderStyle).SkipColumns(1)
+                        .Write("D1", allBorderStyle).Write("E1", diagonalBorderStyle)
+                        .BeginRow().SkipColumns(1).Write("B2", leftBorderStyle).SkipColumns(1)
+                        .Write("D2", allBorderStyle)
+                        .Write("E2", diagonalBorderStyle)
+                        .BeginRow().SkipColumns(1).Write(leftBorderStyle).SkipColumns(1).Write(allBorderStyle)
+                        .Write(diagonalBorderStyle);
+                }
+            }
+        }
     }
 }

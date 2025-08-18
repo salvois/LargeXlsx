@@ -27,17 +27,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class RightToLeft
+namespace Examples
 {
-    public static void Run()
+    public static class RightToLeft
     {
-        using var stream = new FileStream($"{nameof(RightToLeft)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        xlsxWriter
-            .BeginWorksheet("Sheet 1", rightToLeft: true)
-            .BeginRow().Write(@"ما هو ""لوريم إيبسوم"" ؟")
-            .BeginRow().Write(@"لوريم إيبسوم(Lorem Ipsum) هو ببساطة نص شكلي (بمعنى أن الغاية هي الشكل وليس المحتوى) ويُستخدم في صناعات المطابع ودور النشر.");
+        public static void Run()
+        {
+            using (var stream = new FileStream($"{nameof(RightToLeft)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter
+                        .BeginWorksheet("Sheet 1", rightToLeft: true)
+                        .BeginRow().Write(@"ما هو ""لوريم إيبسوم"" ؟")
+                        .BeginRow().Write(
+                            @"لوريم إيبسوم(Lorem Ipsum) هو ببساطة نص شكلي (بمعنى أن الغاية هي الشكل وليس المحتوى) ويُستخدم في صناعات المطابع ودور النشر.");
+            }
+        }
     }
 }

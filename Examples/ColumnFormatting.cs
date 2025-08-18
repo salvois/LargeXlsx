@@ -29,30 +29,37 @@ using System.Drawing;
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class ColumnFormatting
+namespace Examples
 {
-    public static void Run()
+    public static class ColumnFormatting
     {
-        var rnd = new Random();
-        using var stream = new FileStream($"{nameof(ColumnFormatting)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White), new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General, XlsxAlignment.Default);
-
-        xlsxWriter
-            .BeginWorksheet("Sheet 1", columns: new[]
-            {
-                XlsxColumn.Formatted(count: 2, width: 20),
-                XlsxColumn.Unformatted(3),
-                XlsxColumn.Formatted(style: blueStyle, width: 9),
-                XlsxColumn.Formatted(hidden: true, width: 0)
-            });
-        for (var i = 0; i < 10; i++)
+        public static void Run()
         {
-            xlsxWriter.BeginRow();
-            for (var j = 0; j < 10; j++)
-                xlsxWriter.Write(rnd.Next());
+            var rnd = new Random();
+            using (var stream = new FileStream($"{nameof(ColumnFormatting)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    var blueStyle = new XlsxStyle(XlsxFont.Default.With(Color.White),
+                        new XlsxFill(Color.FromArgb(0, 0x45, 0x86)), XlsxBorder.None, XlsxNumberFormat.General,
+                        XlsxAlignment.Default);
+
+                    xlsxWriter
+                        .BeginWorksheet("Sheet 1", columns: new[]
+                        {
+                            XlsxColumn.Formatted(count: 2, width: 20),
+                            XlsxColumn.Unformatted(3),
+                            XlsxColumn.Formatted(style: blueStyle, width: 9),
+                            XlsxColumn.Formatted(hidden: true, width: 0)
+                        });
+                    for (var i = 0; i < 10; i++)
+                    {
+                        xlsxWriter.BeginRow();
+                        for (var j = 0; j < 10; j++)
+                            xlsxWriter.Write(rnd.Next());
+                    }
+                }
+            }
         }
     }
 }

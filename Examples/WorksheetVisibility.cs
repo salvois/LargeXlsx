@@ -27,20 +27,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class WorksheetVisibility
+namespace Examples
 {
-    public static void Run()
+    public static class WorksheetVisibility
     {
-        using var stream = new FileStream($"{nameof(WorksheetVisibility)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        xlsxWriter
-            .BeginWorksheet("VisibleWorksheet")
-            .BeginRow().Write("A1").Write("B1")
-            .BeginWorksheet("HiddenWorksheet", state: XlsxWorksheetState.Hidden)
-            .BeginRow().Write("This sheet is hidden by default")
-            .BeginWorksheet("VeryHiddenWorksheet", state: XlsxWorksheetState.VeryHidden)
-            .BeginRow().Write("This sheet is veryHidden");
+        public static void Run()
+        {
+            using (var stream =
+                   new FileStream($"{nameof(WorksheetVisibility)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                    xlsxWriter
+                        .BeginWorksheet("VisibleWorksheet")
+                        .BeginRow().Write("A1").Write("B1")
+                        .BeginWorksheet("HiddenWorksheet", state: XlsxWorksheetState.Hidden)
+                        .BeginRow().Write("This sheet is hidden by default")
+                        .BeginWorksheet("VeryHiddenWorksheet", state: XlsxWorksheetState.VeryHidden)
+                        .BeginRow().Write("This sheet is veryHidden");
+            }
+        }
     }
 }

@@ -28,23 +28,29 @@ using System.Drawing;
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class HideGridlines
+namespace Examples
 {
-    public static void Run()
+    public static class HideGridlines
     {
-        var xlsxStyle = XlsxStyle.Default.With(XlsxBorder.Around(new XlsxBorder.Line(Color.Black, XlsxBorder.Style.Dotted)));
-        using var stream = new FileStream($"{nameof(HideGridlines)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        xlsxWriter
-            .BeginWorksheet("HiddenGridlines", showGridLines: false)
-            .BeginRow().Write("A1", xlsxStyle).Write("B1", xlsxStyle).Write("C1", xlsxStyle)
-            .BeginRow().Write("A2", xlsxStyle).Write("B2", xlsxStyle).Write("C2", xlsxStyle)
-            .BeginRow().Write("A3", xlsxStyle).Write("B3", xlsxStyle).Write("C3", xlsxStyle)
-            .BeginWorksheet("HiddenHeaders", showHeaders: false)
-            .BeginRow()
-            .BeginRow().Write("").Write("This sheet have row and columns headers hidden by default")
-            .BeginRow();
+        public static void Run()
+        {
+            var xlsxStyle =
+                XlsxStyle.Default.With(XlsxBorder.Around(new XlsxBorder.Line(Color.Black, XlsxBorder.Style.Dotted)));
+            using (var stream = new FileStream($"{nameof(HideGridlines)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    xlsxWriter
+                        .BeginWorksheet("HiddenGridlines", showGridLines: false)
+                        .BeginRow().Write("A1", xlsxStyle).Write("B1", xlsxStyle).Write("C1", xlsxStyle)
+                        .BeginRow().Write("A2", xlsxStyle).Write("B2", xlsxStyle).Write("C2", xlsxStyle)
+                        .BeginRow().Write("A3", xlsxStyle).Write("B3", xlsxStyle).Write("C3", xlsxStyle)
+                        .BeginWorksheet("HiddenHeaders", showHeaders: false)
+                        .BeginRow()
+                        .BeginRow().Write("").Write("This sheet have row and columns headers hidden by default")
+                        .BeginRow();
+                }
+            }
+        }
     }
 }

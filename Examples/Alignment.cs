@@ -27,27 +27,42 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System.IO;
 using LargeXlsx;
 
-namespace Examples;
-
-public static class Alignment
+namespace Examples
 {
-    public static void Run()
+    public static class Alignment
     {
-        using var stream = new FileStream($"{nameof(Alignment)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream);
-        xlsxWriter
-            .BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 40) })
-            .BeginRow().Write("Left", XlsxStyle.Default.With(new XlsxAlignment(horizontal: XlsxAlignment.Horizontal.Left)))
-            .BeginRow().Write("Center", XlsxStyle.Default.With(new XlsxAlignment(horizontal: XlsxAlignment.Horizontal.Center)))
-            .BeginRow().Write("Right", XlsxStyle.Default.With(new XlsxAlignment(horizontal: XlsxAlignment.Horizontal.Right)))
-            .BeginRow(height: 30).Write("Top", XlsxStyle.Default.With(new XlsxAlignment(vertical: XlsxAlignment.Vertical.Top)))
-            .BeginRow(height: 30).Write("Middle", XlsxStyle.Default.With(new XlsxAlignment(vertical: XlsxAlignment.Vertical.Center)))
-            .BeginRow(height: 30).Write("Bottom", XlsxStyle.Default.With(new XlsxAlignment(vertical: XlsxAlignment.Vertical.Bottom)))
-            .BeginRow(height: 90).Write("Rotated by 45°", XlsxStyle.Default.With(new XlsxAlignment(textRotation: 45)))
-            .BeginRow(height: 120).Write("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt" +
-                                         " ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation" +
-                                         " ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                XlsxStyle.Default.With(new XlsxAlignment(horizontal: XlsxAlignment.Horizontal.Justify, vertical: XlsxAlignment.Vertical.Justify, wrapText: true)))
-            .BeginRow().Write("Lorem ipsum dolor sit amet, consectetur adipiscing elit", XlsxStyle.Default.With(new XlsxAlignment(shrinkToFit: true)));
+        public static void Run()
+        {
+            using (var stream = new FileStream($"{nameof(Alignment)}.xlsx", FileMode.Create, FileAccess.Write))
+            {
+                using (var xlsxWriter = new XlsxWriter(stream))
+                {
+                    xlsxWriter
+                        .BeginWorksheet("Sheet 1", columns: new[] {XlsxColumn.Formatted(width: 40)})
+                        .BeginRow().Write("Left",
+                            XlsxStyle.Default.With(new XlsxAlignment(horizontal: XlsxAlignment.Horizontal.Left)))
+                        .BeginRow().Write("Center",
+                            XlsxStyle.Default.With(new XlsxAlignment(horizontal: XlsxAlignment.Horizontal.Center)))
+                        .BeginRow().Write("Right",
+                            XlsxStyle.Default.With(new XlsxAlignment(horizontal: XlsxAlignment.Horizontal.Right)))
+                        .BeginRow(height: 30).Write("Top",
+                            XlsxStyle.Default.With(new XlsxAlignment(vertical: XlsxAlignment.Vertical.Top)))
+                        .BeginRow(height: 30).Write("Middle",
+                            XlsxStyle.Default.With(new XlsxAlignment(vertical: XlsxAlignment.Vertical.Center)))
+                        .BeginRow(height: 30).Write("Bottom",
+                            XlsxStyle.Default.With(new XlsxAlignment(vertical: XlsxAlignment.Vertical.Bottom)))
+                        .BeginRow(height: 90).Write("Rotated by 45°",
+                            XlsxStyle.Default.With(new XlsxAlignment(textRotation: 45)))
+                        .BeginRow(height: 120).Write(
+                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt" +
+                            " ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation" +
+                            " ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+                            XlsxStyle.Default.With(new XlsxAlignment(horizontal: XlsxAlignment.Horizontal.Justify,
+                                vertical: XlsxAlignment.Vertical.Justify, wrapText: true)))
+                        .BeginRow().Write("Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+                            XlsxStyle.Default.With(new XlsxAlignment(shrinkToFit: true)));
+                }
+            }
+        }
     }
 }

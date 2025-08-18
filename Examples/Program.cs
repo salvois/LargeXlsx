@@ -26,34 +26,43 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
 
-namespace Examples;
-
-public static class Program
+namespace Examples
 {
-    public static void Main(string[] _)
+    public static class Program
     {
-        Simple.Run();
-        MultipleSheet.Run();
-        FrozenPanes.Run();
-        HideGridlines.Run();
-        WorksheetVisibility.Run();
-        NumberFormats.Run();
-        ColumnFormatting.Run();
-        RowFormatting.Run();
-        Alignment.Run();
-        Border.Run();
-        DataValidation.Run();
-        RightToLeft.Run();
-        Zip64Small.Run();
-        SheetProtection.Run();
-        HeaderFooterPageBreaks.Run();
-        InvalidXmlChars.Run();
-        InlineStrings.Run();
-        SharedStrings.Run();
-        Large.Run();
-        StyledLarge.Run();
-        StyledLargeCreateStyles.Run();
-        Zip64Huge.Run();
-        Console.WriteLine($"Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)} TotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
+        public static void Main(string[] _)
+        {
+            Simple.Run();
+            MultipleSheet.Run();
+            FrozenPanes.Run();
+            HideGridlines.Run();
+            WorksheetVisibility.Run();
+            NumberFormats.Run();
+            ColumnFormatting.Run();
+            RowFormatting.Run();
+            Alignment.Run();
+            Border.Run();
+            DataValidation.Run();
+            RightToLeft.Run();
+            Zip64Small.Run();
+            SheetProtection.Run();
+            HeaderFooterPageBreaks.Run();
+            InvalidXmlChars.Run();
+            InlineStrings.Run();
+            SharedStrings.Run();
+            Large.Run();
+            StyledLarge.Run();
+            StyledLargeCreateStyles.Run();
+            Zip64Huge.Run();
+
+            // ... existing code ...
+
+#if NET6_0_OR_GREATER
+    Console.WriteLine($"Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)} TotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
+#else
+            Console.WriteLine(
+                $"Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)}");
+#endif
+        }
     }
 }
