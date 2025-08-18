@@ -54,7 +54,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationList;
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var dataValidation = package.Workbook.Worksheets[worksheetIndex].DataValidations[0] as ExcelDataValidationList;
                     dataValidation.ShouldNotBeNull();
                     dataValidation.ValidationType.ShouldBe(ExcelDataValidationType.List);
                     dataValidation.Address.Address.ShouldBe("A1 C1:D1");
@@ -73,7 +74,8 @@ namespace LargeXlsx.Tests
                         .AddDataValidation(XlsxDataValidation.List(new[] {"Lorem", "Ipsum", "Dolor"})).Write();
                 using (var package = new ExcelPackage(stream))
                 {
-                    var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationList;
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var dataValidation = package.Workbook.Worksheets[worksheetIndex].DataValidations[0] as ExcelDataValidationList;
                     dataValidation.ShouldNotBeNull();
                     dataValidation.ValidationType.ShouldBe(ExcelDataValidationType.List);
                     dataValidation.Address.Address.ShouldBe("A1");
@@ -100,7 +102,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationList;
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var dataValidation = package.Workbook.Worksheets[worksheetIndex].DataValidations[0] as ExcelDataValidationList;
                     dataValidation.ShouldNotBeNull();
                     dataValidation.ValidationType.ShouldBe(ExcelDataValidationType.List);
                     dataValidation.Address.Address.ShouldBe("A1");
@@ -120,8 +123,9 @@ namespace LargeXlsx.Tests
                             formula2: "10"));
                 using (var package = new ExcelPackage(stream))
                 {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
                     var dataValidation =
-                        package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationDecimal;
+                        package.Workbook.Worksheets[worksheetIndex].DataValidations[0] as ExcelDataValidationDecimal;
                     dataValidation.ShouldNotBeNull();
                     dataValidation.Formula.Value.ShouldBe(1.0);
                     dataValidation.Formula2.Value.ShouldBe(10.0);
@@ -145,7 +149,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    var dataValidation = (ExcelDataValidationList) package.Workbook.Worksheets[0].DataValidations[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var dataValidation = (ExcelDataValidationList) package.Workbook.Worksheets[worksheetIndex].DataValidations[0];
                     dataValidation.ShowErrorMessage.ShouldBe(true);
                     dataValidation.ErrorTitle.ShouldBe("Error title");
                     dataValidation.Error.ShouldBe("A very informative error message");
@@ -170,7 +175,8 @@ namespace LargeXlsx.Tests
                             errorStyle: errorStyle));
                 using (var package = new ExcelPackage(stream))
                 {
-                    var dataValidation = (ExcelDataValidationList) package.Workbook.Worksheets[0].DataValidations[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var dataValidation = (ExcelDataValidationList) package.Workbook.Worksheets[worksheetIndex].DataValidations[0];
                     dataValidation.ErrorStyle.ShouldBe(expected);
                 }
             }
@@ -193,7 +199,10 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                         .AddDataValidation(new XlsxDataValidation(validationType: validationType));
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].DataValidations[0].ValidationType.Type.ShouldBe(expected);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].DataValidations[0].ValidationType.Type.ShouldBe(expected);
+                }
             }
         }
 
@@ -214,8 +223,11 @@ namespace LargeXlsx.Tests
                         new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.Decimal,
                             operatorType: operatorType));
                 using (var package = new ExcelPackage(stream))
-                    ((ExcelDataValidationDecimal) package.Workbook.Worksheets[0].DataValidations[0]).Operator
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    ((ExcelDataValidationDecimal) package.Workbook.Worksheets[worksheetIndex].DataValidations[0]).Operator
                         .ShouldBe(expected);
+                }
             }
         }
     }

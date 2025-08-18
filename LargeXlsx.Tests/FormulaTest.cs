@@ -46,8 +46,10 @@ namespace LargeXlsx.Tests
                 using (var package = new ExcelPackage(stream))
                 {
                     // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
-                    package.Workbook.Worksheets[0].Cells["A1"].Formula.ShouldBe("41.5+1");
-                    package.Workbook.Worksheets[0].Cells["A1"].Value.ShouldBe("42.5");
+
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Formula.ShouldBe("41.5+1");
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Value.ShouldBe("42.5");
                 }
             }
         }
@@ -62,8 +64,10 @@ namespace LargeXlsx.Tests
                 using (var package = new ExcelPackage(stream))
                 {
                     // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
-                    package.Workbook.Worksheets[0].Cells["A1"].Formula.ShouldBe("41+1");
-                    package.Workbook.Worksheets[0].Cells["A1"].Value.ShouldBeNull();
+
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Formula.ShouldBe("41+1");
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Value.ShouldBeNull();
                 }
             }
         }

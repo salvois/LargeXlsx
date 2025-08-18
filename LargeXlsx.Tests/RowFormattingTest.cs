@@ -45,7 +45,10 @@ namespace LargeXlsx.Tests
                 using (var xlsxWriter = new XlsxWriter(stream))
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(height: 36.5).Write("Test");
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Row(1).Height.ShouldBe(36.5);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Row(1).Height.ShouldBe(36.5);
+                }
             }
         }
 
@@ -57,7 +60,10 @@ namespace LargeXlsx.Tests
                 using (var xlsxWriter = new XlsxWriter(stream))
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(hidden: true).Write("Test");
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Row(1).Hidden.ShouldBeTrue();
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Row(1).Hidden.ShouldBeTrue();
+                }
             }
         }
 
@@ -76,7 +82,8 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(style: blueStyle).Write("Test");
                 using (var package = new ExcelPackage(stream))
                 {
-                    var row = package.Workbook.Worksheets[0].Row(1);
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var row = package.Workbook.Worksheets[worksheetIndex].Row(1);
                     row.Style.Fill.PatternType.ShouldBe(ExcelFillStyle.Solid);
                     row.Style.Fill.BackgroundColor.Rgb.ShouldBe("FF004586");
                     row.Style.Font.Color.Rgb.ShouldBe("FFFFFFFF");

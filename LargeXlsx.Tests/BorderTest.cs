@@ -62,7 +62,8 @@ namespace LargeXlsx.Tests
                                 new XlsxBorder(top: new XlsxBorder.Line(Color.DeepPink, borderStyle))));
                 using (var package = new ExcelPackage(stream))
                 {
-                    var border = package.Workbook.Worksheets[0].Cells["A1"].Style.Border;
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var border = package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Style.Border;
                     border.Top.Color.Rgb.ShouldBe("FFFF1493");
                     border.Top.Style.ShouldBe(expected);
                 }
@@ -79,7 +80,8 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().Write("Test");
                 using (var package = new ExcelPackage(stream))
                 {
-                    var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var style = package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Style;
                     style.Border.Top.Color.Rgb.ShouldBeNull();
                     style.Border.Top.Style.ShouldBe(ExcelBorderStyle.None);
                     style.Border.Right.Color.Rgb.ShouldBeNull();

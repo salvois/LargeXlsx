@@ -135,7 +135,9 @@ namespace LargeXlsx.Tests
                 using (var package = new ExcelPackage(stream))
                 {
                     package.Workbook.Worksheets.Count.ShouldBe(1);
-                    var sheet = package.Workbook.Worksheets[0];
+
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.Cells["A1"].Value.ShouldBe("A string");
                     sheet.Cells["B1"].Value.ShouldBe(123.0);
                     sheet.Cells["C1"].Value.ShouldBe(456.0);
@@ -178,7 +180,8 @@ namespace LargeXlsx.Tests
                 using (var package = new ExcelPackage(stream))
                 {
                     package.Workbook.Worksheets.Count.ShouldBe(1);
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.Name.ShouldBe("Sheet&'<1>\"");
 
                     sheet.Cells["A1"].Value.ShouldBe("Col<1>");
@@ -255,7 +258,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
 
                     sheet.Cells["A1"].Style.Font.UnderLine.ShouldBe(false);
                     sheet.Cells["A1"].Style.Font.UnderLineType.ShouldBe(ExcelUnderLineType.None);
@@ -287,7 +291,8 @@ namespace LargeXlsx.Tests
                 {
                     package.Workbook.Worksheets.Count.ShouldBe(2);
 
-                    var sheet1 = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet1 = package.Workbook.Worksheets[worksheetIndex];
                     sheet1.Name.ShouldBe("Sheet1");
                     sheet1.Cells["A1"].Value.ShouldBe("Sheet1.A1");
                     sheet1.Cells["B1"].Value.ShouldBe("Sheet1.B1");
@@ -297,7 +302,7 @@ namespace LargeXlsx.Tests
                     sheet1.Cells["C2"].Value.ShouldBe("Sheet1.C2");
                     sheet1.Cells["A2:B2"].Merge.ShouldBeTrue();
 
-                    var sheet2 = package.Workbook.Worksheets[1];
+                    var sheet2 = package.Workbook.Worksheets[worksheetIndex + 1];
                     sheet2.Name.ShouldBe("Sheet2");
                     sheet2.Cells["A1"].Value.ShouldBe("Sheet2.A1");
                     sheet2.Cells["B1"].Value.ShouldBeNull();
@@ -326,10 +331,11 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    package.Workbook.Worksheets[0].View.ActiveCell.ShouldBe("C2");
-                    package.Workbook.Worksheets[1].View.ActiveCell.ShouldBe("B3");
-                    package.Workbook.Worksheets[2].View.ActiveCell.ShouldBe("A2");
-                    package.Workbook.Worksheets[3].View.ActiveCell.ShouldBe("B1");
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].View.ActiveCell.ShouldBe("C2");
+                    package.Workbook.Worksheets[worksheetIndex+1].View.ActiveCell.ShouldBe("B3");
+                    package.Workbook.Worksheets[worksheetIndex+2].View.ActiveCell.ShouldBe("A2");
+                    package.Workbook.Worksheets[worksheetIndex+3].View.ActiveCell.ShouldBe("B1");
                 }
             }
         }
@@ -350,7 +356,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    package.Workbook.Worksheets[0].AutoFilterAddress.Address.ShouldBe("A1:C4");
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].AutoFilterAddress.Address.ShouldBe("A1:C4");
                 }
             }
         }
@@ -390,7 +397,10 @@ namespace LargeXlsx.Tests
                             @"لوريم إيبسوم(Lorem Ipsum) هو ببساطة نص شكلي (بمعنى أن الغاية هي الشكل وليس المحتوى) ويُستخدم في صناعات المطابع ودور النشر.");
 
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].View.RightToLeft.ShouldBe(rightToLeft);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].View.RightToLeft.ShouldBe(rightToLeft);
+                }
             }
         }
 
@@ -405,7 +415,10 @@ namespace LargeXlsx.Tests
                         .BeginRow().Write("Gridlines are hidden in this sheet.");
 
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].View.ShowGridLines.ShouldBe(showGridLines);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].View.ShowGridLines.ShouldBe(showGridLines);
+                }
             }
         }
 
@@ -420,7 +433,10 @@ namespace LargeXlsx.Tests
                         .BeginRow().Write("Row and column headers are hidden in this sheet.");
 
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].View.ShowHeaders.ShouldBe(showHeaders);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].View.ShowHeaders.ShouldBe(showHeaders);
+                }
             }
         }
 
@@ -435,7 +451,10 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1", state: state).BeginRow().Write("A1");
 
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Hidden.ShouldBe(expected);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Hidden.ShouldBe(expected);
+                }
             }
         }
 
@@ -455,7 +474,8 @@ namespace LargeXlsx.Tests
                 using (var package = new ExcelPackage(stream))
                 {
                     package.Workbook.Worksheets.Count.ShouldBe(1);
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.Name.ShouldBe("Sheet1");
                     sheet.Cells["A1"].Value.ShouldBe("A1");
                     sheet.Cells["B1"].Value.ShouldBe("B1");
@@ -481,7 +501,8 @@ namespace LargeXlsx.Tests
                 using (var package = new ExcelPackage(stream))
                 {
                     package.Workbook.Worksheets.Count.ShouldBe(1);
-                    var protection = package.Workbook.Worksheets[0].Protection;
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var protection = package.Workbook.Worksheets[worksheetIndex].Protection;
                     protection.IsProtected.ShouldBeTrue();
                     protection.AllowAutoFilter.ShouldBeTrue();
                     protection.AllowDeleteColumns.ShouldBeFalse();
@@ -545,7 +566,8 @@ namespace LargeXlsx.Tests
                 using (var package = new ExcelPackage(stream))
                 {
                     package.Workbook.Worksheets.Count.ShouldBe(1);
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.Name.ShouldBe("Sheet1");
                     sheet.Cells["A1"].Value.ShouldBe("Lorem ipsum dolor sit amet");
                     sheet.Cells["A2"].Value.ShouldBe("Lorem ipsum dolor sit amet");
@@ -616,7 +638,8 @@ namespace LargeXlsx.Tests
                 using (var package = new ExcelPackage(stream))
                 {
                     package.Workbook.Worksheets.Count.ShouldBe(1);
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.Name.ShouldBe("Sheet1");
                     sheet.Cells["A1"].Value.ShouldBe("Inline string");
                     sheet.Cells["A2"].Value.ShouldBe("Shared string");
@@ -627,7 +650,7 @@ namespace LargeXlsx.Tests
                     sheet.HeaderFooter.EvenFooter.CenteredText.ShouldBe("Even footer");
                     sheet.HeaderFooter.FirstHeader.CenteredText.ShouldBe("First header");
                     sheet.HeaderFooter.FirstFooter.CenteredText.ShouldBe("First footer");
-                    var dataValidation = (ExcelDataValidationList) package.Workbook.Worksheets[0].DataValidations[0];
+                    var dataValidation = (ExcelDataValidationList) package.Workbook.Worksheets[worksheetIndex].DataValidations[0];
                     dataValidation.ErrorTitle.ShouldBe("Error title");
                     dataValidation.Error.ShouldBe("A very informative error message");
                     dataValidation.PromptTitle.ShouldBe("Prompt title");

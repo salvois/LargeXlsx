@@ -52,7 +52,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.Row(1).PageBreak.ShouldBeTrue();
                     sheet.Row(2).PageBreak.ShouldBeFalse();
                     sheet.Row(3).PageBreak.ShouldBeFalse();
@@ -78,7 +79,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.Row(1).PageBreak.ShouldBeFalse();
                     sheet.Row(2).PageBreak.ShouldBeTrue();
                     sheet.Row(3).PageBreak.ShouldBeFalse();

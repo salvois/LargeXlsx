@@ -52,7 +52,10 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                         .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(horizontal: alignment)));
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Cells["A1"].Style.HorizontalAlignment.ShouldBe(expected);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Style.HorizontalAlignment.ShouldBe(expected);
+                }
             }
         }
 
@@ -69,7 +72,10 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                         .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(vertical: alignment)));
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Cells["A1"].Style.VerticalAlignment.ShouldBe(expected);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Style.VerticalAlignment.ShouldBe(expected);
+                }
             }
         }
 
@@ -82,7 +88,10 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                         .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(textRotation: 45)));
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Cells["A1"].Style.TextRotation.ShouldBe(45);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Style.TextRotation.ShouldBe(45);
+                }
             }
         }
 
@@ -95,7 +104,10 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                         .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(indent: 2)));
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Cells["A1"].Style.Indent.ShouldBe(2);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Style.Indent.ShouldBe(2);
+                }
             }
         }
 
@@ -108,7 +120,10 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                         .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(wrapText: true)));
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Cells["A1"].Style.WrapText.ShouldBe(true);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Style.WrapText.ShouldBe(true);
+                }
             }
         }
 
@@ -121,7 +136,10 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                         .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(shrinkToFit: true)));
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Cells["A1"].Style.ShrinkToFit.ShouldBe(true);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Style.ShrinkToFit.ShouldBe(true);
+                }
             }
         }
 
@@ -136,7 +154,10 @@ namespace LargeXlsx.Tests
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                         .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(readingOrder: readingOrder)));
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Cells["A1"].Style.ReadingOrder.ShouldBe(expected);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Style.ReadingOrder.ShouldBe(expected);
+                }
             }
         }
 
@@ -146,18 +167,13 @@ namespace LargeXlsx.Tests
             using (var stream = new MemoryStream())
             {
                 using (var xlsxWriter = new XlsxWriter(stream))
-                {
                     xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().Write("Test");
-                }
-
-                stream.Flush();
-                stream.Position = 0; // <-- Add this line
-
+                
                 using (var package = new ExcelPackage(stream))
                 {
-                    var count = package.Workbook.Worksheets.Count;
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
 
-                    var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
+                    var style = package.Workbook.Worksheets[worksheetIndex].Cells["A1"].Style;
                     style.HorizontalAlignment.ShouldBe(ExcelHorizontalAlignment.General);
                     style.VerticalAlignment.ShouldBe(ExcelVerticalAlignment.Bottom);
                     style.ShrinkToFit.ShouldBeFalse();

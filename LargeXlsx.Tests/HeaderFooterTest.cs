@@ -26,7 +26,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.HeaderFooter.AlignWithMargins.ShouldBeTrue();
                     sheet.HeaderFooter.ScaleWithDocument.ShouldBeTrue();
                     sheet.HeaderFooter.differentFirst.ShouldBeFalse();
@@ -58,7 +59,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.HeaderFooter.AlignWithMargins.ShouldBe(alignWithMargins);
                     sheet.HeaderFooter.ScaleWithDocument.ShouldBe(scaleWithDoc);
                 }
@@ -82,7 +84,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.HeaderFooter.AlignWithMargins.ShouldBeTrue();
                     sheet.HeaderFooter.ScaleWithDocument.ShouldBeTrue();
                     sheet.HeaderFooter.differentFirst.ShouldBeTrue();
@@ -120,7 +123,8 @@ namespace LargeXlsx.Tests
 
                 using (var package = new ExcelPackage(stream))
                 {
-                    var sheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var sheet = package.Workbook.Worksheets[worksheetIndex];
                     sheet.HeaderFooter.AlignWithMargins.ShouldBeTrue();
                     sheet.HeaderFooter.ScaleWithDocument.ShouldBeTrue();
                     sheet.HeaderFooter.differentFirst.ShouldBeFalse();

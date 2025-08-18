@@ -48,7 +48,10 @@ namespace LargeXlsx.Tests
                 using (var xlsxWriter = new XlsxWriter(stream))
                     xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] {XlsxColumn.Formatted(width: 20)});
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Column(1).Width.ShouldBe(20);
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Column(1).Width.ShouldBe(20);
+                }
             }
         }
 
@@ -65,7 +68,8 @@ namespace LargeXlsx.Tests
                         columns: new[] {XlsxColumn.Formatted(width: 20, style: blueStyle)});
                 using (var package = new ExcelPackage(stream))
                 {
-                    var style = package.Workbook.Worksheets[0].Column(1).Style;
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var style = package.Workbook.Worksheets[worksheetIndex].Column(1).Style;
                     style.Fill.PatternType.ShouldBe(ExcelFillStyle.Solid);
                     style.Fill.BackgroundColor.Rgb.ShouldBe("FF004586");
                     style.Font.Color.Rgb.ShouldBe("FFFFFFFF");
@@ -81,7 +85,10 @@ namespace LargeXlsx.Tests
                 using (var xlsxWriter = new XlsxWriter(stream))
                     xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] {XlsxColumn.Formatted(width: 0, hidden: true)});
                 using (var package = new ExcelPackage(stream))
-                    package.Workbook.Worksheets[0].Column(1).Hidden.ShouldBeTrue();
+                {
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    package.Workbook.Worksheets[worksheetIndex].Column(1).Hidden.ShouldBeTrue();
+                }
             }
         }
 
@@ -99,7 +106,8 @@ namespace LargeXlsx.Tests
                     });
                 using (var package = new ExcelPackage(stream))
                 {
-                    var worksheet = package.Workbook.Worksheets[0];
+                    var worksheetIndex = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                    var worksheet = package.Workbook.Worksheets[worksheetIndex];
                     worksheet.Column(1).Hidden.ShouldBeTrue();
                     worksheet.Column(2).Hidden.ShouldBeTrue();
                     worksheet.Column(3).Hidden.ShouldBeFalse();
