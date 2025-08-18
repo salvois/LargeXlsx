@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Examples\Examples.csproj" />
+    <ProjectReference Include="..\LargeXlsx\LargeXlsx.csproj" />
   </ItemGroup>
 
 </Project>
