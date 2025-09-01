@@ -78,6 +78,8 @@ public static class StyledLargeCreateStyles
                 xlsxWriter.Write(i * ColumnCount + j, XlsxStyle.Default.With(new XlsxFill(colors[colorIndex])));
                 colorIndex = (colorIndex + 1) % colors.Count;
             }
+            if (i % 100 == 0)
+                xlsxWriter.Commit();
         }
     }
 }

@@ -28,6 +28,8 @@ public static class InlineStrings
                 .Write("  Leading spaces")
                 .Write("Trailing spaces   ")
                 .Write("Spaces  in   between");
+            if (i % 100 == 0)
+                xlsxWriter.Commit();
         }
     }
 }

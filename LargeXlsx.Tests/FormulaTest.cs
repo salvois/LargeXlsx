@@ -40,7 +40,7 @@ public static class FormulaTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().WriteFormula("41.5+1", result: 42.5);
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
         package.Workbook.Worksheets[0].Cells["A1"].Formula.ShouldBe("41.5+1");
         package.Workbook.Worksheets[0].Cells["A1"].Value.ShouldBe("42.5");
@@ -52,7 +52,7 @@ public static class FormulaTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().WriteFormula("41+1");
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         // We don't assert package.Workbook.FullCalcOnLoad because EPPlus always sets it to true
         package.Workbook.Worksheets[0].Cells["A1"].Formula.ShouldBe("41+1");
         package.Workbook.Worksheets[0].Cells["A1"].Value.ShouldBeNull();

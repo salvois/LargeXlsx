@@ -54,6 +54,8 @@ public static class SharedStrings
                 .WriteSharedString("Lorem ipsum dolor sit amet")
                 .WriteSharedString("consectetur adipiscing elit")
                 .WriteSharedString("sed do eiusmod tempor incididunt ut labore et dolore magna aliqua");
+            if (i % 100 == 0)
+                xlsxWriter.Commit();
         }
         xlsxWriter.BeginWorksheet("Sheet2").BeginRow().Write("This string is not shared either");
         for (var i = 0; i < RowCount; i++)
@@ -62,6 +64,8 @@ public static class SharedStrings
                 .WriteSharedString("  Leading spaces")
                 .WriteSharedString("Trailing spaces   ")
                 .WriteSharedString("Spaces  in   between");
+            if (i % 100 == 0)
+                xlsxWriter.Commit();
         }
     }
 }

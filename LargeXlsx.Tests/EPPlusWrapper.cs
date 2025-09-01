@@ -24,16 +24,17 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-using System;
-using System.Globalization;
+using OfficeOpenXml;
 using System.IO;
-using System.Text;
 
-namespace LargeXlsx
+namespace LargeXlsx.Tests;
+
+public static class EPPlusWrapper
 {
-    internal class InvariantCultureStreamWriter : StreamWriter
+    public static ExcelPackage Create(Stream stream)
     {
-        public InvariantCultureStreamWriter(Stream stream) : base(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)) { }
-        public override IFormatProvider FormatProvider => CultureInfo.InvariantCulture;
+        var package = new ExcelPackage(stream);
+        package.Compatibility.IsWorksheets1Based = false;
+        return package;
     }
 }

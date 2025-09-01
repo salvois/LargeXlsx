@@ -81,6 +81,8 @@ public static class StyledLarge
                 xlsxWriter.Write(i * ColumnCount + j, cellStyles[cellStyleIndex]);
                 cellStyleIndex = (cellStyleIndex + 1) % cellStyles.Count;
             }
+            if (i % 100 == 0)
+                xlsxWriter.Commit();
         }
     }
 }

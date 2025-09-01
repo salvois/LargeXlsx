@@ -25,7 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using NUnit.Framework;
-using OfficeOpenXml;
 using Shouldly;
 using System.IO;
 using System;
@@ -47,7 +46,7 @@ public static class PageBreaksTest
                 .BeginRow().Write("A3").Write("B3").Write("C3");
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var sheet = package.Workbook.Worksheets[0];
         sheet.Row(1).PageBreak.ShouldBeTrue();
         sheet.Row(2).PageBreak.ShouldBeFalse();
@@ -69,7 +68,7 @@ public static class PageBreaksTest
                 .AddColumnPageBreakBefore(2);
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var sheet = package.Workbook.Worksheets[0];
         sheet.Row(1).PageBreak.ShouldBeFalse();
         sheet.Row(2).PageBreak.ShouldBeTrue();

@@ -45,7 +45,7 @@ public static class ColumnFormattingTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 20) });
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Column(1).Width.ShouldBe(20);
     }
 
@@ -56,7 +56,7 @@ public static class ColumnFormattingTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 20, style: blueStyle) });
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var style = package.Workbook.Worksheets[0].Column(1).Style;
         style.Fill.PatternType.ShouldBe(ExcelFillStyle.Solid);
         style.Fill.BackgroundColor.Rgb.ShouldBe("FF004586");
@@ -69,7 +69,7 @@ public static class ColumnFormattingTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Formatted(width: 0, hidden: true) });
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Column(1).Hidden.ShouldBeTrue();
     }
 
@@ -84,7 +84,7 @@ public static class ColumnFormattingTest
                 XlsxColumn.Unformatted(count: 3),
                 XlsxColumn.Formatted(count: 1, width: 0, hidden: true)
             });
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var worksheet = package.Workbook.Worksheets[0];
         worksheet.Column(1).Hidden.ShouldBeTrue();
         worksheet.Column(2).Hidden.ShouldBeTrue();

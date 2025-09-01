@@ -46,7 +46,7 @@ public static class DataValidationTest
             xlsxWriter.SetDefaultStyle(XlsxStyle.Default.With(new XlsxFill(Color.OldLace))).BeginWorksheet("Sheet 1")
                 .BeginRow().AddDataValidation(dataValidation).Write().SkipColumns(1).AddDataValidation(1, 2, dataValidation).Write(repeatCount: 2);
         }
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
         {
             var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationList;
             dataValidation.ShouldNotBeNull();
@@ -62,7 +62,7 @@ public static class DataValidationTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().AddDataValidation(XlsxDataValidation.List(new[] { "Lorem", "Ipsum", "Dolor" })).Write();
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationList;
         dataValidation.ShouldNotBeNull();
         dataValidation.ValidationType.ShouldBe(ExcelDataValidationType.List);
@@ -81,7 +81,7 @@ public static class DataValidationTest
                 .BeginWorksheet("Sheet 1").BeginRow().AddDataValidation(dataValidation).Write(XlsxStyle.Default.With(new XlsxFill(Color.OldLace)))
                 .BeginWorksheet("Choices").BeginRow().Write(3.141592).BeginRow().Write("Lorem").BeginRow().Write("Ipsum, Dolor");
         }
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
         {
             var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationList;
             dataValidation.ShouldNotBeNull();
@@ -98,7 +98,7 @@ public static class DataValidationTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().AddDataValidation(
                 new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.Decimal, formula1: "1", formula2: "10"));
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var dataValidation = package.Workbook.Worksheets[0].DataValidations[0] as ExcelDataValidationDecimal;
         dataValidation.ShouldNotBeNull();
         dataValidation.Formula.Value.ShouldBe(1.0);
@@ -116,7 +116,7 @@ public static class DataValidationTest
                     showErrorMessage: true, errorTitle: "Error title", error: "A very informative error message",
                     showInputMessage: true, promptTitle: "Prompt title", prompt: "A very enlightening prompt"));
         }
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var dataValidation = (ExcelDataValidationList)package.Workbook.Worksheets[0].DataValidations[0];
         dataValidation.ShowErrorMessage.ShouldBe(true);
         dataValidation.ErrorTitle.ShouldBe("Error title");
@@ -134,7 +134,7 @@ public static class DataValidationTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().AddDataValidation(new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.List, errorStyle: errorStyle));
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var dataValidation = (ExcelDataValidationList)package.Workbook.Worksheets[0].DataValidations[0];
         dataValidation.ErrorStyle.ShouldBe(expected);
     }
@@ -152,7 +152,7 @@ public static class DataValidationTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().AddDataValidation(new XlsxDataValidation(validationType: validationType));
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].DataValidations[0].ValidationType.Type.ShouldBe(expected);
     }
 
@@ -169,7 +169,7 @@ public static class DataValidationTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().AddDataValidation(new XlsxDataValidation(validationType: XlsxDataValidation.ValidationType.Decimal, operatorType: operatorType));
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             ((ExcelDataValidationDecimal)package.Workbook.Worksheets[0].DataValidations[0]).Operator.ShouldBe(expected);
     }
 }

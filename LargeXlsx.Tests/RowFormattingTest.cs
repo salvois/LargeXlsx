@@ -42,7 +42,7 @@ public static class RowFormattingTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(height: 36.5).Write("Test");
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Row(1).Height.ShouldBe(36.5);
     }
 
@@ -52,7 +52,7 @@ public static class RowFormattingTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(hidden: true).Write("Test");
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Row(1).Hidden.ShouldBeTrue();
     }
 
@@ -68,7 +68,7 @@ public static class RowFormattingTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow(style: blueStyle).Write("Test");
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var row = package.Workbook.Worksheets[0].Row(1);
         row.Style.Fill.PatternType.ShouldBe(ExcelFillStyle.Solid);
         row.Style.Fill.BackgroundColor.Rgb.ShouldBe("FF004586");

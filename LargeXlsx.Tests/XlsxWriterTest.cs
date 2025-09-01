@@ -119,7 +119,7 @@ public static class XlsxWriterTest
                 .Write();
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets.Count.ShouldBe(1);
         var sheet = package.Workbook.Worksheets[0];
         sheet.Cells["A1"].Value.ShouldBe("A string");
@@ -157,7 +157,7 @@ public static class XlsxWriterTest
                 .BeginRow().Write("Row8").Write(false).Write(true);
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets.Count.ShouldBe(1);
         var sheet = package.Workbook.Worksheets[0];
         sheet.Name.ShouldBe("Sheet&'<1>\"");
@@ -230,7 +230,7 @@ public static class XlsxWriterTest
                 .BeginRow().Write("Row3", doubleUnderLineStyle);
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var sheet = package.Workbook.Worksheets[0];
 
         sheet.Cells["A1"].Style.Font.UnderLine.ShouldBe(false);
@@ -256,7 +256,7 @@ public static class XlsxWriterTest
                 .BeginRow().Write("Sheet2.A2").Write("Sheet2.B2").Write("Sheet2.C2");
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets.Count.ShouldBe(2);
 
         var sheet1 = package.Workbook.Worksheets[0];
@@ -293,7 +293,7 @@ public static class XlsxWriterTest
                 .BeginWorksheet("OnlyCols", splitColumn: 1);
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets[0].View.ActiveCell.ShouldBe("C2");
         package.Workbook.Worksheets[1].View.ActiveCell.ShouldBe("B3");
         package.Workbook.Worksheets[2].View.ActiveCell.ShouldBe("A2");
@@ -313,7 +313,7 @@ public static class XlsxWriterTest
                 .BeginRow().Write("A4").Write("B4").Write("C4")
                 .SetAutoFilter(1, 1, xlsxWriter.CurrentRowNumber, 3);
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets[0].AutoFilterAddress.Address.ShouldBe("A1:C4");
     }
 
@@ -344,7 +344,7 @@ public static class XlsxWriterTest
                 .BeginRow().Write(@"ما هو ""لوريم إيبسوم"" ؟")
                 .BeginRow().Write(@"لوريم إيبسوم(Lorem Ipsum) هو ببساطة نص شكلي (بمعنى أن الغاية هي الشكل وليس المحتوى) ويُستخدم في صناعات المطابع ودور النشر.");
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets[0].View.RightToLeft.ShouldBe(rightToLeft);
     }
 
@@ -357,7 +357,7 @@ public static class XlsxWriterTest
                 .BeginWorksheet("Sheet 1", showGridLines: showGridLines)
                 .BeginRow().Write("Gridlines are hidden in this sheet.");
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets[0].View.ShowGridLines.ShouldBe(showGridLines);
     }
 
@@ -370,7 +370,7 @@ public static class XlsxWriterTest
                 .BeginWorksheet("Sheet 1", showHeaders: showHeaders)
                 .BeginRow().Write("Row and column headers are hidden in this sheet.");
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets[0].View.ShowHeaders.ShouldBe(showHeaders);
     }
 
@@ -383,7 +383,7 @@ public static class XlsxWriterTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1", state: state).BeginRow().Write("A1");
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets[0].Hidden.ShouldBe(expected);
     }
 
@@ -399,7 +399,7 @@ public static class XlsxWriterTest
                 .BeginRow().Write("A2").Write("B2");
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets.Count.ShouldBe(1);
         var sheet = package.Workbook.Worksheets[0];
         sheet.Name.ShouldBe("Sheet1");
@@ -421,7 +421,7 @@ public static class XlsxWriterTest
                 .BeginRow().Write("A1");
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets.Count.ShouldBe(1);
         var protection = package.Workbook.Worksheets[0].Protection;
         protection.IsProtected.ShouldBeTrue();
@@ -474,7 +474,7 @@ public static class XlsxWriterTest
                 .BeginRow().WriteSharedString("Lorem ipsum dolor sit amet");
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets.Count.ShouldBe(1);
         var sheet = package.Workbook.Worksheets[0];
         sheet.Name.ShouldBe("Sheet1");
@@ -529,7 +529,7 @@ public static class XlsxWriterTest
                         showInputMessage: true, promptTitle: "Prompt ti\0tle", prompt: "A very enlig\0htening prompt"));
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         package.Workbook.Worksheets.Count.ShouldBe(1);
         var sheet = package.Workbook.Worksheets[0];
         sheet.Name.ShouldBe("Sheet1");

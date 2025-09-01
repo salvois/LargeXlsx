@@ -21,7 +21,7 @@ public static class HeaderFooterTest
                     oddFooter: new XlsxHeaderFooterBuilder().Center().Text("CenterFooter").ToString()));
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var sheet = package.Workbook.Worksheets[0];
         sheet.HeaderFooter.AlignWithMargins.ShouldBeTrue();
         sheet.HeaderFooter.ScaleWithDocument.ShouldBeTrue();
@@ -49,7 +49,7 @@ public static class HeaderFooterTest
                     oddFooter: new XlsxHeaderFooterBuilder().Center().Text("Footer").ToString()));
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var sheet = package.Workbook.Worksheets[0];
         sheet.HeaderFooter.AlignWithMargins.ShouldBe(alignWithMargins);
         sheet.HeaderFooter.ScaleWithDocument.ShouldBe(scaleWithDoc);
@@ -69,7 +69,7 @@ public static class HeaderFooterTest
                     firstHeader: new XlsxHeaderFooterBuilder().Right().Text("FirstHeader").ToString()));
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var sheet = package.Workbook.Worksheets[0];
         sheet.HeaderFooter.AlignWithMargins.ShouldBeTrue();
         sheet.HeaderFooter.ScaleWithDocument.ShouldBeTrue();
@@ -103,7 +103,7 @@ public static class HeaderFooterTest
                     evenHeader: new XlsxHeaderFooterBuilder().Right().Text("EvenHeader").ToString()));
         }
 
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var sheet = package.Workbook.Worksheets[0];
         sheet.HeaderFooter.AlignWithMargins.ShouldBeTrue();
         sheet.HeaderFooter.ScaleWithDocument.ShouldBeTrue();

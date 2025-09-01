@@ -25,9 +25,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
@@ -55,24 +53,25 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipWriter zipWriter)
+        public void Save(ZipWriter zipWriter, CustomWriter customWriter)
         {
             using (var stream = zipWriter.WriteToStream("xl/sharedStrings.xml", new ZipWriterEntryOptions()))
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
-                streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-                                   + "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
+                customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"u8
+                                   + "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">\n"u8);
                 foreach (var si in _stringItems.OrderBy(s => s.Value))
                 {
                     // <si><t xml:space="preserve">{0}</t></si>
-                    streamWriter
-                        .Append("<si><t")
+                    customWriter
+                        .Append("<si><t"u8)
                         .AddSpacePreserveIfNeeded(si.Key)
-                        .Append(">")
+                        .Append(">"u8)
                         .AppendEscapedXmlText(si.Key, _skipInvalidCharacters)
-                        .Append("</t></si>\n");
+                        .Append("</t></si>\n"u8);
+                    customWriter.FlushToIfBiggerThan(stream, 65536);
                 }
-                streamWriter.WriteLine("</sst>");
+                customWriter.Append("</sst>\n"u8);
+                customWriter.FlushTo(stream);
             }
         }
     }

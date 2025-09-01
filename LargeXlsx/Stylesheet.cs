@@ -24,9 +24,9 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using SharpCompress.Writers.Zip;
 
@@ -108,19 +108,19 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipWriter zipWriter)
+        public void Save(ZipWriter zipWriter, CustomWriter customWriter)
         {
             using (var stream = zipWriter.WriteToStream("xl/styles.xml", new ZipWriterEntryOptions()))
-            using (var streamWriter = new InvariantCultureStreamWriter(stream))
             {
-                streamWriter.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-                                   + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
-                WriteNumberFormats(streamWriter);
-                WriteFonts(streamWriter);
-                WriteFills(streamWriter);
-                WriteBorders(streamWriter);
-                WriteCellFormats(streamWriter);
-                streamWriter.WriteLine("</styleSheet>");
+                customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"u8
+                                   + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">\n"u8);
+                WriteNumberFormats(customWriter);
+                WriteFonts(customWriter);
+                WriteFills(customWriter);
+                WriteBorders(customWriter);
+                WriteCellFormats(customWriter);
+                customWriter.Append("</styleSheet>\n"u8);
+                customWriter.FlushTo(stream);
             }
         }
 
@@ -130,132 +130,144 @@ namespace LargeXlsx
             _lastUsedStyleId = styleId;
         }
 
-        private void WriteNumberFormats(StreamWriter streamWriter)
+        private void WriteNumberFormats(CustomWriter customWriter)
         {
-            streamWriter.WriteLine("<numFmts count=\"{0}\">", _numberFormats.Count(nf => nf.Value >= FirstCustomNumberFormatId));
+            customWriter.Append("<numFmts count=\""u8).Append(_numberFormats.Count(nf => nf.Value >= FirstCustomNumberFormatId)).Append("\">\n"u8);
             foreach (var numberFormat in _numberFormats.Where(nf => nf.Value >= FirstCustomNumberFormatId).OrderBy(nf => nf.Value))
             {
-                streamWriter
-                    .Append("<numFmt numFmtId=\"")
+                customWriter
+                    .Append("<numFmt numFmtId=\""u8)
                     .Append(numberFormat.Value)
-                    .Append("\" formatCode=\"")
+                    .Append("\" formatCode=\""u8)
                     .AppendEscapedXmlAttribute(numberFormat.Key.FormatCode, false)
-                    .Append("\"/>\n");
+                    .Append("\"/>\n"u8);
             }
-            streamWriter.WriteLine("</numFmts>");
+            customWriter.Append("</numFmts>\n"u8);
         }
 
-        private void WriteFonts(StreamWriter streamWriter)
+        private void WriteFonts(CustomWriter customWriter)
         {
-            streamWriter.WriteLine("<fonts count=\"{0}\">", _fonts.Count);
+            customWriter.Append("<fonts count=\""u8).Append(_fonts.Count).Append("\">\n"u8);
             foreach (var font in _fonts.OrderBy(f => f.Value))
             {
-                streamWriter
-                    .Append("<font><sz val=\"")
+                customWriter
+                    .Append("<font><sz val=\""u8)
                     .Append(font.Key.Size)
-                    .Append("\"/><color rgb=\"")
-                    .Append(GetColorString(font.Key.Color))
-                    .Append("\"/><name val=\"")
+                    .Append("\"/><color rgb=\""u8)
+                    .AppendEscapedXmlAttribute(GetColorString(font.Key.Color), false)
+                    .Append("\"/><name val=\""u8)
                     .AppendEscapedXmlAttribute(font.Key.Name, false)
-                    .Append("\"/><family val=\"2\"/>");
+                    .Append("\"/><family val=\"2\"/>"u8);
                 if (font.Key.Bold)
-                    streamWriter.Append("<b val=\"true\"/>");
+                    customWriter.Append("<b val=\"true\"/>"u8);
                 if (font.Key.Italic)
-                    streamWriter.Append("<i val=\"true\"/>");
+                    customWriter.Append("<i val=\"true\"/>"u8);
                 if (font.Key.Strike)
-                    streamWriter.Append("<strike val=\"true\"/>");
+                    customWriter.Append("<strike val=\"true\"/>"u8);
                 switch (font.Key.UnderlineType)
                 {
                     case XlsxFont.Underline.None:
                         break;
                     case XlsxFont.Underline.Single:
-                        streamWriter.Append("<u/>");
+                        customWriter.Append("<u/>"u8);
                         break;
                     default:
-                        streamWriter.Append($"<u val=\"{Util.EnumToAttributeValue(font.Key.UnderlineType)}\"/>");
+                        customWriter.Append("<u val=\""u8).AppendEscapedXmlAttribute(Util.EnumToAttributeValue(font.Key.UnderlineType), false).Append("\"/>"u8);
                         break;
                 }
-                streamWriter.Append("</font>\n");
+                customWriter.Append("</font>\n"u8);
             }
-            streamWriter.WriteLine("</fonts>");
+            customWriter.Append("</fonts>\n"u8);
         }
 
-        private void WriteFills(StreamWriter streamWriter)
+        private void WriteFills(CustomWriter customWriter)
         {
-            streamWriter.WriteLine("<fills count=\"{0}\">", _fills.Count);
+            customWriter.Append("<fills count=\""u8).Append(_fills.Count).Append("\">\n"u8);
             foreach (var fill in _fills.OrderBy(f => f.Value))
             {
-                streamWriter.WriteLine("<fill>"
-                                   + "<patternFill patternType=\"{0}\">"
-                                   + "<fgColor rgb=\"{1}\"/>"
-                                   + "<bgColor rgb=\"{1}\"/>"
-                                   + "</patternFill>"
-                                   + "</fill>",
-                    Util.EnumToAttributeValue(fill.Key.PatternType), GetColorString(fill.Key.Color));
+                var colorString = GetColorString(fill.Key.Color);
+                customWriter.Append("<fill><patternFill patternType=\""u8)
+                    .AppendEscapedXmlAttribute(Util.EnumToAttributeValue(fill.Key.PatternType), false)
+                    .Append("\"><fgColor rgb=\""u8)
+                    .AppendEscapedXmlAttribute(colorString, false)
+                    .Append("\"/><bgColor rgb=\""u8)
+                    .AppendEscapedXmlAttribute(colorString, false)
+                    .Append("\"/></patternFill></fill>\n"u8);
             }
-            streamWriter.WriteLine("</fills>");
+            customWriter.Append("</fills>\n"u8);
         }
 
-        private void WriteBorders(StreamWriter streamWriter)
+        private void WriteBorders(CustomWriter customWriter)
         {
-            streamWriter.WriteLine($"<borders count=\"{_borders.Count}\">");
+            customWriter.Append("<borders count=\""u8).Append(_borders.Count).Append("\">\n"u8);
             foreach (var border in _borders.OrderBy(b => b.Value))
             {
-                streamWriter.WriteLine($"<border diagonalDown=\"{Util.BoolToInt(border.Key.DiagonalDown)}\" diagonalUp=\"{Util.BoolToInt(border.Key.DiagonalUp)}\">");
-                WriteBorderLine(streamWriter, "left", border.Key.Left);
-                WriteBorderLine(streamWriter, "right", border.Key.Right);
-                WriteBorderLine(streamWriter, "top", border.Key.Top);
-                WriteBorderLine(streamWriter, "bottom", border.Key.Bottom);
-                WriteBorderLine(streamWriter, "diagonal", border.Key.Diagonal);
-                streamWriter.WriteLine("</border>");
+                customWriter
+                    .Append("<border diagonalDown=\""u8)
+                    .Append(Util.BoolToInt(border.Key.DiagonalDown))
+                    .Append("\" diagonalUp=\""u8)
+                    .Append(Util.BoolToInt(border.Key.DiagonalUp))
+                    .Append("\">\n"u8);
+                WriteBorderLine(customWriter, "left"u8, border.Key.Left);
+                WriteBorderLine(customWriter, "right"u8, border.Key.Right);
+                WriteBorderLine(customWriter, "top"u8, border.Key.Top);
+                WriteBorderLine(customWriter, "bottom"u8, border.Key.Bottom);
+                WriteBorderLine(customWriter, "diagonal"u8, border.Key.Diagonal);
+                customWriter.Append("</border>\n"u8);
             }
-            streamWriter.WriteLine("</borders>");
+            customWriter.Append("</borders>\n"u8);
         }
 
-        private static void WriteBorderLine(StreamWriter streamWriter, string elementName, XlsxBorder.Line line)
+        private static void WriteBorderLine(CustomWriter customWriter, ReadOnlySpan<byte> elementName, XlsxBorder.Line line)
         {
             if (line != null)
             {
-                streamWriter.Write($"<{elementName} style=\"{Util.EnumToAttributeValue(line.Style)}\">");
+                customWriter.Append("<"u8).Append(elementName).Append(" style=\""u8).AppendEscapedXmlAttribute(Util.EnumToAttributeValue(line.Style), false).Append("\">"u8);
                 if (line.Color != Color.Transparent)
-                    streamWriter.Write($"<color rgb=\"{GetColorString(line.Color)}\"/>");
-                streamWriter.WriteLine($"</{elementName}>");
+                    customWriter.Append("<color rgb=\""u8).AppendEscapedXmlAttribute(GetColorString(line.Color), false).Append("\"/>"u8);
+                customWriter.Append("</"u8).Append(elementName).Append(">\n"u8);
             }
             else
             {
-                streamWriter.WriteLine($"<{elementName}/>");
+                customWriter.Append("<"u8).Append(elementName).Append("/>\n"u8);
             }
         }
 
-        private void WriteCellFormats(StreamWriter streamWriter)
+        private void WriteCellFormats(CustomWriter customWriter)
         {
-            streamWriter.WriteLine("<cellXfs count=\"{0}\">", _styles.Count);
+            customWriter.Append("<cellXfs count=\""u8).Append(_styles.Count).Append("\">\n"u8);
             foreach (var style in _styles.OrderBy(s => s.Value))
             {
-                streamWriter.Write("<xf numFmtId=\"{0}\" fontId=\"{1}\" fillId=\"{2}\" borderId=\"{3}\""
-                                   + " applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\"",
-                    _numberFormats[style.Key.NumberFormat], _fonts[style.Key.Font], _fills[style.Key.Fill],
-                    _borders[style.Key.Border]);
+                customWriter
+                    .Append("<xf numFmtId=\""u8)
+                    .Append(_numberFormats[style.Key.NumberFormat])
+                    .Append("\" fontId=\""u8)
+                    .Append(_fonts[style.Key.Font])
+                    .Append("\" fillId=\""u8)
+                    .Append(_fills[style.Key.Fill])
+                    .Append("\" borderId=\""u8)
+                    .Append(_borders[style.Key.Border])
+                    .Append("\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\""u8);
                 if (style.Key.Alignment != XlsxAlignment.Default)
                 {
-                    streamWriter.Write(" applyAlignment=\"1\"><alignment");
+                    customWriter.Append(" applyAlignment=\"1\"><alignment"u8);
                     var a = style.Key.Alignment;
-                    if (a.HorizontalType != XlsxAlignment.Horizontal.General) streamWriter.Write(" horizontal=\"{0}\"", Util.EnumToAttributeValue(a.HorizontalType));
-                    if (a.VerticalType != XlsxAlignment.Vertical.Bottom) streamWriter.Write(" vertical=\"{0}\"", Util.EnumToAttributeValue(a.VerticalType));
-                    if (a.Indent != 0) streamWriter.Write(" indent=\"{0}\"", a.Indent);
-                    if (a.JustifyLastLine) streamWriter.Write(" justifyLastLine=\"1\"");
-                    if (a.ReadingOrderType != XlsxAlignment.ReadingOrder.ContextDependent) streamWriter.Write(" readingOrder=\"{0}\"", (int)a.ReadingOrderType);
-                    if (a.ShrinkToFit) streamWriter.Write(" shrinkToFit=\"1\"");
-                    if (a.TextRotation != 0) streamWriter.Write(" textRotation=\"{0}\"", a.TextRotation);
-                    if (a.WrapText) streamWriter.Write(" wrapText=\"1\"");
-                    streamWriter.WriteLine("/></xf>");
+                    if (a.HorizontalType != XlsxAlignment.Horizontal.General) customWriter.Append(" horizontal=\""u8).AppendEscapedXmlAttribute(Util.EnumToAttributeValue(a.HorizontalType), false).Append("\""u8);
+                    if (a.VerticalType != XlsxAlignment.Vertical.Bottom) customWriter.Append(" vertical=\""u8).AppendEscapedXmlAttribute(Util.EnumToAttributeValue(a.VerticalType), false).Append("\""u8);
+                    if (a.Indent != 0) customWriter.Append(" indent=\""u8).Append(a.Indent).Append("\""u8);
+                    if (a.JustifyLastLine) customWriter.Append(" justifyLastLine=\"1\""u8);
+                    if (a.ReadingOrderType != XlsxAlignment.ReadingOrder.ContextDependent) customWriter.Append(" readingOrder=\""u8).Append((int)a.ReadingOrderType).Append("\""u8);
+                    if (a.ShrinkToFit) customWriter.Append(" shrinkToFit=\"1\""u8);
+                    if (a.TextRotation != 0) customWriter.Append(" textRotation=\""u8).Append(a.TextRotation).Append("\""u8);
+                    if (a.WrapText) customWriter.Append(" wrapText=\"1\""u8);
+                    customWriter.Append("/></xf>\n"u8);
                 }
                 else
                 {
-                    streamWriter.WriteLine("/>");
+                    customWriter.Append("/>\n"u8);
                 }
             }
-            streamWriter.WriteLine("</cellXfs>");
+            customWriter.Append("</cellXfs>\n"u8);
         }
 
         private static string GetColorString(Color color) => $"{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";

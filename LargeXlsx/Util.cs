@@ -25,11 +25,9 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Xml;
 
 namespace LargeXlsx
 {
@@ -37,85 +35,9 @@ namespace LargeXlsx
     {
         private static readonly DateTime ExcelEpoch = new DateTime(1900, 1, 1);
         private static readonly DateTime Date19000301 = new DateTime(1900, 3, 1);
-        private static readonly string[] CachedColumnNames = new string[Limits.MaxColumnCount];
+        private static readonly byte[][] CachedColumnNames = new byte[Limits.MaxColumnCount][];
 
-        public static TextWriter Append(this TextWriter textWriter, string value)
-        {
-            textWriter.Write(value);
-            return textWriter;
-        }
-
-        public static TextWriter Append(this TextWriter textWriter, double value)
-        {
-            textWriter.Write(value);
-            return textWriter;
-        }
-
-        public static TextWriter Append(this TextWriter textWriter, decimal value)
-        {
-            textWriter.Write(value);
-            return textWriter;
-        }
-
-        public static TextWriter Append(this TextWriter textWriter, int value)
-        {
-            textWriter.Write(value);
-            return textWriter;
-        }
-
-        public static TextWriter AppendEscapedXmlText(this TextWriter textWriter, string value, bool skipInvalidCharacters)
-        {
-            // A plain old for provides a measurable improvement on garbage collection
-            for (var i = 0; i < value.Length; i++)
-            {
-                var c = value[i];
-                if (XmlConvert.IsXmlChar(c))
-                {
-                    if (c == '<') textWriter.Write("&lt;");
-                    else if (c == '>') textWriter.Write("&gt;");
-                    else if (c == '&') textWriter.Write("&amp;");
-                    else textWriter.Write(c);
-                }
-                else if (i < value.Length - 1 && XmlConvert.IsXmlSurrogatePair(value[i + 1], c))
-                {
-                    textWriter.Write(c);
-                    textWriter.Write(value[i + 1]);
-                    i++;
-                }
-                else if (!skipInvalidCharacters)
-                    throw new XmlException($"Invalid XML character at position {i} in \"{value}\"");
-            }
-            return textWriter;
-        }
-
-        public static TextWriter AppendEscapedXmlAttribute(this TextWriter textWriter, string value, bool skipInvalidCharacters)
-        {
-            // A plain old for provides a measurable improvement on garbage collection
-            for (var i = 0; i < value.Length; i++)
-            {
-                var c = value[i];
-                if (XmlConvert.IsXmlChar(c))
-                {
-                    if (c == '<') textWriter.Write("&lt;");
-                    else if (c == '>') textWriter.Write("&gt;");
-                    else if (c == '&') textWriter.Write("&amp;");
-                    else if (c == '\'') textWriter.Write("&apos;");
-                    else if (c == '"') textWriter.Write("&quot;");
-                    else textWriter.Write(c);
-                }
-                else if (i < value.Length - 1 && XmlConvert.IsXmlSurrogatePair(value[i + 1], c))
-                {
-                    textWriter.Write(c);
-                    textWriter.Write(value[i + 1]);
-                    i++;
-                }
-                else if (!skipInvalidCharacters) 
-                    throw new XmlException($"Invalid XML character at position {i} in \"{value}\"");
-            }
-            return textWriter;
-        }
-
-        public static string GetColumnName(int columnIndex)
+        internal static byte[] GetUtf8ColumnName(int columnIndex)
         {
             if (columnIndex < 1 || columnIndex > Limits.MaxColumnCount)
                 throw new InvalidOperationException($"A worksheet can contain at most {Limits.MaxColumnCount} columns ({columnIndex} attempted)");
@@ -128,21 +50,23 @@ namespace LargeXlsx
             return columnName;
         }
 
-        private static string GetColumnNameInternal(int columnIndex)
+        public static string GetColumnName(int columnIndex) => 
+            Encoding.UTF8.GetString(GetUtf8ColumnName(columnIndex));
+
+        private static byte[] GetColumnNameInternal(int columnIndex)
         {
-            var columnName = new StringBuilder(3); // This has been measured to be faster than string concatenation
-            while (true)
+            if (columnIndex <= 26)
+                return [(byte)('A' + columnIndex - 1)];
+            if (columnIndex <= 702)
             {
-                if (columnIndex > 26)
-                {
-                    columnIndex = Math.DivRem(columnIndex - 1, 26, out var rem);
-                    columnName.Insert(0, (char)('A' + rem));
-                }
-                else
-                {
-                    columnName.Insert(0, (char)('A' + columnIndex - 1));
-                    return columnName.ToString();
-                }
+                var c2 = Math.DivRem(columnIndex - 1, 26, out var c1);
+                return [(byte)('A' + c2 - 1), (byte)('A' + c1)];
+            }
+            else
+            {
+                var x = Math.DivRem(columnIndex - 1, 26, out var c1);
+                var c3 = Math.DivRem(x - 1, 26, out var c2);
+                return [(byte)('A' + c3 - 1), (byte)('A' + c2), (byte)('A' + c1)];
             }
         }
 
@@ -176,13 +100,6 @@ namespace LargeXlsx
                 hash = hasher.ComputeHash(hash.Concat(iterator).ToArray());
             }
             return hash;
-        }
-
-        public static TextWriter AddSpacePreserveIfNeeded(this TextWriter textWriter, string value)
-        {
-            if (value.Length > 0 && (XmlConvert.IsWhitespaceChar(value[0]) || XmlConvert.IsWhitespaceChar(value[value.Length - 1])))
-                textWriter.Write(" xml:space=\"preserve\"");
-            return textWriter;
         }
     }
 }

@@ -46,6 +46,7 @@ namespace LargeXlsx
         private readonly SharedStringTable _sharedStringTable;
         private readonly bool _requireCellReferences;
         private readonly bool _skipInvalidCharacters;
+        private readonly CustomWriter _customWriter;
         private Worksheet _currentWorksheet;
         private bool _hasFormulasWithoutResult;
         private bool _disposed;
@@ -64,9 +65,16 @@ namespace LargeXlsx
             _sharedStringTable = new SharedStringTable(skipInvalidCharacters);
             _requireCellReferences = requireCellReferences;
             _skipInvalidCharacters = skipInvalidCharacters;
+            _customWriter = new CustomWriter(1024);
             DefaultStyle = XlsxStyle.Default;
 
             _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate) { DeflateCompressionLevel = compressionLevel, UseZip64 = useZip64 });
+        }
+
+        public void Commit()
+        {
+            CheckInWorksheet();
+            _currentWorksheet.Commit();
         }
 
         public void Dispose()
@@ -74,8 +82,8 @@ namespace LargeXlsx
             if (!_disposed)
             {
                 _currentWorksheet?.Dispose();
-                _stylesheet.Save(_zipWriter);
-                _sharedStringTable.Save(_zipWriter);
+                _stylesheet.Save(_zipWriter, _customWriter);
+                _sharedStringTable.Save(_zipWriter, _customWriter);
                 SaveDocProps();
                 SaveContentTypes();
                 SaveRels();
@@ -96,10 +104,9 @@ namespace LargeXlsx
                 // Thus, pretend being version 15.0 like LibreOffice Calc does.
                 // https://bugs.documentfoundation.org/show_bug.cgi?id=91064
                 streamWriter
-                    .Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+                    .Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                             + "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\">"
-                            + "<Application>").AppendEscapedXmlText(assemblyName.Name, false)
-                    .Append($"/{assemblyName.Version.Major}.{assemblyName.Version.Minor}.{assemblyName.Version.Build}</Application>"
+                            + $"<Application>{assemblyName.Name}/{assemblyName.Version.Major}.{assemblyName.Version.Minor}.{assemblyName.Version.Build}</Application>"
                             + "<AppVersion>15.0000</AppVersion>"
                             + "</Properties>");
             }
@@ -144,47 +151,61 @@ namespace LargeXlsx
         private void SaveWorkbook()
         {
             using (var stream = _zipWriter.WriteToStream("xl/workbook.xml", new ZipWriterEntryOptions()))
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
-                var worksheetTags = new StringWriter();
-                var definedNames = new StringWriter();
-                var sheetIndex = 0;
-                foreach (var worksheet in _worksheets)
+                _customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"u8
+                                           + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"u8
+                                           + "<sheets>"u8);
+                var hasDefinedNames = false;
+                for (var i = 0; i < _worksheets.Count; i++)
                 {
-                    worksheetTags
-                        .Append("<sheet name=\"")
+                    var worksheet = _worksheets[i];
+                    _customWriter
+                        .Append("<sheet name=\""u8)
                         .AppendEscapedXmlAttribute(worksheet.Name, _skipInvalidCharacters)
-                        .Append($"\" sheetId=\"{worksheet.Id}\" {GetWorksheetState(worksheet.State)} r:id=\"RidWS{worksheet.Id}\"/>");
+                        .Append("\" sheetId=\""u8)
+                        .Append(worksheet.Id)
+                        .Append("\" "u8)
+                        .Append(GetWorksheetState(worksheet.State))
+                        .Append(" r:id=\"RidWS"u8)
+                        .Append(worksheet.Id)
+                        .Append("\"/>"u8);
                     if (worksheet.AutoFilterAbsoluteRef != null)
-                        definedNames
-                            .Append($"<definedName name=\"_xlnm._FilterDatabase\" localSheetId=\"{sheetIndex}\" hidden=\"1\">")
-                            .AppendEscapedXmlText(worksheet.AutoFilterAbsoluteRef, _skipInvalidCharacters)
-                            .Append("</definedName>");
-                    sheetIndex++;
+                        hasDefinedNames = true;
                 }
-                streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-                                   + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
-                                   + "<sheets>"
-                                   + worksheetTags
-                                   + "</sheets>");
-                var definedNamesString = definedNames.ToString();
-                if (definedNamesString.Length > 0)
-                    streamWriter.Append("<definedNames>").Append(definedNamesString).Append("</definedNames>");
-                if (_hasFormulasWithoutResult) streamWriter.Write("<calcPr calcCompleted=\"0\" fullCalcOnLoad=\"1\"/>");
-                streamWriter.Write("</workbook>");
+                _customWriter.Append("</sheets>"u8);
+                if (hasDefinedNames)
+                {
+                    _customWriter.Append("<definedNames>"u8);
+                    for (var i = 0; i < _worksheets.Count; i++)
+                    {
+                        var worksheet = _worksheets[i];
+                        if (worksheet.AutoFilterAbsoluteRef != null)
+                            _customWriter
+                                .Append("<definedName name=\"_xlnm._FilterDatabase\" localSheetId=\""u8)
+                                .Append(i)
+                                .Append("\" hidden=\"1\">"u8)
+                                .AppendEscapedXmlText(worksheet.AutoFilterAbsoluteRef, _skipInvalidCharacters)
+                                .Append("</definedName>"u8);
+                    }
+                    _customWriter.Append("</definedNames>"u8);
+                }
+                if (_hasFormulasWithoutResult)
+                    _customWriter.Append("<calcPr calcCompleted=\"0\" fullCalcOnLoad=\"1\"/>"u8);
+                _customWriter.Append("</workbook>"u8);
+                _customWriter.FlushTo(stream);
             }
         }
 
-        private static string GetWorksheetState(XlsxWorksheetState state)
+        private static ReadOnlySpan<byte> GetWorksheetState(XlsxWorksheetState state)
         {
             switch (state)
             {
                 case XlsxWorksheetState.Visible:
-                    return "";
+                    return ""u8;
                 case XlsxWorksheetState.Hidden:
-                    return "state=\"hidden\"";
+                    return "state=\"hidden\""u8;
                 case XlsxWorksheetState.VeryHidden:
-                    return "state=\"veryHidden\"";
+                    return "state=\"veryHidden\""u8;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
@@ -224,6 +245,7 @@ namespace LargeXlsx
             _currentWorksheet?.Dispose();
             _currentWorksheet = new Worksheet(
                 zipWriter: _zipWriter,
+                customWriter: _customWriter,
                 id: _worksheets.Count + 1,
                 name: name,
                 splitRow: splitRow,

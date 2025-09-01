@@ -25,8 +25,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
-using System.IO;
-using System.Xml;
 using NUnit.Framework;
 using Shouldly;
 
@@ -35,46 +33,6 @@ namespace LargeXlsx.Tests;
 [TestFixture]
 public static class UtilTest
 {
-    [Test]
-    public static void AppendEscapedXmlText_AllValid() =>
-        new StringWriter()
-            .AppendEscapedXmlText("Lorem 'ipsum' & \"dolor\" \U0001d11e <sit> amet", skipInvalidCharacters: false)
-            .ToString().ShouldBe("Lorem 'ipsum' &amp; \"dolor\" \U0001d11e &lt;sit&gt; amet");
-
-    [TestCase(new[] { 'a', '\0', 'b' })]
-    [TestCase(new[] { 'a', '\ud800', 'b' })]
-    [TestCase(new[] { 'a', '\udc00', 'b' })]
-    public static void AppendEscapedXmlText_InvalidChars_Throw(char[] value) => 
-        Should.Throw<XmlException>(() => new StringWriter().AppendEscapedXmlText(new string(value), skipInvalidCharacters: false));
-
-    [TestCase(new[] { 'a', '\0', 'b' })]
-    [TestCase(new[] { 'a', '\ud800', 'b' })]
-    [TestCase(new[] { 'a', '\udc00', 'b' })]
-    public static void AppendEscapedXmlText_InvalidChars_Skip(char[] value) =>
-        new StringWriter()
-            .AppendEscapedXmlText(new string(value), skipInvalidCharacters: true)
-            .ToString().ShouldBe("ab");
-
-    [Test]
-    public static void AppendEscapedXmlAttribute_AllValid() =>
-        new StringWriter()
-            .AppendEscapedXmlAttribute("Lorem 'ipsum' & \"dolor\" \U0001d11e <sit> amet", skipInvalidCharacters: false)
-            .ToString().ShouldBe("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; \U0001d11e &lt;sit&gt; amet");
-
-    [TestCase(new[] { 'a', '\0', 'b' })]
-    [TestCase(new[] { 'a', '\ud800', 'b' })]
-    [TestCase(new[] { 'a', '\udc00', 'b' })]
-    public static void AppendEscapedXmlAttribute_InvalidChars_Throw(char[] value) => 
-        Should.Throw<XmlException>(() => new StringWriter().AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: false));
-
-    [TestCase(new[] { 'a', '\0', 'b' })]
-    [TestCase(new[] { 'a', '\ud800', 'b' })]
-    [TestCase(new[] { 'a', '\udc00', 'b' })]
-    public static void AppendEscapedXmlAttribute_InvalidChars_Skip(char[] value) =>
-        new StringWriter()
-            .AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: true)
-            .ToString().ShouldBe("ab");
-
     [TestCase(1, "A")]
     [TestCase(2, "B")]
     [TestCase(26, "Z")]
@@ -98,7 +56,7 @@ public static class UtilTest
     [TestCase(-1)]
     [TestCase(0)]
     [TestCase(16385)]
-    public static void GetColumnNameOutOfRange(int index) => 
+    public static void GetColumnNameOutOfRange(int index) =>
         Should.Throw<InvalidOperationException>(() => Util.GetColumnName(index));
 
     [TestCase("2020-05-06T18:27:00", 43957.76875)]
@@ -119,18 +77,4 @@ public static class UtilTest
                 saltValue: Convert.FromBase64String("5kelhTC7DUqQ5qi78ihM8A=="),
                 spinCount: 100000))
             .ShouldBe("/dQmPXViT1u/fiTHmjLlP2HqOjYeRKI8W367Qn/Eikv63K8nnZMiyk2Wl9ShdHaBL7y1AeeJq5gxm4bW0ArxYg==");
-
-    [TestCase(" leading space", " xml:space=\"preserve\"")]
-    [TestCase("\tleading tab", " xml:space=\"preserve\"")]
-    [TestCase("\rleading CR", " xml:space=\"preserve\"")]
-    [TestCase("\nleading LF", " xml:space=\"preserve\"")]
-    [TestCase("trailing space ", " xml:space=\"preserve\"")]
-    [TestCase("trailing tab\t", " xml:space=\"preserve\"")]
-    [TestCase("trailing CR\n", " xml:space=\"preserve\"")]
-    [TestCase("trailing LF\n", " xml:space=\"preserve\"")]
-    [TestCase("middle   spaces", "")]
-    public static void AddSpacePreserveIfNeeded_LeadingOrTrailingWhitespace(string value, string expectation) =>
-        new StringWriter()
-            .AddSpacePreserveIfNeeded(value)
-            .ToString().ShouldBe(expectation);
 }

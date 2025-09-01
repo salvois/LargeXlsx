@@ -49,7 +49,7 @@ public static class AlignmentTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(horizontal: alignment)));
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Cells["A1"].Style.HorizontalAlignment.ShouldBe(expected);
     }
 
@@ -64,7 +64,7 @@ public static class AlignmentTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(vertical: alignment)));
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Cells["A1"].Style.VerticalAlignment.ShouldBe(expected);
     }
 
@@ -75,7 +75,7 @@ public static class AlignmentTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(textRotation: 45)));
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Cells["A1"].Style.TextRotation.ShouldBe(45);
     }
 
@@ -86,7 +86,7 @@ public static class AlignmentTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(indent: 2)));
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Cells["A1"].Style.Indent.ShouldBe(2);
     }
 
@@ -97,7 +97,7 @@ public static class AlignmentTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(wrapText: true)));
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Cells["A1"].Style.WrapText.ShouldBe(true);
     }
 
@@ -108,7 +108,7 @@ public static class AlignmentTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(shrinkToFit: true)));
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Cells["A1"].Style.ShrinkToFit.ShouldBe(true);
     }
 
@@ -121,7 +121,7 @@ public static class AlignmentTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxAlignment(readingOrder: readingOrder)));
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
             package.Workbook.Worksheets[0].Cells["A1"].Style.ReadingOrder.ShouldBe(expected);
     }
 
@@ -131,7 +131,7 @@ public static class AlignmentTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().Write("Test");
-        using (var package = new ExcelPackage(stream))
+        using (var package = EPPlusWrapper.Create(stream))
         {
             var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
             style.HorizontalAlignment.ShouldBe(ExcelHorizontalAlignment.General);

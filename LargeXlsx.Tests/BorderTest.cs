@@ -55,7 +55,7 @@ public static class BorderTest
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow()
                 .Write("Test", XlsxStyle.Default.With(new XlsxBorder(top: new XlsxBorder.Line(Color.DeepPink, borderStyle))));
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var border = package.Workbook.Worksheets[0].Cells["A1"].Style.Border;
         border.Top.Color.Rgb.ShouldBe("FFFF1493");
         border.Top.Style.ShouldBe(expected);
@@ -68,7 +68,7 @@ public static class BorderTest
         using var stream = new MemoryStream();
         using (var xlsxWriter = new XlsxWriter(stream))
             xlsxWriter.BeginWorksheet("Sheet 1").BeginRow().Write("Test");
-        using var package = new ExcelPackage(stream);
+        using var package = EPPlusWrapper.Create(stream);
         var style = package.Workbook.Worksheets[0].Cells["A1"].Style;
         style.Border.Top.Color.Rgb.ShouldBeNull();
         style.Border.Top.Style.ShouldBe(ExcelBorderStyle.None);
