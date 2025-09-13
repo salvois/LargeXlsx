@@ -30,17 +30,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using SharpCompress.Common;
-using SharpCompress.Compressors.Deflate;
-using SharpCompress.Writers;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
     public sealed class XlsxWriter : IDisposable
     {
         private const int MaxSheetNameLength = 31;
-        private readonly ZipWriter _zipWriter;
+        private readonly SharpCompressZipWriter _zipWriter;
         private readonly List<Worksheet> _worksheets;
         private readonly Stylesheet _stylesheet;
         private readonly SharedStringTable _sharedStringTable;
@@ -58,7 +54,12 @@ namespace LargeXlsx
         public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
         public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
 
-        public XlsxWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Level3, bool useZip64 = false, bool requireCellReferences = true, bool skipInvalidCharacters = false)
+        public XlsxWriter(Stream stream, XlsxCompressionLevel compressionLevel = XlsxCompressionLevel.Excel, bool requireCellReferences = true, bool skipInvalidCharacters = false)
+            : this(new SharpCompressZipWriter(stream, compressionLevel, useZip64: true), requireCellReferences, skipInvalidCharacters)
+        {
+        }
+
+        internal XlsxWriter(SharpCompressZipWriter zipWriter, bool requireCellReferences = true, bool skipInvalidCharacters = false)
         {
             _worksheets = new List<Worksheet>();
             _stylesheet = new Stylesheet();
@@ -67,8 +68,7 @@ namespace LargeXlsx
             _skipInvalidCharacters = skipInvalidCharacters;
             _customWriter = new CustomWriter(1024);
             DefaultStyle = XlsxStyle.Default;
-
-            _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate) { DeflateCompressionLevel = compressionLevel, UseZip64 = useZip64 });
+            _zipWriter = zipWriter;
         }
 
         public void Commit()
@@ -97,7 +97,7 @@ namespace LargeXlsx
         private void SaveDocProps()
         {
             var assemblyName = Assembly.GetExecutingAssembly().GetName();
-            using (var stream = _zipWriter.WriteToStream("docProps/app.xml", new ZipWriterEntryOptions()))
+            using (var stream = _zipWriter.CreateEntry("docProps/app.xml"))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 // Looks some applications (e.g. Microsoft's) may consider a file invalid if a specific version number is not found.
@@ -114,7 +114,7 @@ namespace LargeXlsx
 
         private void SaveContentTypes()
         {
-            using (var stream = _zipWriter.WriteToStream("[Content_Types].xml", new ZipWriterEntryOptions()))
+            using (var stream = _zipWriter.CreateEntry("[Content_Types].xml"))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 var worksheetTags = new StringBuilder();
@@ -137,7 +137,7 @@ namespace LargeXlsx
 
         private void SaveRels()
         {
-            using (var stream = _zipWriter.WriteToStream("_rels/.rels", new ZipWriterEntryOptions()))
+            using (var stream = _zipWriter.CreateEntry("_rels/.rels"))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
@@ -150,7 +150,7 @@ namespace LargeXlsx
 
         private void SaveWorkbook()
         {
-            using (var stream = _zipWriter.WriteToStream("xl/workbook.xml", new ZipWriterEntryOptions()))
+            using (var stream = _zipWriter.CreateEntry("xl/workbook.xml"))
             {
                 _customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"u8
                                            + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"u8
@@ -213,7 +213,7 @@ namespace LargeXlsx
 
         private void SaveWorkbookRels()
         {
-            using (var stream = _zipWriter.WriteToStream("xl/_rels/workbook.xml.rels", new ZipWriterEntryOptions()))
+            using (var stream = _zipWriter.CreateEntry("xl/_rels/workbook.xml.rels"))
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
             {
                 var worksheetTags = new StringBuilder();

@@ -387,28 +387,6 @@ public static class XlsxWriterTest
         package.Workbook.Worksheets[0].Hidden.ShouldBe(expected);
     }
 
-    [Theory]
-    public static void Zip64(bool useZip64)
-    {
-        using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream, useZip64: useZip64))
-        {
-            xlsxWriter
-                .BeginWorksheet("Sheet1")
-                .BeginRow().Write("A1").Write("B1")
-                .BeginRow().Write("A2").Write("B2");
-        }
-
-        using var package = EPPlusWrapper.Create(stream);
-        package.Workbook.Worksheets.Count.ShouldBe(1);
-        var sheet = package.Workbook.Worksheets[0];
-        sheet.Name.ShouldBe("Sheet1");
-        sheet.Cells["A1"].Value.ShouldBe("A1");
-        sheet.Cells["B1"].Value.ShouldBe("B1");
-        sheet.Cells["A2"].Value.ShouldBe("A2");
-        sheet.Cells["B2"].Value.ShouldBe("B2");
-    }
-
     [Test]
     public static void SheetProtection()
     {
@@ -490,7 +468,13 @@ public static class XlsxWriterTest
     public static void RequireCellReferences(bool requireCellReferences)
     {
         using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream, requireCellReferences: requireCellReferences))
+#if NETCOREAPP2_1_OR_GREATER
+        const bool useZip64 = true;
+#else
+        // ZIP64 does not work with DocumentFormat.OpenXml on .NET Framework
+        const bool useZip64 = false;
+#endif
+        using (var xlsxWriter = new XlsxWriter(new SharpCompressZipWriter(stream, XlsxCompressionLevel.Excel, useZip64: useZip64), requireCellReferences: requireCellReferences))
         {
             xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("Lorem").Write("ipsum");
         }

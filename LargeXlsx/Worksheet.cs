@@ -29,7 +29,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
@@ -61,7 +60,7 @@ namespace LargeXlsx
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
         public Worksheet(
-            ZipWriter zipWriter,
+            SharpCompressZipWriter zipWriter,
             CustomWriter customWriter,
             int id,
             string name,
@@ -92,7 +91,7 @@ namespace LargeXlsx
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
             _stringedCurrentRowNumber = new byte[10];
             _stringedCurrentRowNumberLength = 0;
-            _stream = zipWriter.WriteToStream($"xl/worksheets/sheet{id}.xml", new ZipWriterEntryOptions());
+            _stream = zipWriter.CreateEntry($"xl/worksheets/sheet{id}.xml");
             _customWriter = customWriter;
 
             _customWriter

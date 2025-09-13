@@ -26,7 +26,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.Collections.Generic;
 using System.Linq;
-using SharpCompress.Writers.Zip;
 
 namespace LargeXlsx
 {
@@ -53,9 +52,9 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(ZipWriter zipWriter, CustomWriter customWriter)
+        public void Save(SharpCompressZipWriter zipWriter, CustomWriter customWriter)
         {
-            using (var stream = zipWriter.WriteToStream("xl/sharedStrings.xml", new ZipWriterEntryOptions()))
+            using (var stream = zipWriter.CreateEntry("xl/sharedStrings.xml"))
             {
                 customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"u8
                                    + "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">\n"u8);

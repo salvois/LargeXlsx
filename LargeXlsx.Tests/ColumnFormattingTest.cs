@@ -29,7 +29,6 @@ using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using NUnit.Framework;
-using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using Shouldly;
 using Color = System.Drawing.Color;
@@ -99,7 +98,13 @@ public static class ColumnFormattingTest
     public static void OnlyUnformatted()
     {
         using var stream = new MemoryStream();
-        using (var xlsxWriter = new XlsxWriter(stream))
+#if NETCOREAPP2_1_OR_GREATER
+        const bool useZip64 = true;
+#else
+        // ZIP64 does not work with DocumentFormat.OpenXml on .NET Framework
+        const bool useZip64 = false;
+#endif
+        using (var xlsxWriter = new XlsxWriter(new SharpCompressZipWriter(stream, XlsxCompressionLevel.Excel, useZip64: useZip64)))
             xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Unformatted() });
 
         using var spreadsheetDocument = SpreadsheetDocument.Open(stream, false);
