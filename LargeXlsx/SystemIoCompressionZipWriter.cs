@@ -24,17 +24,27 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#if NETCOREAPP2_1_OR_GREATER
+using System;
 using System.IO;
-using LargeXlsx;
+using System.IO.Compression;
 
-namespace Examples;
+namespace LargeXlsx;
 
-public static class Zip64Small
+public class SystemIoCompressionZipWriter(Stream stream, XlsxCompressionLevel compressionLevel) : IZipWriter
 {
-    public static void Run()
+    private readonly CompressionLevel _compressionLevel = compressionLevel switch
     {
-        using var stream = new FileStream($"{nameof(Zip64Small)}.xlsx", FileMode.Create, FileAccess.Write);
-        using var xlsxWriter = new XlsxWriter(stream, compressionLevel: XlsxCompressionLevel.Excel);
-        xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("A1").Write("B1").BeginRow().Write("A2").Write("B2");
-    }
+        XlsxCompressionLevel.Fastest => CompressionLevel.Fastest,
+        XlsxCompressionLevel.Optimal => CompressionLevel.Optimal,
+        _ => throw new ArgumentOutOfRangeException(nameof(compressionLevel), compressionLevel, null)
+    };
+    private readonly ZipArchive _zipArchive = new(stream, ZipArchiveMode.Create, leaveOpen: true);
+
+    public Stream CreateEntry(string path) =>
+        _zipArchive.CreateEntry(path, _compressionLevel).Open();
+
+    public void Dispose() =>
+        _zipArchive.Dispose();
 }
+#endif

@@ -52,7 +52,7 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(SharpCompressZipWriter zipWriter, CustomWriter customWriter)
+        public void Save(IZipWriter zipWriter, CustomWriter customWriter)
         {
             using (var stream = zipWriter.CreateEntry("xl/sharedStrings.xml"))
             {

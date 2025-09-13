@@ -36,7 +36,7 @@ namespace LargeXlsx
     public sealed class XlsxWriter : IDisposable
     {
         private const int MaxSheetNameLength = 31;
-        private readonly SharpCompressZipWriter _zipWriter;
+        private readonly IZipWriter _zipWriter;
         private readonly List<Worksheet> _worksheets;
         private readonly Stylesheet _stylesheet;
         private readonly SharedStringTable _sharedStringTable;
@@ -54,12 +54,19 @@ namespace LargeXlsx
         public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
         public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
 
-        public XlsxWriter(Stream stream, XlsxCompressionLevel compressionLevel = XlsxCompressionLevel.Excel, bool requireCellReferences = true, bool skipInvalidCharacters = false)
-            : this(new SharpCompressZipWriter(stream, compressionLevel, useZip64: true), requireCellReferences, skipInvalidCharacters)
+        public XlsxWriter(Stream stream, XlsxCompressionLevel compressionLevel = XlsxCompressionLevel.Fastest, bool requireCellReferences = true, bool skipInvalidCharacters = false)
+            : this(
+#if NETCOREAPP2_1_OR_GREATER
+                new SystemIoCompressionZipWriter(stream, compressionLevel),
+#else
+                new SharpCompressZipWriter(stream, compressionLevel, useZip64: true),
+#endif
+                requireCellReferences: requireCellReferences,
+                skipInvalidCharacters: skipInvalidCharacters)
         {
         }
 
-        internal XlsxWriter(SharpCompressZipWriter zipWriter, bool requireCellReferences = true, bool skipInvalidCharacters = false)
+        internal XlsxWriter(IZipWriter zipWriter, bool requireCellReferences = true, bool skipInvalidCharacters = false)
         {
             _worksheets = new List<Worksheet>();
             _stylesheet = new Stylesheet();

@@ -29,7 +29,5 @@ namespace LargeXlsx;
 public enum XlsxCompressionLevel
 {
     Fastest,
-    Excel,
-    Optimal,
-    Best
+    Optimal
 }

@@ -51,6 +51,8 @@ public static class Zip64Huge
                 xlsxWriter.BeginRow().Write($"Row {i}");
                 for (var j = 1; j < ColumnCount; j++)
                     xlsxWriter.Write(i * 100 + j);
+                if (i % 100 == 0)
+                    xlsxWriter.Commit();
                 if (i % 50000 == 0)
                     Console.WriteLine($"{nameof(Zip64Huge)} wrote {i} rows in {stopwatch.ElapsedMilliseconds} ms...");
             }

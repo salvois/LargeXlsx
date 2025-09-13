@@ -60,7 +60,7 @@ namespace LargeXlsx
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
 
         public Worksheet(
-            SharpCompressZipWriter zipWriter,
+            IZipWriter zipWriter,
             CustomWriter customWriter,
             int id,
             string name,

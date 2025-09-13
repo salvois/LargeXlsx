@@ -469,15 +469,12 @@ public static class XlsxWriterTest
     {
         using var stream = new MemoryStream();
 #if NETCOREAPP2_1_OR_GREATER
-        const bool useZip64 = true;
+        using (var xlsxWriter = new XlsxWriter(stream, requireCellReferences: requireCellReferences))
 #else
         // ZIP64 does not work with DocumentFormat.OpenXml on .NET Framework
-        const bool useZip64 = false;
+        using (var xlsxWriter = new XlsxWriter(new SharpCompressZipWriter(stream, XlsxCompressionLevel.Fastest, useZip64: false), requireCellReferences: requireCellReferences))
 #endif
-        using (var xlsxWriter = new XlsxWriter(new SharpCompressZipWriter(stream, XlsxCompressionLevel.Excel, useZip64: useZip64), requireCellReferences: requireCellReferences))
-        {
             xlsxWriter.BeginWorksheet("Sheet1").BeginRow().Write("Lorem").Write("ipsum");
-        }
 
         using var spreadsheetDocument = SpreadsheetDocument.Open(stream, false);
         var sheetId = spreadsheetDocument.WorkbookPart!.Workbook.Sheets!.Elements<Sheet>().Single(s => s.Name == "Sheet1").Id!.ToString()!;

@@ -46,7 +46,6 @@ public static class Program
             Border.Run,
             DataValidation.Run,
             RightToLeft.Run,
-            Zip64Small.Run,
             SheetProtection.Run,
             HeaderFooterPageBreaks.Run,
             InvalidXmlChars.Run,
@@ -55,15 +54,16 @@ public static class Program
             Large.Run,
             StyledLarge.Run,
             StyledLargeCreateStyles.Run,
-            //Zip64Huge.Run,
+            Zip64Huge.Run,
         };
+        Console.WriteLine(System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
         foreach (var example in examples)
         {
             example();
 #if NETCOREAPP3_0_OR_GREATER
-            Console.WriteLine($"Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)} TotalMemory: {GC.GetTotalMemory(false)} TotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
+            Console.WriteLine($"{example.Method.DeclaringType!.Name,20}\tGen0: {GC.CollectionCount(0)}\tGen1: {GC.CollectionCount(1)}\tGen2: {GC.CollectionCount(2)}\tTotalMemory: {GC.GetTotalMemory(false)}\tTotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
 #else
-            Console.WriteLine($"Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)} TotalMemory: {GC.GetTotalMemory(false)}");
+            Console.WriteLine($"{example.Method.DeclaringType!.Name,20}\tGen0: {GC.CollectionCount(0)}\tGen1: {GC.CollectionCount(1)}\tGen2: {GC.CollectionCount(2)}\tTotalMemory: {GC.GetTotalMemory(false)}");
 #endif
         }
     }

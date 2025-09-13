@@ -99,12 +99,11 @@ public static class ColumnFormattingTest
     {
         using var stream = new MemoryStream();
 #if NETCOREAPP2_1_OR_GREATER
-        const bool useZip64 = true;
+        using (var xlsxWriter = new XlsxWriter(stream))
 #else
         // ZIP64 does not work with DocumentFormat.OpenXml on .NET Framework
-        const bool useZip64 = false;
+        using (var xlsxWriter = new XlsxWriter(new SharpCompressZipWriter(stream, XlsxCompressionLevel.Fastest, useZip64: false)))
 #endif
-        using (var xlsxWriter = new XlsxWriter(new SharpCompressZipWriter(stream, XlsxCompressionLevel.Excel, useZip64: useZip64)))
             xlsxWriter.BeginWorksheet("Sheet 1", columns: new[] { XlsxColumn.Unformatted() });
 
         using var spreadsheetDocument = SpreadsheetDocument.Open(stream, false);

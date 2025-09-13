@@ -24,39 +24,12 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#if NETSTANDARD2_0
 using System;
 using System.IO;
-using SharpCompress.Common;
-using SharpCompress.Writers;
-using SharpCompress.Writers.Zip;
-using SharpCompress.Compressors.Deflate;
 
 namespace LargeXlsx;
 
-public class SharpCompressZipWriter : IZipWriter
+public interface IZipWriter : IDisposable
 {
-    private readonly ZipWriter _zipWriter;
-
-    public SharpCompressZipWriter(Stream stream, XlsxCompressionLevel compressionLevel, bool useZip64)
-    {
-        var deflateCompressionLevel = compressionLevel switch
-        {
-            XlsxCompressionLevel.Fastest => CompressionLevel.BestSpeed,
-            XlsxCompressionLevel.Optimal => CompressionLevel.Default,
-            _ => throw new ArgumentOutOfRangeException(nameof(compressionLevel), compressionLevel, null)
-        };
-        _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate)
-        {
-            DeflateCompressionLevel = deflateCompressionLevel,
-            UseZip64 = useZip64
-        });
-    }
-
-    public Stream CreateEntry(string path) =>
-        _zipWriter.WriteToStream(path, new ZipWriterEntryOptions());
-
-    public void Dispose() =>
-        _zipWriter.Dispose();
+    Stream CreateEntry(string path);
 }
-#endif
