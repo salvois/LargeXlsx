@@ -32,25 +32,22 @@ using System.Xml;
 
 namespace LargeXlsx;
 
-internal sealed class CustomWriter(int capacityInBytes = 0)
+internal sealed class CustomWriter
 {
     private readonly char[] _charBuffer = new char[1024];
-    private readonly byte[] _byteBuffer = new byte[4096];
     private readonly Encoder _encoder = Encoding.UTF8.GetEncoder();
-    private readonly MemoryStream _memoryStream = new(capacityInBytes);
+    private byte[] _writeBuffer = new byte[4096];
+    private int _writeBufferLength = 0;
 
     public CustomWriter Append(double value)
     {
 #if NETCOREAPP2_1_OR_GREATER
         if (!value.TryFormat(_charBuffer, out var charsWritten, provider: CultureInfo.InvariantCulture))
             throw new ArgumentException();
-        var bytesWritten = _encoder.GetBytes(_charBuffer, 0, charsWritten, _byteBuffer, 0, true);
+        WriteAscii(_charBuffer, charsWritten);
 #else
-        var s = value.ToString(CultureInfo.InvariantCulture);
-        s.CopyTo(0, _charBuffer, 0, s.Length);
-        var bytesWritten = _encoder.GetBytes(_charBuffer, 0, s.Length, _byteBuffer, 0, true);
+        WriteAscii(value.ToString(CultureInfo.InvariantCulture));
 #endif
-        _memoryStream.Write(_byteBuffer, 0, bytesWritten);
         return this;
     }
 
@@ -59,13 +56,10 @@ internal sealed class CustomWriter(int capacityInBytes = 0)
 #if NETCOREAPP2_1_OR_GREATER
         if (!value.TryFormat(_charBuffer, out var charsWritten, provider: CultureInfo.InvariantCulture))
             throw new ArgumentException();
-        var bytesWritten = _encoder.GetBytes(_charBuffer, 0, charsWritten, _byteBuffer, 0, true);
+        WriteAscii(_charBuffer, charsWritten);
 #else
-        var s = value.ToString(CultureInfo.InvariantCulture);
-        s.CopyTo(0, _charBuffer, 0, s.Length);
-        var bytesWritten = _encoder.GetBytes(_charBuffer, 0, s.Length, _byteBuffer, 0, true);
+        WriteAscii(value.ToString(CultureInfo.InvariantCulture));
 #endif
-        _memoryStream.Write(_byteBuffer, 0, bytesWritten);
         return this;
     }
 
@@ -74,34 +68,18 @@ internal sealed class CustomWriter(int capacityInBytes = 0)
 #if NETCOREAPP2_1_OR_GREATER
         if (!value.TryFormat(_charBuffer, out var charsWritten, provider: CultureInfo.InvariantCulture))
             throw new ArgumentException();
-        var bytesWritten = _encoder.GetBytes(_charBuffer, 0, charsWritten, _byteBuffer, 0, true);
+        WriteAscii(_charBuffer, charsWritten);
 #else
-        var s = value.ToString(CultureInfo.InvariantCulture);
-        s.CopyTo(0, _charBuffer, 0, s.Length);
-        var bytesWritten = _encoder.GetBytes(_charBuffer, 0, s.Length, _byteBuffer, 0, true);
+        WriteAscii(value.ToString(CultureInfo.InvariantCulture));
 #endif
-        _memoryStream.Write(_byteBuffer, 0, bytesWritten);
         return this;
     }
 
     public CustomWriter Append(ReadOnlySpan<byte> value)
     {
-#if NETCOREAPP2_1_OR_GREATER
-        _memoryStream.Write(value);
-#else
-        for (var i = 0; i < value.Length; i += _byteBuffer.Length)
-        {
-            var count = Math.Min(value.Length - i, _byteBuffer.Length);
-            value.Slice(i, count).CopyTo(_byteBuffer);
-            _memoryStream.Write(_byteBuffer, i, count);
-        }
-#endif
-        return this;
-    }
-
-    public CustomWriter Append(byte[] buffer, int offset, int count)
-    {
-        _memoryStream.Write(buffer, offset, count);
+        EnsureDeltaCapacity(value.Length);
+        value.CopyTo(new Span<byte>(_writeBuffer, _writeBufferLength, value.Length));
+        _writeBufferLength += value.Length;
         return this;
     }
 
@@ -111,6 +89,7 @@ internal sealed class CustomWriter(int capacityInBytes = 0)
         for (var i = 0; i < value.Length; i++)
         {
             var c = value[i];
+            EnsureDeltaCapacity(4);
             if (XmlConvert.IsXmlChar(c))
             {
                 if (c == '<') Append("&lt;"u8);
@@ -118,18 +97,23 @@ internal sealed class CustomWriter(int capacityInBytes = 0)
                 else if (c == '&') Append("&amp;"u8);
                 else
                 {
-                    _charBuffer[0] = c;
-                    var bytesWritten = _encoder.GetBytes(_charBuffer, 0, 1, _byteBuffer, 0, true);
-                    _memoryStream.Write(_byteBuffer, 0, bytesWritten);
+                    if (c < 0x80)
+                        _writeBuffer[_writeBufferLength++] = (byte)c;
+                    else
+                    {
+                        _charBuffer[0] = c;
+                        var bytesWritten = _encoder.GetBytes(_charBuffer, 0, 1, _writeBuffer, _writeBufferLength, true);
+                        _writeBufferLength += bytesWritten;
+                    }
                 }
             }
             else if (i < value.Length - 1 && XmlConvert.IsXmlSurrogatePair(value[i + 1], c))
             {
                 _charBuffer[0] = c;
-                _charBuffer[1] = value[i + 1];
-                var bytesWritten = _encoder.GetBytes(_charBuffer, 0, 2, _byteBuffer, 0, true);
-                _memoryStream.Write(_byteBuffer, 0, bytesWritten);
                 i++;
+                _charBuffer[1] = value[i];
+                var bytesWritten = _encoder.GetBytes(_charBuffer, 0, 2, _writeBuffer, _writeBufferLength, true);
+                _writeBufferLength += bytesWritten;
             }
             else if (!skipInvalidCharacters)
                 throw new XmlException($"Invalid XML character at position {i} in \"{value}\"");
@@ -143,6 +127,7 @@ internal sealed class CustomWriter(int capacityInBytes = 0)
         for (var i = 0; i < value.Length; i++)
         {
             var c = value[i];
+            EnsureDeltaCapacity(4);
             if (XmlConvert.IsXmlChar(c))
             {
                 if (c == '<') Append("&lt;"u8);
@@ -152,18 +137,23 @@ internal sealed class CustomWriter(int capacityInBytes = 0)
                 else if (c == '"') Append("&quot;"u8);
                 else
                 {
-                    _charBuffer[0] = c;
-                    var bytesWritten = _encoder.GetBytes(_charBuffer, 0, 1, _byteBuffer, 0, true);
-                    _memoryStream.Write(_byteBuffer, 0, bytesWritten);
+                    if (c < 0x80)
+                        _writeBuffer[_writeBufferLength++] = (byte)c;
+                    else
+                    {
+                        _charBuffer[0] = c;
+                        var bytesWritten = _encoder.GetBytes(_charBuffer, 0, 1, _writeBuffer, _writeBufferLength, true);
+                        _writeBufferLength += bytesWritten;
+                    }
                 }
             }
             else if (i < value.Length - 1 && XmlConvert.IsXmlSurrogatePair(value[i + 1], c))
             {
                 _charBuffer[0] = c;
-                _charBuffer[1] = value[i + 1];
-                var bytesWritten = _encoder.GetBytes(_charBuffer, 0, 2, _byteBuffer, 0, true);
-                _memoryStream.Write(_byteBuffer, 0, bytesWritten);
                 i++;
+                _charBuffer[1] = value[i];
+                var bytesWritten = _encoder.GetBytes(_charBuffer, 0, 2, _writeBuffer, _writeBufferLength, true);
+                _writeBufferLength += bytesWritten;
             }
             else if (!skipInvalidCharacters)
                 throw new XmlException($"Invalid XML character at position {i} in \"{value}\"");
@@ -180,14 +170,13 @@ internal sealed class CustomWriter(int capacityInBytes = 0)
 
     public void FlushTo(Stream outputStream)
     {
-        _memoryStream.Position = 0;
-        _memoryStream.CopyTo(outputStream);
-        _memoryStream.SetLength(0);
+        outputStream.Write(_writeBuffer, 0, _writeBufferLength);
+        _writeBufferLength = 0;
     }
 
     public void FlushToIfBiggerThan(Stream outputStream, int byteThreshold)
     {
-        if (_memoryStream.Length >= byteThreshold)
+        if (_writeBufferLength >= byteThreshold)
             FlushTo(outputStream);
     }
 
@@ -196,11 +185,45 @@ internal sealed class CustomWriter(int capacityInBytes = 0)
 #if NETCOREAPP2_1_OR_GREATER
         if (!value.TryFormat(_charBuffer, out var charsWritten, provider: CultureInfo.InvariantCulture))
             throw new ArgumentException();
-        return _encoder.GetBytes(_charBuffer, 0, charsWritten, destination, 0, true);
+        for (var i = 0; i < charsWritten; i++)
+            destination[i] = (byte)_charBuffer[i];
+        return charsWritten;
 #else
         var s = value.ToString(CultureInfo.InvariantCulture);
-        s.CopyTo(0, _charBuffer, 0, s.Length);
-        return _encoder.GetBytes(_charBuffer, 0, s.Length, destination, 0, true);
+        for (var i = 0; i < s.Length; i++)
+            destination[i] = (byte)s[i];
+        return s.Length;
 #endif
+    }
+
+    private void WriteAscii(char[] chars, int count)
+    {
+        EnsureDeltaCapacity(count);
+        for (var i = 0; i < count; i++)
+            _writeBuffer[_writeBufferLength++] = (byte)chars[i];
+    }
+
+    private void WriteAscii(string s)
+    {
+        // Avoid memory allocations by foreach
+        EnsureDeltaCapacity(s.Length);
+        for (var i = 0; i < s.Length; i++)
+            _writeBuffer[_writeBufferLength++] = (byte)s[i];
+    }
+
+    private void EnsureDeltaCapacity(int deltaCapacity)
+    {
+        var newCapacity = _writeBufferLength + deltaCapacity;
+        var capacity = _writeBuffer.Length;
+        if (capacity < newCapacity)
+        {
+            do
+            {
+                if (capacity >= 1E9)
+                    throw new InvalidOperationException("Attempting to buffer too much data");
+                capacity *= 2;
+            } while (capacity < newCapacity);
+            Array.Resize(ref _writeBuffer, capacity);
+        }
     }
 }

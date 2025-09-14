@@ -73,7 +73,7 @@ namespace LargeXlsx
             _sharedStringTable = new SharedStringTable(skipInvalidCharacters);
             _requireCellReferences = requireCellReferences;
             _skipInvalidCharacters = skipInvalidCharacters;
-            _customWriter = new CustomWriter(1024);
+            _customWriter = new CustomWriter();
             DefaultStyle = XlsxStyle.Default;
             _zipWriter = zipWriter;
         }

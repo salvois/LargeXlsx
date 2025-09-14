@@ -372,7 +372,7 @@ namespace LargeXlsx
         {
             if (_stringedCurrentRowNumberLength == 0)
                 _stringedCurrentRowNumberLength = _customWriter.GetUtf8Bytes(CurrentRowNumber, _stringedCurrentRowNumber);
-            _customWriter.Append(_stringedCurrentRowNumber, 0, _stringedCurrentRowNumberLength);
+            _customWriter.Append(new ReadOnlySpan<byte>(_stringedCurrentRowNumber, 0, _stringedCurrentRowNumberLength));
         }
 
         private void WriteStyle(int styleId)
