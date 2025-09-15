@@ -25,46 +25,58 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Examples;
 
 public static class Program
 {
-    public static void Main(string[] _)
+    public static async Task Main(string[] _)
     {
-        var examples = new[]
-        {
-            Simple.Run,
-            MultipleSheet.Run,
-            FrozenPanes.Run,
-            HideGridlines.Run,
-            WorksheetVisibility.Run,
-            NumberFormats.Run,
-            ColumnFormatting.Run,
-            RowFormatting.Run,
-            Alignment.Run,
-            Border.Run,
-            DataValidation.Run,
-            RightToLeft.Run,
-            SheetProtection.Run,
-            HeaderFooterPageBreaks.Run,
-            InvalidXmlChars.Run,
-            InlineStrings.Run,
-            SharedStrings.Run,
-            Large.Run,
-            StyledLarge.Run,
-            StyledLargeCreateStyles.Run,
-            Zip64Huge.Run,
-        };
         Console.WriteLine(System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
-        foreach (var example in examples)
-        {
-            example();
+        Run(Simple.Run);
+        Run(MultipleSheet.Run);
+        Run(FrozenPanes.Run);
+        Run(HideGridlines.Run);
+        Run(WorksheetVisibility.Run);
+        Run(NumberFormats.Run);
+        Run(ColumnFormatting.Run);
+        Run(RowFormatting.Run);
+        Run(Alignment.Run);
+        Run(Border.Run);
+        Run(DataValidation.Run);
+        Run(RightToLeft.Run);
+        Run(SheetProtection.Run);
+        Run(HeaderFooterPageBreaks.Run);
+        Run(InvalidXmlChars.Run);
+        Run(InlineStrings.Run);
+        Run(SharedStrings.Run);
+        Run(Large.Run);
+        await RunAsync(LargeAsync.Run);
+        Run(StyledLarge.Run);
+        Run(StyledLargeCreateStyles.Run);
+        Run(Zip64Huge.Run);
+    }
+
+    private static void Run(Action example)
+    {
+        example();
+        WriteMemoryInfo(example.Method);
+    }
+
+    private static async Task RunAsync(Func<Task> example)
+    {
+        await example();
+        WriteMemoryInfo(example.Method);
+    }
+
+    private static void WriteMemoryInfo(MethodInfo methodInfo)
+    {
 #if NETCOREAPP3_0_OR_GREATER
-            Console.WriteLine($"{example.Method.DeclaringType!.Name,20}\tGen0: {GC.CollectionCount(0)}\tGen1: {GC.CollectionCount(1)}\tGen2: {GC.CollectionCount(2)}\tTotalMemory: {GC.GetTotalMemory(false)}\tTotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
+        Console.WriteLine($"{methodInfo.DeclaringType!.Name,20}\tGen0: {GC.CollectionCount(0)}\tGen1: {GC.CollectionCount(1)}\tGen2: {GC.CollectionCount(2)}\tTotalMemory: {GC.GetTotalMemory(false)}\tTotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
 #else
-            Console.WriteLine($"{example.Method.DeclaringType!.Name,20}\tGen0: {GC.CollectionCount(0)}\tGen1: {GC.CollectionCount(1)}\tGen2: {GC.CollectionCount(2)}\tTotalMemory: {GC.GetTotalMemory(false)}");
+        Console.WriteLine($"{methodInfo.DeclaringType!.Name,20}\tGen0: {GC.CollectionCount(0)}\tGen1: {GC.CollectionCount(1)}\tGen2: {GC.CollectionCount(2)}\tTotalMemory: {GC.GetTotalMemory(false)}");
 #endif
-        }
     }
 }

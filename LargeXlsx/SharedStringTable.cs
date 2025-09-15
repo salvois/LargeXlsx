@@ -26,52 +26,45 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
-namespace LargeXlsx
+namespace LargeXlsx;
+
+internal class SharedStringTable(bool skipInvalidCharacters)
 {
-    internal class SharedStringTable
+    private readonly Dictionary<string, int> _stringItems = new();
+    private int _nextStringId = 0;
+
+    public int ResolveStringId(string s)
     {
-        private readonly bool _skipInvalidCharacters;
-        private readonly Dictionary<string, int> _stringItems;
-        private int _nextStringId;
-
-        public SharedStringTable(bool skipInvalidCharacters)
+        if (!_stringItems.TryGetValue(s, out var id))
         {
-            _skipInvalidCharacters = skipInvalidCharacters;
-            _stringItems = new Dictionary<string, int>();
-            _nextStringId = 0;
+            id = _nextStringId++;
+            _stringItems.Add(s, id);
         }
+        return id;
+    }
 
-        public int ResolveStringId(string s)
+    public async Task Save(IZipWriter zipWriter, CustomWriter customWriter)
+    {
+#if NETCOREAPP2_1_OR_GREATER
+        await using var stream = zipWriter.CreateEntry("xl/sharedStrings.xml");
+#else
+        using var stream = zipWriter.CreateEntry("xl/sharedStrings.xml");
+#endif
+        customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"u8
+                            + "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">\n"u8);
+        foreach (var si in _stringItems.OrderBy(s => s.Value))
         {
-            if (!_stringItems.TryGetValue(s, out var id))
-            {
-                id = _nextStringId++;
-                _stringItems.Add(s, id);
-            }
-            return id;
+            // <si><t xml:space="preserve">{0}</t></si>
+            await customWriter
+                .Append("<si><t"u8)
+                .AddSpacePreserveIfNeeded(si.Key)
+                .Append(">"u8)
+                .AppendEscapedXmlText(si.Key, skipInvalidCharacters)
+                .Append("</t></si>\n"u8)
+                .TryFlushToAsync(stream).ConfigureAwait(false);
         }
-
-        public void Save(IZipWriter zipWriter, CustomWriter customWriter)
-        {
-            using (var stream = zipWriter.CreateEntry("xl/sharedStrings.xml"))
-            {
-                customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"u8
-                                   + "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">\n"u8);
-                foreach (var si in _stringItems.OrderBy(s => s.Value))
-                {
-                    // <si><t xml:space="preserve">{0}</t></si>
-                    customWriter
-                        .Append("<si><t"u8)
-                        .AddSpacePreserveIfNeeded(si.Key)
-                        .Append(">"u8)
-                        .AppendEscapedXmlText(si.Key, _skipInvalidCharacters)
-                        .Append("</t></si>\n"u8);
-                    customWriter.FlushToIfBiggerThan(stream, 65536);
-                }
-                customWriter.Append("</sst>\n"u8);
-                customWriter.FlushTo(stream);
-            }
-        }
+        await customWriter.Append("</sst>\n"u8).FlushToAsync(stream).ConfigureAwait(false);
     }
 }

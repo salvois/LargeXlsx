@@ -27,7 +27,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LargeXlsx
 {
@@ -107,20 +109,21 @@ namespace LargeXlsx
             return id;
         }
 
-        public void Save(IZipWriter zipWriter, CustomWriter customWriter)
+        public async Task Save(IZipWriter zipWriter, CustomWriter customWriter)
         {
-            using (var stream = zipWriter.CreateEntry("xl/styles.xml"))
-            {
-                customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"u8
-                                   + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">\n"u8);
-                WriteNumberFormats(customWriter);
-                WriteFonts(customWriter);
-                WriteFills(customWriter);
-                WriteBorders(customWriter);
-                WriteCellFormats(customWriter);
-                customWriter.Append("</styleSheet>\n"u8);
-                customWriter.FlushTo(stream);
-            }
+#if NETCOREAPP2_1_OR_GREATER
+            await using var stream = zipWriter.CreateEntry("xl/styles.xml");
+#else
+            using var stream = zipWriter.CreateEntry("xl/styles.xml");
+#endif
+            customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"u8
+                                + "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">\n"u8);
+            await WriteNumberFormats(customWriter, stream).ConfigureAwait(false);
+            await WriteFonts(customWriter, stream).ConfigureAwait(false);
+            await WriteFills(customWriter, stream).ConfigureAwait(false);
+            await WriteBorders(customWriter, stream).ConfigureAwait(false);
+            await WriteCellFormats(customWriter, stream).ConfigureAwait(false);
+            await customWriter.Append("</styleSheet>\n"u8).FlushToAsync(stream).ConfigureAwait(false);
         }
 
         private void SetLastUsedStyle(XlsxStyle style, int styleId)
@@ -129,22 +132,23 @@ namespace LargeXlsx
             _lastUsedStyleId = styleId;
         }
 
-        private void WriteNumberFormats(CustomWriter customWriter)
+        private async Task WriteNumberFormats(CustomWriter customWriter, Stream outputStream)
         {
             customWriter.Append("<numFmts count=\""u8).Append(_numberFormats.Count(nf => nf.Value >= FirstCustomNumberFormatId)).Append("\">\n"u8);
             foreach (var numberFormat in _numberFormats.Where(nf => nf.Value >= FirstCustomNumberFormatId).OrderBy(nf => nf.Value))
             {
-                customWriter
+                await customWriter
                     .Append("<numFmt numFmtId=\""u8)
                     .Append(numberFormat.Value)
                     .Append("\" formatCode=\""u8)
                     .AppendEscapedXmlAttribute(numberFormat.Key.FormatCode, false)
-                    .Append("\"/>\n"u8);
+                    .Append("\"/>\n"u8)
+                    .TryFlushToAsync(outputStream).ConfigureAwait(false);
             }
             customWriter.Append("</numFmts>\n"u8);
         }
 
-        private void WriteFonts(CustomWriter customWriter)
+        private async Task WriteFonts(CustomWriter customWriter, Stream outputStream)
         {
             customWriter.Append("<fonts count=\""u8).Append(_fonts.Count).Append("\">\n"u8);
             foreach (var font in _fonts.OrderBy(f => f.Value))
@@ -174,29 +178,30 @@ namespace LargeXlsx
                         customWriter.Append("<u val=\""u8).AppendEscapedXmlAttribute(Util.EnumToAttributeValue(font.Key.UnderlineType), false).Append("\"/>"u8);
                         break;
                 }
-                customWriter.Append("</font>\n"u8);
+                await customWriter.Append("</font>\n"u8).TryFlushToAsync(outputStream).ConfigureAwait(false);
             }
             customWriter.Append("</fonts>\n"u8);
         }
 
-        private void WriteFills(CustomWriter customWriter)
+        private async Task WriteFills(CustomWriter customWriter, Stream outputStream)
         {
             customWriter.Append("<fills count=\""u8).Append(_fills.Count).Append("\">\n"u8);
             foreach (var fill in _fills.OrderBy(f => f.Value))
             {
                 var colorString = GetColorString(fill.Key.Color);
-                customWriter.Append("<fill><patternFill patternType=\""u8)
+                await customWriter.Append("<fill><patternFill patternType=\""u8)
                     .AppendEscapedXmlAttribute(Util.EnumToAttributeValue(fill.Key.PatternType), false)
                     .Append("\"><fgColor rgb=\""u8)
                     .AppendEscapedXmlAttribute(colorString, false)
                     .Append("\"/><bgColor rgb=\""u8)
                     .AppendEscapedXmlAttribute(colorString, false)
-                    .Append("\"/></patternFill></fill>\n"u8);
+                    .Append("\"/></patternFill></fill>\n"u8)
+                    .TryFlushToAsync(outputStream).ConfigureAwait(false);
             }
             customWriter.Append("</fills>\n"u8);
         }
 
-        private void WriteBorders(CustomWriter customWriter)
+        private async Task WriteBorders(CustomWriter customWriter, Stream outputStream)
         {
             customWriter.Append("<borders count=\""u8).Append(_borders.Count).Append("\">\n"u8);
             foreach (var border in _borders.OrderBy(b => b.Value))
@@ -212,7 +217,7 @@ namespace LargeXlsx
                 WriteBorderLine(customWriter, "top"u8, border.Key.Top);
                 WriteBorderLine(customWriter, "bottom"u8, border.Key.Bottom);
                 WriteBorderLine(customWriter, "diagonal"u8, border.Key.Diagonal);
-                customWriter.Append("</border>\n"u8);
+                await customWriter.Append("</border>\n"u8).TryFlushToAsync(outputStream).ConfigureAwait(false);
             }
             customWriter.Append("</borders>\n"u8);
         }
@@ -232,7 +237,7 @@ namespace LargeXlsx
             }
         }
 
-        private void WriteCellFormats(CustomWriter customWriter)
+        private async Task WriteCellFormats(CustomWriter customWriter, Stream outputStream)
         {
             customWriter.Append("<cellXfs count=\""u8).Append(_styles.Count).Append("\">\n"u8);
             foreach (var style in _styles.OrderBy(s => s.Value))
@@ -265,6 +270,7 @@ namespace LargeXlsx
                 {
                     customWriter.Append("/>\n"u8);
                 }
+                await customWriter.TryFlushToAsync(outputStream).ConfigureAwait(false);
             }
             customWriter.Append("</cellXfs>\n"u8);
         }

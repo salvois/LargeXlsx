@@ -28,16 +28,19 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using System.Xml;
 
 namespace LargeXlsx;
 
-internal sealed class CustomWriter
+internal sealed class CustomWriter(int flushThreshold = 65536)
 {
     private readonly char[] _charBuffer = new char[1024];
     private readonly Encoder _encoder = Encoding.UTF8.GetEncoder();
     private byte[] _writeBuffer = new byte[4096];
     private int _writeBufferLength = 0;
+
+    public int WriteBufferCapacity => _writeBuffer.Length;
 
     public CustomWriter Append(double value)
     {
@@ -168,16 +171,27 @@ internal sealed class CustomWriter
         return this;
     }
 
+    public void TryFlushTo(Stream outputStream)
+    {
+        if (_writeBufferLength >= flushThreshold)
+            FlushTo(outputStream);
+    }
+
     public void FlushTo(Stream outputStream)
     {
         outputStream.Write(_writeBuffer, 0, _writeBufferLength);
         _writeBufferLength = 0;
     }
 
-    public void FlushToIfBiggerThan(Stream outputStream, int byteThreshold)
+    public Task TryFlushToAsync(Stream outputStream) =>
+        _writeBufferLength >= flushThreshold
+            ? FlushToAsync(outputStream)
+            : Task.CompletedTask;
+
+    public async Task FlushToAsync(Stream outputStream)
     {
-        if (_writeBufferLength >= byteThreshold)
-            FlushTo(outputStream);
+        await outputStream.WriteAsync(_writeBuffer, 0, _writeBufferLength).ConfigureAwait(false);
+        _writeBufferLength = 0;
     }
 
     public int GetUtf8Bytes(int value, byte[] destination)

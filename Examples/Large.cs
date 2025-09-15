@@ -68,8 +68,6 @@ public static class Large
             xlsxWriter.BeginRow().Write($"Row {i}");
             for (var j = 1; j < ColumnCount; j++)
                 xlsxWriter.Write(i * 1000 + j, numberStyle);
-            if (i % 100 == 0)
-                xlsxWriter.Commit();
         }
     }
 }

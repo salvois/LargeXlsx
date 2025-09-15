@@ -29,10 +29,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LargeXlsx
 {
-    internal class Worksheet : IDisposable
+    internal sealed class Worksheet : IAsyncDisposable
     {
         private readonly Stream _stream;
         private readonly CustomWriter _customWriter;
@@ -113,24 +114,35 @@ namespace LargeXlsx
             _customWriter.Append("<sheetData>\n"u8);
         }
 
-        public void Commit()
-        {
+        public void Commit() =>
             _customWriter.FlushTo(_stream);
-        }
 
-        public void Dispose()
+        public void TryCommit() =>
+            _customWriter.TryFlushTo(_stream);
+
+        public Task CommitAsync() =>
+            _customWriter.FlushToAsync(_stream);
+
+        public Task TryCommitAsync() =>
+            _customWriter.TryFlushToAsync(_stream);
+
+        public async ValueTask DisposeAsync()
         {
             CloseLastRow();
             _customWriter.Append("</sheetData>\n"u8);
-            WriteSheetProtection();
+            await WriteSheetProtection().ConfigureAwait(false);
             WriteAutoFilter();
-            WriteMergedCells();
-            WriteDataValidations();
-            WriteHeaderFooter();
+            await WriteMergedCells().ConfigureAwait(false);
+            await WriteDataValidations().ConfigureAwait(false);
+            await WriteHeaderFooter().ConfigureAwait(false);
             WritePageBreaks();
             _customWriter.Append("</worksheet>\n"u8);
-            _customWriter.FlushTo(_stream);
+            await _customWriter.FlushToAsync(_stream).ConfigureAwait(false);
+#if NETCOREAPP2_1_OR_GREATER
+            await _stream.DisposeAsync().ConfigureAwait(false);
+#else
             _stream.Dispose();
+#endif
         }
 
         public void BeginRow(double? height, bool hidden, XlsxStyle style)
@@ -479,17 +491,17 @@ namespace LargeXlsx
                 _customWriter.Append("<autoFilter ref=\""u8).AppendEscapedXmlAttribute(_autoFilterRef, false).Append("\"/>\n"u8);
         }
 
-        private void WriteMergedCells()
+        private async Task WriteMergedCells()
         {
             if (!_mergedCellRefs.Any())
                 return;
             _customWriter.Append("<mergeCells count=\""u8).Append(_mergedCellRefs.Count).Append("\">\n"u8);
             foreach (var mergedCell in _mergedCellRefs)
-                _customWriter.Append("<mergeCell ref=\""u8).AppendEscapedXmlAttribute(mergedCell, false).Append("\"/>\n"u8);
+                await _customWriter.Append("<mergeCell ref=\""u8).AppendEscapedXmlAttribute(mergedCell, false).Append("\"/>\n"u8).TryFlushToAsync(_stream).ConfigureAwait(false);
             _customWriter.Append("</mergeCells>\n"u8);
         }
 
-        private void WriteDataValidations()
+        private async Task WriteDataValidations()
         {
             if (!_cellRefsByDataValidation.Any())
                 return;
@@ -526,12 +538,12 @@ namespace LargeXlsx
                     _customWriter.Append("<formula1>"u8).AppendEscapedXmlText(kvp.Key.Formula1, _skipInvalidCharacters).Append("</formula1>"u8);
                 if (kvp.Key.Formula2 != null)
                     _customWriter.Append("<formula2>"u8).AppendEscapedXmlText(kvp.Key.Formula2, _skipInvalidCharacters).Append("</formula2>"u8);
-                _customWriter.Append("</dataValidation>\n"u8);
+                await _customWriter.Append("</dataValidation>\n"u8).TryFlushToAsync(_stream).ConfigureAwait(false);
             }
             _customWriter.Append("</dataValidations>\n"u8);
         }
 
-        private void WriteSheetProtection()
+        private async Task WriteSheetProtection()
         {
             if (_sheetProtection == null)
                 return;
@@ -562,10 +574,10 @@ namespace LargeXlsx
             if (!_sheetProtection.AutoFilter) _customWriter.Append(" autoFilter=\"0\""u8);
             if (!_sheetProtection.PivotTables) _customWriter.Append(" pivotTables=\"0\""u8);
             if (_sheetProtection.SelectUnlockedCells) _customWriter.Append(" selectUnlockedCells=\"1\""u8);
-            _customWriter.Append("/>\n"u8);
+            await _customWriter.Append("/>\n"u8).TryFlushToAsync(_stream).ConfigureAwait(false);
         }
 
-        private void WriteHeaderFooter()
+        private async Task WriteHeaderFooter()
         {
             if (_headerFooter == null)
                 return;
@@ -593,7 +605,7 @@ namespace LargeXlsx
                 _customWriter.Append("<firstHeader>"u8).AppendEscapedXmlText(_headerFooter.FirstHeader, _skipInvalidCharacters).Append("</firstHeader>\n"u8);
             if (_headerFooter.FirstFooter != null)
                 _customWriter.Append("<firstFooter>"u8).AppendEscapedXmlText(_headerFooter.FirstFooter, _skipInvalidCharacters).Append("</firstFooter>\n"u8);
-            _customWriter.Append("</headerFooter>\n"u8);
+            await _customWriter.Append("</headerFooter>\n"u8).TryFlushToAsync(_stream).ConfigureAwait(false);
         }
 
         private void WritePageBreaks()

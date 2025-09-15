@@ -30,10 +30,11 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace LargeXlsx
 {
-    public sealed class XlsxWriter : IDisposable
+    public sealed class XlsxWriter : IDisposable, IAsyncDisposable
     {
         private const int MaxSheetNameLength = 31;
         private readonly IZipWriter _zipWriter;
@@ -51,10 +52,15 @@ namespace LargeXlsx
         public int CurrentRowNumber => _currentWorksheet.CurrentRowNumber;
         public int CurrentColumnNumber => _currentWorksheet.CurrentColumnNumber;
         public string CurrentColumnName => Util.GetColumnName(CurrentColumnNumber);
-        public string GetRelativeColumnName(int offsetFromCurrentColumn) => Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
-        public static string GetColumnName(int columnIndex) => Util.GetColumnName(columnIndex);
+        public int BufferCapacity => _customWriter.WriteBufferCapacity;
 
-        public XlsxWriter(Stream stream, XlsxCompressionLevel compressionLevel = XlsxCompressionLevel.Fastest, bool requireCellReferences = true, bool skipInvalidCharacters = false)
+        public string GetRelativeColumnName(int offsetFromCurrentColumn) =>
+            Util.GetColumnName(CurrentColumnNumber + offsetFromCurrentColumn);
+
+        public static string GetColumnName(int columnIndex) =>
+            Util.GetColumnName(columnIndex);
+
+        public XlsxWriter(Stream stream, XlsxCompressionLevel compressionLevel = XlsxCompressionLevel.Fastest, bool requireCellReferences = true, bool skipInvalidCharacters = false, int commitThreshold = 65536)
             : this(
 #if NETCOREAPP2_1_OR_GREATER
                 new SystemIoCompressionZipWriter(stream, compressionLevel),
@@ -62,20 +68,27 @@ namespace LargeXlsx
                 new SharpCompressZipWriter(stream, compressionLevel, useZip64: true),
 #endif
                 requireCellReferences: requireCellReferences,
-                skipInvalidCharacters: skipInvalidCharacters)
+                skipInvalidCharacters: skipInvalidCharacters,
+                commitThreshold: commitThreshold)
         {
         }
 
-        internal XlsxWriter(IZipWriter zipWriter, bool requireCellReferences = true, bool skipInvalidCharacters = false)
+        internal XlsxWriter(IZipWriter zipWriter, bool requireCellReferences = true, bool skipInvalidCharacters = false, int commitThreshold = 65536)
         {
             _worksheets = new List<Worksheet>();
             _stylesheet = new Stylesheet();
             _sharedStringTable = new SharedStringTable(skipInvalidCharacters);
             _requireCellReferences = requireCellReferences;
             _skipInvalidCharacters = skipInvalidCharacters;
-            _customWriter = new CustomWriter();
+            _customWriter = new CustomWriter(commitThreshold);
             DefaultStyle = XlsxStyle.Default;
             _zipWriter = zipWriter;
+        }
+
+        public void TryCommit()
+        {
+            CheckInWorksheet();
+            _currentWorksheet.TryCommit();
         }
 
         public void Commit()
@@ -84,17 +97,33 @@ namespace LargeXlsx
             _currentWorksheet.Commit();
         }
 
-        public void Dispose()
+        public Task TryCommitAsync()
+        {
+            CheckInWorksheet();
+            return _currentWorksheet.TryCommitAsync();
+        }
+
+        public Task CommitAsync()
+        {
+            CheckInWorksheet();
+            return _currentWorksheet.CommitAsync();
+        }
+
+        public void Dispose() => 
+            DisposeAsync().GetAwaiter().GetResult();
+
+        public async ValueTask DisposeAsync()
         {
             if (!_disposed)
             {
-                _currentWorksheet?.Dispose();
-                _stylesheet.Save(_zipWriter, _customWriter);
-                _sharedStringTable.Save(_zipWriter, _customWriter);
+                if (_currentWorksheet != null)
+                    await _currentWorksheet.DisposeAsync().ConfigureAwait(false);
+                await _stylesheet.Save(_zipWriter, _customWriter).ConfigureAwait(false);
+                await _sharedStringTable.Save(_zipWriter, _customWriter).ConfigureAwait(false);
                 SaveDocProps();
                 SaveContentTypes();
                 SaveRels();
-                SaveWorkbook();
+                await SaveWorkbook().ConfigureAwait(false);
                 SaveWorkbookRels();
                 _zipWriter.Dispose();
                 _disposed = true;
@@ -155,52 +184,53 @@ namespace LargeXlsx
             }
         }
 
-        private void SaveWorkbook()
+        private async Task SaveWorkbook()
         {
-            using (var stream = _zipWriter.CreateEntry("xl/workbook.xml"))
+#if NETCOREAPP2_1_OR_GREATER
+            await using var stream = _zipWriter.CreateEntry("xl/workbook.xml");
+#else
+            using var stream = _zipWriter.CreateEntry("xl/workbook.xml");
+#endif
+            _customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"u8
+                                 + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"u8
+                                 + "<sheets>"u8);
+            var hasDefinedNames = false;
+            for (var i = 0; i < _worksheets.Count; i++)
             {
-                _customWriter.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"u8
-                                           + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"u8
-                                           + "<sheets>"u8);
-                var hasDefinedNames = false;
+                var worksheet = _worksheets[i];
+                _customWriter
+                    .Append("<sheet name=\""u8)
+                    .AppendEscapedXmlAttribute(worksheet.Name, _skipInvalidCharacters)
+                    .Append("\" sheetId=\""u8)
+                    .Append(worksheet.Id)
+                    .Append("\" "u8)
+                    .Append(GetWorksheetState(worksheet.State))
+                    .Append(" r:id=\"RidWS"u8)
+                    .Append(worksheet.Id)
+                    .Append("\"/>"u8);
+                if (worksheet.AutoFilterAbsoluteRef != null)
+                    hasDefinedNames = true;
+            }
+            _customWriter.Append("</sheets>"u8);
+            if (hasDefinedNames)
+            {
+                _customWriter.Append("<definedNames>"u8);
                 for (var i = 0; i < _worksheets.Count; i++)
                 {
                     var worksheet = _worksheets[i];
-                    _customWriter
-                        .Append("<sheet name=\""u8)
-                        .AppendEscapedXmlAttribute(worksheet.Name, _skipInvalidCharacters)
-                        .Append("\" sheetId=\""u8)
-                        .Append(worksheet.Id)
-                        .Append("\" "u8)
-                        .Append(GetWorksheetState(worksheet.State))
-                        .Append(" r:id=\"RidWS"u8)
-                        .Append(worksheet.Id)
-                        .Append("\"/>"u8);
                     if (worksheet.AutoFilterAbsoluteRef != null)
-                        hasDefinedNames = true;
+                        _customWriter
+                            .Append("<definedName name=\"_xlnm._FilterDatabase\" localSheetId=\""u8)
+                            .Append(i)
+                            .Append("\" hidden=\"1\">"u8)
+                            .AppendEscapedXmlText(worksheet.AutoFilterAbsoluteRef, _skipInvalidCharacters)
+                            .Append("</definedName>"u8);
                 }
-                _customWriter.Append("</sheets>"u8);
-                if (hasDefinedNames)
-                {
-                    _customWriter.Append("<definedNames>"u8);
-                    for (var i = 0; i < _worksheets.Count; i++)
-                    {
-                        var worksheet = _worksheets[i];
-                        if (worksheet.AutoFilterAbsoluteRef != null)
-                            _customWriter
-                                .Append("<definedName name=\"_xlnm._FilterDatabase\" localSheetId=\""u8)
-                                .Append(i)
-                                .Append("\" hidden=\"1\">"u8)
-                                .AppendEscapedXmlText(worksheet.AutoFilterAbsoluteRef, _skipInvalidCharacters)
-                                .Append("</definedName>"u8);
-                    }
-                    _customWriter.Append("</definedNames>"u8);
-                }
-                if (_hasFormulasWithoutResult)
-                    _customWriter.Append("<calcPr calcCompleted=\"0\" fullCalcOnLoad=\"1\"/>"u8);
-                _customWriter.Append("</workbook>"u8);
-                _customWriter.FlushTo(stream);
+                _customWriter.Append("</definedNames>"u8);
             }
+            if (_hasFormulasWithoutResult)
+                _customWriter.Append("<calcPr calcCompleted=\"0\" fullCalcOnLoad=\"1\"/>"u8);
+            await _customWriter.Append("</workbook>"u8).FlushToAsync(stream).ConfigureAwait(false);
         }
 
         private static ReadOnlySpan<byte> GetWorksheetState(XlsxWorksheetState state)
@@ -245,11 +275,25 @@ namespace LargeXlsx
             bool showHeaders = true,
             XlsxWorksheetState state = XlsxWorksheetState.Visible)
         {
+            return BeginWorksheetAsync(name, splitRow, splitColumn, rightToLeft, columns, showGridLines, showHeaders, state).GetAwaiter().GetResult();
+        }
+        
+        public async Task<XlsxWriter> BeginWorksheetAsync(
+            string name,
+            int splitRow = 0,
+            int splitColumn = 0,
+            bool rightToLeft = false,
+            IEnumerable<XlsxColumn> columns = null,
+            bool showGridLines = true,
+            bool showHeaders = true,
+            XlsxWorksheetState state = XlsxWorksheetState.Visible)
+        {
             if (name.Length > MaxSheetNameLength)
                 throw new ArgumentException($"The name \"{name}\" exceeds the maximum length of {MaxSheetNameLength} characters supported by Excel");
             if (_worksheets.Any(ws => string.Equals(ws.Name, name, StringComparison.InvariantCultureIgnoreCase)))
                 throw new ArgumentException($"A worksheet named \"{name}\" has already been added");
-            _currentWorksheet?.Dispose();
+            if (_currentWorksheet != null)
+                await _currentWorksheet.DisposeAsync().ConfigureAwait(false);
             _currentWorksheet = new Worksheet(
                 zipWriter: _zipWriter,
                 customWriter: _customWriter,
@@ -261,7 +305,7 @@ namespace LargeXlsx
                 state: state,
                 stylesheet: _stylesheet,
                 sharedStringTable: _sharedStringTable,
-                columns: columns ?? Enumerable.Empty<XlsxColumn>(),
+                columns: columns ?? [],
                 showGridLines: showGridLines,
                 showHeaders: showHeaders,
                 requireCellReferences: _requireCellReferences,
@@ -280,6 +324,15 @@ namespace LargeXlsx
         public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null)
         {
             CheckInWorksheet();
+            TryCommit();
+            _currentWorksheet.BeginRow(height, hidden, style);
+            return this;
+        }
+
+        public async Task<XlsxWriter> BeginRowAsync(double? height = null, bool hidden = false, XlsxStyle style = null)
+        {
+            CheckInWorksheet();
+            await TryCommitAsync().ConfigureAwait(false);
             _currentWorksheet.BeginRow(height, hidden, style);
             return this;
         }
