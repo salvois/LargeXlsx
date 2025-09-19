@@ -24,12 +24,14 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+using SharpCompress.Writers.Zip;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using SharpCompress.Writers.Zip;
+using static LargeXlsx.XlsxFont;
 
 namespace LargeXlsx
 {
@@ -275,6 +277,107 @@ namespace LargeXlsx
                 .Append(_sharedStringTable.ResolveStringId(value))
                 .Append("</v></c>\n");
             CurrentColumnNumber++;
+        }
+
+        public void WriteRichText(IEnumerable<XlsxRichTextRun> runs, XlsxStyle style)
+        {
+            if (runs == null || !runs.Any())
+            {
+                // No runs => write an empty cell with the provided style
+                Write(style, 1);
+                return;
+            }
+
+            EnsureRow();
+
+            _streamWriter.Write("<c");
+            WriteCellRef();
+            WriteStyle(style);
+            _streamWriter.Append(" t=\"inlineStr\"><is>");
+
+            foreach (var run in runs)
+                WriteRichTextRun(run);
+
+            _streamWriter.Append("</is></c>\n");
+            CurrentColumnNumber++;
+        }
+
+        private void WriteRichTextRun(XlsxRichTextRun run)
+        {
+            if (run?.Text == null)
+                return;
+
+            _streamWriter.Append("<r>");
+            if (run.Font != null)
+                WriteRunProperties(run.Font);
+
+            _streamWriter.Append("<t")
+                .AddSpacePreserveIfNeeded(run.Text)
+                .Append(">")
+                .AppendEscapedXmlText(run.Text, _skipInvalidCharacters)
+                .Append("</t>");
+            _streamWriter.Append("</r>");
+        }
+
+        private void WriteRunProperties(XlsxFont font)
+        {
+            // Writes <rPr>...</rPr> based on XlsxFont
+            _streamWriter.Append("<rPr>");
+
+            // Font name
+            // <rFont val="Calibri"/>
+            if (!string.IsNullOrEmpty(font.Name))
+                _streamWriter.Append("<rFont val=\"").AppendEscapedXmlAttribute(font.Name, _skipInvalidCharacters).Append("\"/>");
+
+            // Font size
+            // <sz val="11"/>
+            if (font.Size > 0)
+                _streamWriter.Append("<sz val=\"").Append(font.Size).Append("\"/>");
+
+            // Color
+            // <color rgb="FFRRGGBB"/>
+            _streamWriter.Append("<color rgb=\"").Append(Util.GetColorString(font.Color)).Append("\"/>");
+
+            // Bold / Italic / Strike
+            if (font.Bold) _streamWriter.Append("<b/>");
+            if (font.Italic) _streamWriter.Append("<i/>");
+            if (font.Strike) _streamWriter.Append("<strike/>");
+
+            // Underline
+            var u = GetUnderlineAttributeValue(font.UnderlineType);
+            if (u == null)
+            {
+                // None => no element
+            }
+            else if (u.Length == 0)
+            {
+                // Single => <u/>
+                _streamWriter.Append("<u/>");
+            }
+            else
+            {
+                // Others => <u val="..."/>
+                _streamWriter.Append("<u val=\"").Append(u).Append("\"/>");
+            }
+
+            _streamWriter.Append("</rPr>");
+        }
+
+        private static string GetUnderlineAttributeValue(Underline underline)
+        {
+            // Returns:
+            // null => no underline
+            // ""   => single (no val attribute)
+            // "double" | "singleAccounting" | "doubleAccounting" for others
+            switch (underline)
+            {
+                case Underline.None: return null;
+                case Underline.Single: return string.Empty;
+                case Underline.Double: return "double";
+                case Underline.SingleAccounting: return "singleAccounting";
+                case Underline.DoubleAccounting: return "doubleAccounting";
+                default: return string.Empty;
+            }
         }
 
         public void AddMergedCell(int fromRow, int fromColumn, int rowCount, int columnCount)

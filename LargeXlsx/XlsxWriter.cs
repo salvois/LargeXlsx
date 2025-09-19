@@ -341,6 +341,18 @@ namespace LargeXlsx
             return AddMergedCell(1, columnSpan).Write(value, style, 1).Write(style, repeatCount: columnSpan - 1);
         }
 
+        public XlsxWriter WriteRichText(IEnumerable<XlsxRichTextRun> runs, XlsxStyle style = null, int columnSpan = 1)
+        {
+            if (columnSpan == 1)
+            {
+                CheckInWorksheet();
+                _currentWorksheet.WriteRichText(runs, style ?? DefaultStyle);
+                return this;
+            }
+
+            return AddMergedCell(1, columnSpan).WriteRichText(runs, style, 1).Write(style, repeatCount: columnSpan - 1);
+        }
+
         public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, IConvertible result = null)
         {
             if (columnSpan == 1)

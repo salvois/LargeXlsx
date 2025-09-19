@@ -154,7 +154,7 @@ namespace LargeXlsx
                     .Append("<font><sz val=\"")
                     .Append(font.Key.Size)
                     .Append("\"/><color rgb=\"")
-                    .Append(GetColorString(font.Key.Color))
+                    .Append(Util.GetColorString(font.Key.Color))
                     .Append("\"/><name val=\"")
                     .AppendEscapedXmlAttribute(font.Key.Name, false)
                     .Append("\"/><family val=\"2\"/>");
@@ -191,7 +191,7 @@ namespace LargeXlsx
                                    + "<bgColor rgb=\"{1}\"/>"
                                    + "</patternFill>"
                                    + "</fill>",
-                    Util.EnumToAttributeValue(fill.Key.PatternType), GetColorString(fill.Key.Color));
+                    Util.EnumToAttributeValue(fill.Key.PatternType), Util.GetColorString(fill.Key.Color));
             }
             streamWriter.WriteLine("</fills>");
         }
@@ -218,7 +218,7 @@ namespace LargeXlsx
             {
                 streamWriter.Write($"<{elementName} style=\"{Util.EnumToAttributeValue(line.Style)}\">");
                 if (line.Color != Color.Transparent)
-                    streamWriter.Write($"<color rgb=\"{GetColorString(line.Color)}\"/>");
+                    streamWriter.Write($"<color rgb=\"{Util.GetColorString(line.Color)}\"/>");
                 streamWriter.WriteLine($"</{elementName}>");
             }
             else
@@ -257,7 +257,5 @@ namespace LargeXlsx
             }
             streamWriter.WriteLine("</cellXfs>");
         }
-
-        private static string GetColorString(Color color) => $"{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
     }
 }
