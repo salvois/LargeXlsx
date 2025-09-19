@@ -24,37 +24,22 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 using System;
 
-namespace Examples;
-
-public static class Program
+namespace LargeXlsx
 {
-    public static void Main(string[] _)
+    public sealed class XlsxRichTextRun
     {
-        Simple.Run();
-        MultipleSheet.Run();
-        FrozenPanes.Run();
-        HideGridlines.Run();
-        WorksheetVisibility.Run();
-        NumberFormats.Run();
-        ColumnFormatting.Run();
-        RowFormatting.Run();
-        Alignment.Run();
-        Border.Run();
-        DataValidation.Run();
-        RightToLeft.Run();
-        RichText.Run();
-        Zip64Small.Run();
-        SheetProtection.Run();
-        HeaderFooterPageBreaks.Run();
-        InvalidXmlChars.Run();
-        InlineStrings.Run();
-        SharedStrings.Run();
-        Large.Run();
-        StyledLarge.Run();
-        StyledLargeCreateStyles.Run();
-        Zip64Huge.Run();
-        Console.WriteLine($"Gen0: {GC.CollectionCount(0)} Gen1: {GC.CollectionCount(1)} Gen2: {GC.CollectionCount(2)} TotalAllocatedBytes: {GC.GetTotalAllocatedBytes()}");
+        public string Text { get; }
+        public XlsxFont Font { get; }
+
+        public XlsxRichTextRun(string text, XlsxFont font = null)
+        {
+            if (text == null)
+                throw new ArgumentNullException(nameof(text));
+            Text = text;
+            Font = font;
+        }
     }
 }

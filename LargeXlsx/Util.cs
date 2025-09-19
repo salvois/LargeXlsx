@@ -25,6 +25,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 using System;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -180,9 +181,14 @@ namespace LargeXlsx
 
         public static TextWriter AddSpacePreserveIfNeeded(this TextWriter textWriter, string value)
         {
-            if (value.Length > 0 && (XmlConvert.IsWhitespaceChar(value[0]) || XmlConvert.IsWhitespaceChar(value[value.Length - 1])))
+            if (value.Length > 0 && (XmlConvert.IsWhitespaceChar(value[0]) ||
+                                     XmlConvert.IsWhitespaceChar(value[value.Length - 1])))
                 textWriter.Write(" xml:space=\"preserve\"");
             return textWriter;
         }
+        
+
+        public static string GetColorString(Color color) 
+            => $"{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
     }
 }
