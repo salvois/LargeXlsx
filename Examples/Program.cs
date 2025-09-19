@@ -44,6 +44,7 @@ public static class Program
         Border.Run();
         DataValidation.Run();
         RightToLeft.Run();
+        RichText.Run();
         Zip64Small.Run();
         SheetProtection.Run();
         HeaderFooterPageBreaks.Run();

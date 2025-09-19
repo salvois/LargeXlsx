@@ -338,7 +338,7 @@ namespace LargeXlsx
             // <color rgb="FFRRGGBB"/>
             _streamWriter.Append("<color rgb=\"").Append(Util.GetColorString(font.Color)).Append("\"/>");
 
-            // Bold / Italic / Strike
+            // Bold / Italic / Strike-through
             if (font.Bold) _streamWriter.Append("<b/>");
             if (font.Italic) _streamWriter.Append("<i/>");
             if (font.Strike) _streamWriter.Append("<strike/>");
