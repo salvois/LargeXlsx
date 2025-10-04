@@ -40,17 +40,17 @@ public static class Large
     public static void Run()
     {
         var stopwatch = Stopwatch.StartNew();
-        DoRun(requireCellReferences: true);
+        var bufferCapacity = DoRun(requireCellReferences: true);
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(Large)} requiring references completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(Large),20} requiring references\t{RowCount}x{ColumnCount}\tBuffer capacity: {bufferCapacity}\tElapsed ms: {stopwatch.ElapsedMilliseconds}");
 
         stopwatch.Restart();
-        DoRun(requireCellReferences: false);
+        bufferCapacity = DoRun(requireCellReferences: false);
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(Large)} omitting references completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(Large),20} omitting references\t{RowCount}x{ColumnCount}\tBuffer capacity: {bufferCapacity}\tElapsed ms: {stopwatch.ElapsedMilliseconds}");
     }
 
-    private static void DoRun(bool requireCellReferences)
+    private static int DoRun(bool requireCellReferences)
     {
         using var stream = new FileStream($"{nameof(Large)}_{requireCellReferences}.xlsx", FileMode.Create, FileAccess.Write);
         using var xlsxWriter = new XlsxWriter(stream, requireCellReferences: requireCellReferences);
@@ -69,5 +69,6 @@ public static class Large
             for (var j = 1; j < ColumnCount; j++)
                 xlsxWriter.Write(i * 1000 + j, numberStyle);
         }
+        return xlsxWriter.BufferCapacity;
     }
 }

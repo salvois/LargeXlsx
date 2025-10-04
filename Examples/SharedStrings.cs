@@ -38,12 +38,12 @@ public static class SharedStrings
     public static void Run()
     {
         var stopwatch = Stopwatch.StartNew();
-        DoRun();
+        var bufferCapacity = DoRun();
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(SharedStrings)} completed in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(SharedStrings),20}\tBuffer capacity: {bufferCapacity}\tElapsed ms: {stopwatch.ElapsedMilliseconds}");
     }
 
-    private static void DoRun()
+    private static int DoRun()
     {
         using var stream = new FileStream($"{nameof(SharedStrings)}.xlsx", FileMode.Create, FileAccess.Write);
         using var xlsxWriter = new XlsxWriter(stream);
@@ -63,5 +63,6 @@ public static class SharedStrings
                 .WriteSharedString("Trailing spaces   ")
                 .WriteSharedString("Spaces  in   between");
         }
+        return xlsxWriter.BufferCapacity;
     }
 }

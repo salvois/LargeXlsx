@@ -34,11 +34,13 @@ namespace LargeXlsx.Tests;
 
 public static class CustomWriterTest
 {
+    private const int FlushThreshold = 1024;
+
     [Test]
     public static void AppendEscapedXmlText_AllValid()
     {
         using var memoryStream = new MemoryStream();
-        new CustomWriter().AppendEscapedXmlText("Lorem 'ipsum' & \"dolor\" \U0001d11e <sit> amet", skipInvalidCharacters: false).FlushTo(memoryStream);
+        new CustomWriter(FlushThreshold).AppendEscapedXmlText("Lorem 'ipsum' & \"dolor\" \U0001d11e <sit> amet", skipInvalidCharacters: false).FlushTo(memoryStream);
         Encoding.UTF8.GetString(memoryStream.ToArray()).ShouldBe("Lorem 'ipsum' &amp; \"dolor\" \U0001d11e &lt;sit&gt; amet");
     }
 
@@ -46,7 +48,7 @@ public static class CustomWriterTest
     [TestCase(new[] { 'a', '\ud800', 'b' })]
     [TestCase(new[] { 'a', '\udc00', 'b' })]
     public static void AppendEscapedXmlText_InvalidChars_Throw(char[] value) =>
-        Should.Throw<XmlException>(() => new CustomWriter().AppendEscapedXmlText(new string(value), skipInvalidCharacters: false));
+        Should.Throw<XmlException>(() => new CustomWriter(FlushThreshold).AppendEscapedXmlText(new string(value), skipInvalidCharacters: false));
 
     [TestCase(new[] { 'a', '\0', 'b' })]
     [TestCase(new[] { 'a', '\ud800', 'b' })]
@@ -54,7 +56,7 @@ public static class CustomWriterTest
     public static void AppendEscapedXmlText_InvalidChars_Skip(char[] value)
     {
         using var memoryStream = new MemoryStream();
-        new CustomWriter().AppendEscapedXmlText(new string(value), skipInvalidCharacters: true).FlushTo(memoryStream);
+        new CustomWriter(FlushThreshold).AppendEscapedXmlText(new string(value), skipInvalidCharacters: true).FlushTo(memoryStream);
         Encoding.UTF8.GetString(memoryStream.ToArray()).ShouldBe("ab");
     }
 
@@ -62,7 +64,7 @@ public static class CustomWriterTest
     public static void AppendEscapedXmlAttribute_AllValid()
     {
         using var memoryStream = new MemoryStream();
-        new CustomWriter().AppendEscapedXmlAttribute("Lorem 'ipsum' & \"dolor\" \U0001d11e <sit> amet", skipInvalidCharacters: false).FlushTo(memoryStream);
+        new CustomWriter(FlushThreshold).AppendEscapedXmlAttribute("Lorem 'ipsum' & \"dolor\" \U0001d11e <sit> amet", skipInvalidCharacters: false).FlushTo(memoryStream);
         Encoding.UTF8.GetString(memoryStream.ToArray()).ShouldBe("Lorem &apos;ipsum&apos; &amp; &quot;dolor&quot; \U0001d11e &lt;sit&gt; amet");
     }
 
@@ -70,7 +72,7 @@ public static class CustomWriterTest
     [TestCase(new[] { 'a', '\ud800', 'b' })]
     [TestCase(new[] { 'a', '\udc00', 'b' })]
     public static void AppendEscapedXmlAttribute_InvalidChars_Throw(char[] value) =>
-        Should.Throw<XmlException>(() => new CustomWriter().AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: false));
+        Should.Throw<XmlException>(() => new CustomWriter(FlushThreshold).AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: false));
 
     [TestCase(new[] { 'a', '\0', 'b' })]
     [TestCase(new[] { 'a', '\ud800', 'b' })]
@@ -78,7 +80,7 @@ public static class CustomWriterTest
     public static void AppendEscapedXmlAttribute_InvalidChars_Skip(char[] value)
     {
         using var memoryStream = new MemoryStream();
-        new CustomWriter().AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: true).FlushTo(memoryStream);
+        new CustomWriter(FlushThreshold).AppendEscapedXmlAttribute(new string(value), skipInvalidCharacters: true).FlushTo(memoryStream);
         Encoding.UTF8.GetString(memoryStream.ToArray()).ShouldBe("ab");
     }
 
@@ -94,7 +96,7 @@ public static class CustomWriterTest
     public static void AddSpacePreserveIfNeeded_LeadingOrTrailingWhitespace(string value, string expectation)
     {
         using var memoryStream = new MemoryStream();
-        new CustomWriter().AddSpacePreserveIfNeeded(value).FlushTo(memoryStream);
+        new CustomWriter(FlushThreshold).AddSpacePreserveIfNeeded(value).FlushTo(memoryStream);
         Encoding.UTF8.GetString(memoryStream.ToArray()).ShouldBe(expectation);
     }
 }

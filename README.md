@@ -2,7 +2,9 @@
 
 [![NuGet](https://img.shields.io/nuget/v/LargeXlsx.svg)](https://www.nuget.org/packages/LargeXlsx)
 
-This is a minimalistic yet feature-rich library, written in C# targeting .net standard 2.0, providing simple primitives to write Excel files in XLSX format in a streamed manner, so that potentially huge files can be created while consuming a low, constant amount of memory.
+This is a minimalistic yet feature-rich library, written in C# targeting .NET Standard 2.0 and .NET Core 3.1 or later, providing simple primitives to write Excel files in XLSX format in a streamed manner, so that potentially huge files can be created while consuming a low, constant amount of memory.
+
+Documentation for the old major version 1.x can be found [here](https://github.com/salvois/LargeXlsx/tree/release/v1).
 
 
 ## Supported features
@@ -79,9 +81,13 @@ The output is like:
   - [Supported features](#supported-features)
   - [Example](#example)
   - [Changelog](#changelog)
+  - [Migrating from version 1.x to 2.x](#migrating-from-version-1x-to-2x)
+    - [Breaking changes](#breaking-changes)
+    - [New features](#new-features)
   - [Usage](#usage)
     - [The insertion point](#the-insertion-point)
     - [Column names](#column-names)
+    - [Buffered writes](#buffered-writes)
     - [Creating a new worksheet](#creating-a-new-worksheet)
       - [Column formatting](#column-formatting)
       - [Auto fit column width](#auto-fit-column-width)
@@ -110,6 +116,7 @@ The output is like:
 
 ## Changelog
 
+* 2.0: No external dependencies on .NET Core 3.1 or greater, significant performance improvements, async API
 * 1.12: Page breaks for printing, inspired by [Nael Al Abbasi](https://github.com/thedude61636)
 * 1.11: Validation and optional skipping of invalid XML characters, inspired by [Anton Mihai](https://github.com/mike101200)
 * 1.10: Ability to hide worksheets, thanks to [Micha Voße](https://github.com/piwonesien)
@@ -125,30 +132,53 @@ The output is like:
 * 1.0: Finalized API
 * 0.0.9: Started writing XLSX files directly rather than using Microsoft's [Office Open XML library](https://github.com/OfficeDev/Open-XML-SDK)
 
+
+## Migrating from version 1.x to 2.x
+
+Major version 2 reworked the way XLSX file content is written, by using native UTF-8 strings, and reducing memory allocations and memory copies as much as possible. This allowed for **significant performance improvements**.
+
+Moreover, the SharpCompress compression library has been replaced by System.IO.Compression functionality from the .NET runtime, which provided further performance benefit and removed external dependencies as well. Unfortunately, System.IO.Compression produces valid ZIP64 files (necessary for very big files) only on .NET Core 3.1 or greater, thus, **LargeXlsx is now multi-target** and SharpCompress is still used on the .NET Standard 2.0 target (basically, for compatibily with .NET Framework). Also, some functionality to avoid memory copies is not available on .NET Standard 2.0, hence performance is expected to be not as good.
+
+Thanks to the new way to write XLSX file content, an **asynchronous API** has been introduced, useful, for example, when you want to write XLSX files in ASP.NET Core (Kestrel) scenarios. A dynamically-sized, internal buffer accumulates writes, that are periodically committed to the underlying stream the XLSX file is written to. This is a compromise (suggested by [Antony Corbett](https://github.com/AntonyCorbett)) to let I/O work asynchronously while reducing breaking changes and performance penalty of async state management.
+
+###  Breaking changes
+
+* On .NET Core 3.1 or greater, the SharpCompress library is no longer used. If you relied on SharpCompress as a transitive dependency, you must reference it on your own. SharpCompress is still used on the .NET Standard 2.0 target
+* The constructor of the `XlsxWriter` class changed the type of the  `compressionLevel` parameter to a custom enum that no longer depends on the SharpCompress library. If you explicitly specified a compression level, you must change the argument to a sensible equivalent
+* The constructor of the `XlsxWriter` class has no `useZip64` parameter any longer, and ZIP64 compression is enabled by default for very big files. If you specified an argument you must remove it
+
+### New features
+
+* The `XlsxWriter` class now provides methods (`Commit`, `TryCommit`, `CommitAsync`, `TryCommitAsync`) to commit its internal buffer to the stream the XLSX file is being written to. The `commitThreshold` parameter of the `XlsxWriter` constructor sets the size in bytes (56 KiB by default, to fit a 64 KiB buffer easily) that trigger actual writes to the underlying stream by the `TryCommit` methods
+* `BeginWorksheet` and `BeginRow` also try to commit writes to the underlying stream implicitly, hence you are not forced to use the commit methods above. Moreover, they gained `Async` overloads
+* `XlsxWriter`, which already used to be `IDisposable`, is now also `IAsyncDisposable`, so that it can be used with `await using` to let final writes to be committed asynchronously
+
+
 ## Usage
 
 The `XlsxWriter` class is the entry point for almost all functionality of the library. It is designed so that most of its methods can be chained to write the Excel file using a fluent syntax.
 
-The constructor allows you to create an XLSX writer. Please note that an `XlsxWriter` object **must be disposed** to properly finalize the Excel file. Sandwitching its lifetime in a `using` statement is recommended.
+The constructor allows you to create an XLSX writer. Please note that an `XlsxWriter` object **must be disposed**, either with `Dispose` or `DisposeAsync`, to properly finalize the Excel file. Sandwitching its lifetime in a `using` or `async using` statement is recommended. Moreover, an `XlsxWriter` is not designed to be used on multiple threads.
 
 ```csharp
 // class XlsxWriter
 public XlsxWriter(
     Stream stream,
-    SharpCompress.Compressors.Deflate.CompressionLevel compressionLevel = CompressionLevel.Level3, // compressionLevel since version 1.2
-    bool uzeZip64 = false, // useZip64 since version 1.3
-    bool requireCellReferences = true, // requireCellReferences since version 1.9
-    bool skipInvalidCharacters = false); // skipInvalidCharacters since version 1.11
+    XlsxCompressionLevel compressionLevel = XlsxCompressionLevel.Fastest,
+    bool requireCellReferences = true,
+    bool skipInvalidCharacters = false,
+    int commitThreshold = 57344);
 ```
 
 The constructor accepts:
 * A writeable `Stream` to save the Excel file into
-* An optional desired compression level of the underlying zip stream. The default `CompressionLevel.Level3` roughly matches file sizes produced by Excel. Higher compression levels may result in lower speed.
-* An optional flag indicating whether to use ZIP64 compression to support content larger than 4 GiB uncompressed. Recent versions of XLSX-enabled applications such as Excel or LibreOffice should be able to read any file compressd using ZIP64, even small ones, thus, if you don't know the file size in advance and you target recent software, you could just set it to `true`.
+* An optional desired compression level of the underlying zip stream. The default `XlsxCompressionLevel.Fastest` roughly matches file sizes produced by Excel while providing good performance. The alternative `XlsxCompressionLevel.Optimal` enum value provides higher compression but may result in lower speed
 * An optional flag indicating whether row numbers and cell references (such as "A1") are to be included in the XLSX file even when redundant. Row numbers and cell references are optional according to the specification, and omitting them provides a notable performance boost when writing XLSX files (as much as 40%). Unfortunately, some non-compliant readers (which apparently [include MS Access itself](https://github.com/salvois/LargeXlsx/issues/36)!) consider files without row and cell references as invalid, thus you can be consertative and set this flag to `true` if you want to make them happy. Spreadsheet applications such as Excel and LibreOffice can read XLSX files without references just fine, thus, if they are your target, you could use `false` for greater performance
-* An optional flag indicating how to behave when trying to write characters that are invalid for the XML underlying the XLSX file format. When `false`, since version 1.11 an XmlException is thrown if such invalid characters are found. When `true`, invalid characters are just skipped.
+* An optional flag indicating how to behave when trying to write characters that are invalid for the XML underlying the XLSX file format. When `false`, an XmlException is thrown if such invalid characters are found. When `true`, invalid characters are just skipped
+* A `commitThreshold` value representing the size in bytes the internal buffer of the `XlsxWriter` must exceed to trigger actual writes to the underlting stream by `TryCommit`, `BeginRow` and their `Async` overloads, to avoid micro-commits
 
 The recipe is adding a worksheet with `BeginWorksheet`, adding a row with `BeginRow`, writing cells to that row with `Write`, and repeating as required. Rows and worksheets are implicitly finalized as soon as new rows or worksheets are added, or the `XlsxWriter` is disposed.
+
 
 ### The insertion point
 
@@ -178,10 +208,29 @@ public static string GetColumnName(int columnIndex);
 
 The first version returns the column name for the column at the insertion point. The second version returns the column name for a column relative to the insertion point. The last version returns the column name for an absolute column index. Absolute or relative indexes outside the range [1..16384] will result in an `ArgumentOutOfRangeException`.
 
+### Buffered writes
+
+The following methods operate on the internal buffer of the `XlsxWriter` object:
+
+```csharp
+// class XlsxWriter
+public int BufferCapacity { get; }
+public XlsxWriter Commit();
+public Task<XlsxWriter> CommitAsync();
+public XlsxWriter TryCommit();
+public Task<XlsxWriter> TryCommitAsync();
+```
+
+The `BufferCapacity` property returns the capacity, in bytes, currently allocated to the internal buffer. It is intended as debugging facility, as the buffer is not expected to grow bigger than tens or hundreds of kilobytes in normal usage.
+
+The `Commit` and `CommitAsync` methods write the content of the buffer to the underlying stream the XLSX file is being written to, and empty the buffer. You can use them if you want to force commit and you don't want to wait, for example, for the next `BeginRow`.
+
+The `TryCommit` and `TryCommitAsync` methods do commit only if the content of the buffer exceeds the `commitThreshold` argument passed to the `XlsxWriter` constructor. Thus, you can call them when you see fit, without warrying about micro-commits. `BeginRow` and `BeginRowAsync` also do the same, hence you don't need to commit explicitly in a typical use case.
+
 
 ### Creating a new worksheet
 
-Call `BeginWorksheet` passing the sheet name and one or more of the following optional parameters (using named arguments is recommended):
+Call `BeginWorksheet` or `BeginWorksheetAsync` passing the sheet name and one or more of the following optional parameters (using named arguments is recommended):
 
 - `splitRow`: if greater than zero, the one-based index of the row where to place a horizontal split to create frozen panes
 - `splitColumn`: if greater than zero, the one-based index of the column where to place a vertical split to create frozen panes
@@ -197,22 +246,23 @@ public XlsxWriter BeginWorksheet(
     string name,
     int splitRow = 0,
     int splitColumn = 0,
-    bool rightToLeft = false, // rightToLeft since version 1.2
+    bool rightToLeft = false,
     IEnumerable<XlsxColumn> columns = null,
-    bool showGridLines = true, // showGridLines since version 1.8
-    bool showHeaders = true,  // showHeaders since version 1.8
-    XlsxWorksheetState state = XlsxWorksheetState.Visible); // state since version 1.10
+    bool showGridLines = true,
+    bool showHeaders = true,
+    XlsxWorksheetState state = XlsxWorksheetState.Visible);
+public Task<XlsxWriter> BeginWorksheetAsync(...);
 ```
 
 Note that, for compatibility with a restriction of the Excel application, names are restricted to a maximum of 31 character. An `ArgumentException` is thrown if a longer name is passed.
 An `ArgumentException` is also thrown when trying to add a worksheet with a name already used for another worksheet.
 
-A call to `BeginWorksheet` finalizes the last worksheet being written, if any, and sets up a new one, so that rows can be added.
+A call to `BeginWorksheet` or `BeginWorksheetAsync` finalizes the last worksheet being written, if any, and sets up a new one, so that rows can be added.
 
 
 #### Column formatting
 
-The `BeginWorksheet` method accepts an optional `columns` parameter to specify a list of column formatting objects of type `XlsxColumn`, each describing one or more adjacent columns, with their custom width, hidden state or default style, starting from column A.
+The `BeginWorksheet` and `BeginWorksheetAsync` methods accept an optional `columns` parameter to specify a list of column formatting objects of type `XlsxColumn`, each describing one or more adjacent columns, with their custom width, hidden state or default style, starting from column A.
 
 This information must be provided before writing any content to the worksheet, thus the number, width and styles of the columns must be known in advance.
 
@@ -240,14 +290,17 @@ To be fair, the XLSX specification provides a `bestFit` attribute for columns, b
 
 ### Adding or skipping rows
 
-Call `BeginRow` to advance the insertion point to the beginning of the next line and set up a new row to accept content. If a previous row was being written, it is finalized before creating the new one.
+Call `BeginRow` or `BeginRowAsync` to advance the insertion point to the beginning of the next line and set up a new row to accept content. If a previous row was being written, it is finalized before creating the new one.
 
 ```csharp
 // class XlsxWriter
 public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null);
+public Task<XlsxWriter> BeginRowAsync(...);
 ```
     
 You can specify optional row formatting when creating a new row. The height is expressed in points. The row style represent how to style all *empty* cells of a row. Cells that are explicitly written always use the cell style instead.
+
+Calling `BeginRow` or `BeginRowAsync` also acts as if you called `TryCommit` or `TryCommitAsync`, respectively, hence any buffered content is written to the underlying stream the XLSX file is being written to, if the buffered content exceeds the `commitThreshold` argument passed to the `XlsxWriter` constructor. This is to keep writing content practical and to avoid big breaking changes from major version 1, while being explicit with moments where actual writes may occur.
 
 Call `SkipRows` to move the insertion point down by the specified count of rows, that will be left empty and unstyled (unless column styles are in place). If a previous row was being written, it is finalized. Please note that `BeginRow` must be called anyways before starting to write a new row.
 
@@ -258,7 +311,7 @@ public XlsxWriter SkipRows(int rowCount);
 
 ### Writing cells
 
-Call one of the `Write` methods to write content to the cell at the insertion point:
+Call one of the `Write` methods to write content to the cell at the insertion point. Note that content is written to the internal buffer and not directly to the underlying stream the XLSX file is being written to, therefore they are all synchronous operations.
 
 ```csharp
 // class XlsxWriter
@@ -268,9 +321,9 @@ public XlsxWriter Write(double value, XlsxStyle style = null, int columnSpan = 1
 public XlsxWriter Write(decimal value, XlsxStyle style = null, int columnSpan = 1);
 public XlsxWriter Write(int value, XlsxStyle style = null, int columnSpan = 1);
 public XlsxWriter Write(DateTime value, XlsxStyle style = null, int columnSpan = 1);
-public XlsxWriter Write(bool value, XlsxStyle style = null, int columnSpan = 1); // since version 1.7
+public XlsxWriter Write(bool value, XlsxStyle style = null, int columnSpan = 1);
 public XlsxWriter WriteFormula(string formula, XlsxStyle style = null, int columnSpan = 1, IConvertible result = null);
-public XlsxWriter WriteSharedString(string value, XlsxStyle style = null, int columnSpan = 1); // since version 1.6
+public XlsxWriter WriteSharedString(string value, XlsxStyle style = null, int columnSpan = 1);
 ```
 
  You may write one of the following:
@@ -425,7 +478,7 @@ Password protection of worksheets helps preventing accidental modification of da
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter SetSheetProtection(XlsxSheetProtection sheetProtection); // since version 1.5
+public XlsxWriter SetSheetProtection(XlsxSheetProtection sheetProtection);
 
 // class XlsxSheetProtection
 public XlsxSheetProtection(
@@ -456,7 +509,7 @@ You can call `SetSheetProtection` at any moment while writing a worksheet (that 
 
 ### Headers and footers
 
-Call `SetHeaderFooter` on an `XlsxWriter` when you want to add headers and footers to worksheet printout (since version 1.9):
+Call `SetHeaderFooter` on an `XlsxWriter` when you want to add headers and footers to worksheet printout:
 
 ```csharp
 //class XlsxWriter
@@ -536,7 +589,7 @@ When writing the `&"font,type"` and `&"-,type"` codes manually, the type field c
 
 ### Page breaks
 
-The following methods of `XlsxWriter` can be used to control how to split a worksheet printout either horizontally or vertically (since version 1.12):
+The following methods of `XlsxWriter` can be used to control how to split a worksheet printout either horizontally or vertically:
 
 ```csharp
 // class XlsxWriter
@@ -609,14 +662,14 @@ public XlsxFont(
         bool bold = false,
         bool italic = false,
         bool strike = false,
-        XlsxFont.Underline underline = XlsxFont.Underline.None); // underline since version 1.4
+        XlsxFont.Underline underline = XlsxFont.Underline.None);
 public XlsxFont With(System.Drawing.Color color);
 public XlsxFont WithName(string name);
 public XlsxFont WithSize(double size);
 public XlsxFont WithBold(bool bold = true);
 public XlsxFont WithItalic(bool italic = true);
 public XlsxFont WithStrike(bool strike = true);
-public XlsxFont WithUnderline(XlsxFont.Underline underline = XlsxFont.Underline.None); // since version 1.4
+public XlsxFont WithUnderline(XlsxFont.Underline underline = XlsxFont.Underline.None);
 ```
 
 XlsxFont.Underline enum provides underline styles None, Single, Double, SingleAccounting and DoubleAccounting.
@@ -683,21 +736,21 @@ public XlsxNumberFormat(string formatCode);
 ```
 
 The format code has the same format you would normally use in Excel, such as `"0.0%"` for a percentage with exactly one decimal value. For example, to create a custom number format with thousand separator, at least two decimal digits and at most six, use:\
-`var customNumberFormat = new XlsxNumberFormat("#,##0.00####")`.
+`var customNumberFormat = new XlsxNumberFormat("#,##0.00####")`
 
 Excel defines and reserves many "magic" number formats, and this library exposes some of them as:
 
-* `XlsxNumberFormat.General`: the default number format, where Excel automatically chooses the "best" representation based on magnitude and number of decimals.
-* `XlsxNumberFormat.Integer`: no decimal digits, that is the format code `"0"`.
-* `XlsxNumberFormat.TwoDecimal`: two decimal digits, that is the format code `"0.00"`.
-* `XlsxNumberFormat.ThousandInteger`: thousand separators and no decimal digits, that is the format code `"#,##0"`.
-* `XlsxNumberFormat.ThousandTwoDecimal`: thousand separators and two decimal digits, that is the format code `"#,##0.00"`.
-* `XlsxNumberFormat.IntegerPercentage`: percentage formatting and no decimal digits, that is the format code `"0%"`.
-* `XlsxNumberFormat.TwoDecimalPercentage`: percentage formatting and two decimal digits, that is the format code `"0.00%"`.
-* `XlsxNumberFormat.Scientific`: scientific notation with two decimals and two-digit exponent, that is the format code `"0.00E+00"`.
-* `XlsxNumberFormat.ShortDate`: localized day, month and year as digits; for a European format the equivalent code would be `"dd/mm/yyyy"` but the actual code would be locale-dependent.
-* `XlsxNumberFormat.ShortDateTime`: localized day, month and year as digits with hours and minutes; for a European format the equivalent code would be `"dd/mm/yyyy hh:mm"` but the actual code would be locale-dependent.
-* `XlsxNumberFormat.Text`: treat newly inserted numbers as text, that is the format code `"@"` (since version 1.1).
+* `XlsxNumberFormat.General`: the default number format, where Excel automatically chooses the "best" representation based on magnitude and number of decimals
+* `XlsxNumberFormat.Integer`: no decimal digits, that is the format code `"0"`
+* `XlsxNumberFormat.TwoDecimal`: two decimal digits, that is the format code `"0.00"`
+* `XlsxNumberFormat.ThousandInteger`: thousand separators and no decimal digits, that is the format code `"#,##0"`
+* `XlsxNumberFormat.ThousandTwoDecimal`: thousand separators and two decimal digits, that is the format code `"#,##0.00"`
+* `XlsxNumberFormat.IntegerPercentage`: percentage formatting and no decimal digits, that is the format code `"0%"`
+* `XlsxNumberFormat.TwoDecimalPercentage`: percentage formatting and two decimal digits, that is the format code `"0.00%"`
+* `XlsxNumberFormat.Scientific`: scientific notation with two decimals and two-digit exponent, that is the format code `"0.00E+00"`
+* `XlsxNumberFormat.ShortDate`: localized day, month and year as digits; for a European format the equivalent code would be `"dd/mm/yyyy"` but the actual code would be locale-dependent
+* `XlsxNumberFormat.ShortDateTime`: localized day, month and year as digits with hours and minutes; for a European format the equivalent code would be `"dd/mm/yyyy hh:mm"` but the actual code would be locale-dependent
+* `XlsxNumberFormat.Text`: treat newly inserted numbers as text, that is the format code `"@"`
 
 
 #### Alignment

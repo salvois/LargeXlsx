@@ -60,7 +60,7 @@ namespace LargeXlsx
         public static string GetColumnName(int columnIndex) =>
             Util.GetColumnName(columnIndex);
 
-        public XlsxWriter(Stream stream, XlsxCompressionLevel compressionLevel = XlsxCompressionLevel.Fastest, bool requireCellReferences = true, bool skipInvalidCharacters = false, int commitThreshold = 65536)
+        public XlsxWriter(Stream stream, XlsxCompressionLevel compressionLevel = XlsxCompressionLevel.Fastest, bool requireCellReferences = true, bool skipInvalidCharacters = false, int commitThreshold = 57344)
             : this(
 #if NETCOREAPP2_1_OR_GREATER
                 new SystemIoCompressionZipWriter(stream, compressionLevel),
@@ -85,28 +85,32 @@ namespace LargeXlsx
             _zipWriter = zipWriter;
         }
 
-        public void TryCommit()
+        public XlsxWriter TryCommit()
         {
             CheckInWorksheet();
             _currentWorksheet.TryCommit();
+            return this;
         }
 
-        public void Commit()
+        public XlsxWriter Commit()
         {
             CheckInWorksheet();
             _currentWorksheet.Commit();
+            return this;
         }
 
-        public Task TryCommitAsync()
+        public async Task<XlsxWriter> TryCommitAsync()
         {
             CheckInWorksheet();
-            return _currentWorksheet.TryCommitAsync();
+            await _currentWorksheet.TryCommitAsync();
+            return this;
         }
 
-        public Task CommitAsync()
+        public async Task<XlsxWriter> CommitAsync()
         {
             CheckInWorksheet();
-            return _currentWorksheet.CommitAsync();
+            await _currentWorksheet.CommitAsync();
+            return this;
         }
 
         public void Dispose() => 

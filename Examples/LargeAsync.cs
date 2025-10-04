@@ -41,17 +41,17 @@ public static class LargeAsync
     public static async Task Run()
     {
         var stopwatch = Stopwatch.StartNew();
-        await DoRun(requireCellReferences: true);
+        var bufferCapacity = await DoRun(requireCellReferences: true);
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(LargeAsync)} requiring references completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(LargeAsync),20} requiring references\t{RowCount}x{ColumnCount}\tBuffer capacity: {bufferCapacity}\tElapsed ms: {stopwatch.ElapsedMilliseconds}");
 
         stopwatch.Restart();
-        await DoRun(requireCellReferences: false);
+        bufferCapacity = await DoRun(requireCellReferences: false);
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(LargeAsync)} omitting references completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(LargeAsync),20} omitting references\t{RowCount}x{ColumnCount}\tBuffer capacity: {bufferCapacity}\tElapsed ms: {stopwatch.ElapsedMilliseconds}");
     }
 
-    private static async Task DoRun(bool requireCellReferences)
+    private static async Task<int> DoRun(bool requireCellReferences)
     {
 #if NETCOREAPP2_1_OR_GREATER
         await using var stream = new FileStream($"{nameof(LargeAsync)}_{requireCellReferences}.xlsx", FileMode.Create, FileAccess.Write);
@@ -75,5 +75,6 @@ public static class LargeAsync
             for (var j = 1; j < ColumnCount; j++)
                 xlsxWriter.Write(i * 1000 + j, numberStyle);
         }
+        return xlsxWriter.BufferCapacity;
     }
 }

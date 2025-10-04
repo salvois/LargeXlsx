@@ -33,11 +33,11 @@ using System.Xml;
 
 namespace LargeXlsx;
 
-internal sealed class CustomWriter(int flushThreshold = 65536)
+internal sealed class CustomWriter(int flushThreshold)
 {
     private readonly char[] _charBuffer = new char[1024];
     private readonly Encoder _encoder = Encoding.UTF8.GetEncoder();
-    private byte[] _writeBuffer = new byte[4096];
+    private byte[] _writeBuffer = new byte[65536];
     private int _writeBufferLength = 0;
 
     public int WriteBufferCapacity => _writeBuffer.Length;

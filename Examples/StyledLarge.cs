@@ -37,22 +37,21 @@ public static class StyledLarge
 {
     private const int RowCount = 50000;
     private const int ColumnCount = 180;
-    private const int ColorCount = 100;
-
+    
     public static void Run()
     {
         var stopwatch = Stopwatch.StartNew();
-        DoRun(requireCellReferences: true);
+        var bufferCapacity = DoRun(requireCellReferences: true);
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(StyledLarge)} requiring references completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(StyledLarge),20} requiring references\t{RowCount}x{ColumnCount}\tBuffer capacity: {bufferCapacity}\tElapsed ms: {stopwatch.ElapsedMilliseconds}");
 
         stopwatch.Restart();
-        DoRun(requireCellReferences: false);
+        bufferCapacity = DoRun(requireCellReferences: false);
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(StyledLarge)} omitting references completed {RowCount} rows, {ColumnCount} columns and {ColorCount} colors in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(StyledLarge),20} omitting references\t{RowCount}x{ColumnCount}\tBuffer capacity: {bufferCapacity}\tElapsed ms: {stopwatch.ElapsedMilliseconds}");
     }
 
-    private static void DoRun(bool requireCellReferences)
+    private static int DoRun(bool requireCellReferences)
     {
         var rnd = new Random();
         using var stream = new FileStream($"{nameof(StyledLarge)}_{requireCellReferences}.xlsx", FileMode.Create, FileAccess.Write);
@@ -81,5 +80,6 @@ public static class StyledLarge
                 cellStyleIndex = (cellStyleIndex + 1) % cellStyles.Count;
             }
         }
+        return xlsxWriter.BufferCapacity;
     }
 }

@@ -39,6 +39,7 @@ public static class Zip64Huge
     public static void Run()
     {
         var stopwatch = Stopwatch.StartNew();
+        int bufferCapacity;
         using (var stream = new FileStream($"{nameof(Zip64Huge)}.xlsx", FileMode.Create, FileAccess.Write))
         using (var xlsxWriter = new XlsxWriter(stream, compressionLevel: XlsxCompressionLevel.Fastest))
         {
@@ -54,8 +55,9 @@ public static class Zip64Huge
                 if (i % 50000 == 0)
                     Console.WriteLine($"{nameof(Zip64Huge)} wrote {i} rows in {stopwatch.ElapsedMilliseconds} ms...");
             }
+            bufferCapacity = xlsxWriter.BufferCapacity;
         }
         stopwatch.Stop();
-        Console.WriteLine($"{nameof(Zip64Huge)} completed {RowCount} rows and {ColumnCount} columns in {stopwatch.ElapsedMilliseconds} ms.");
+        Console.WriteLine($"{nameof(Zip64Huge),20}\t{RowCount}x{ColumnCount}\tBuffer capacity: {bufferCapacity}\tElapsed ms: {stopwatch.ElapsedMilliseconds}");
     }
 }
