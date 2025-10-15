@@ -137,7 +137,7 @@ The output is like:
 
 Major version 2 reworked the way XLSX file content is written, by using native UTF-8 strings, and reducing memory allocations and memory copies as much as possible. This allowed for **significant performance improvements**.
 
-Moreover, the SharpCompress compression library has been replaced by System.IO.Compression functionality from the .NET runtime, which provided further performance benefit and removed external dependencies as well. Unfortunately, System.IO.Compression produces valid ZIP64 files (necessary for very big files) only on .NET Core 3.1 or greater, thus, **LargeXlsx is now multi-target** and SharpCompress is still used on the .NET Standard 2.0 target (basically, for compatibily with .NET Framework). Also, some functionality to avoid memory copies is not available on .NET Standard 2.0, hence performance is expected to be not as good.
+Moreover, the SharpCompress compression library has been replaced by System.IO.Compression functionality from the .NET runtime, which provided further performance benefit and removed external dependencies as well. Unfortunately, System.IO.Compression produces valid ZIP64 files (necessary for very big files) only on .NET Core 3.1 or greater, thus, **LargeXlsx is now multi-target** and SharpCompress is still used on the .NET Standard 2.0 target (basically, for compatibility with .NET Framework). Also, some functionality to avoid memory copies is not available on .NET Standard 2.0, hence performance is expected to be not as good.
 
 Thanks to the new way to write XLSX file content, an **asynchronous API** has been introduced, useful, for example, when you want to write XLSX files in ASP.NET Core (Kestrel) scenarios. A dynamically-sized, internal buffer accumulates writes, that are periodically committed to the underlying stream the XLSX file is written to. This is a compromise (suggested by [Antony Corbett](https://github.com/AntonyCorbett)) to let I/O work asynchronously while reducing breaking changes and performance penalty of async state management.
 
@@ -151,14 +151,14 @@ Thanks to the new way to write XLSX file content, an **asynchronous API** has be
 
 * The `XlsxWriter` class now provides methods (`Commit`, `TryCommit`, `CommitAsync`, `TryCommitAsync`) to commit its internal buffer to the stream the XLSX file is being written to. The `commitThreshold` parameter of the `XlsxWriter` constructor sets the size in bytes (56 KiB by default, to fit a 64 KiB buffer easily) that trigger actual writes to the underlying stream by the `TryCommit` methods
 * `BeginWorksheet` and `BeginRow` also try to commit writes to the underlying stream implicitly, hence you are not forced to use the commit methods above. Moreover, they gained `Async` overloads
-* `XlsxWriter`, which already used to be `IDisposable`, is now also `IAsyncDisposable`, so that it can be used with `await using` to let final writes to be committed asynchronously
+* `XlsxWriter`, which already used to be `IDisposable`, is now also `IAsyncDisposable`, so that it can be used with `await using` to let final writes be committed asynchronously
 
 
 ## Usage
 
 The `XlsxWriter` class is the entry point for almost all functionality of the library. It is designed so that most of its methods can be chained to write the Excel file using a fluent syntax.
 
-The constructor allows you to create an XLSX writer. Please note that an `XlsxWriter` object **must be disposed**, either with `Dispose` or `DisposeAsync`, to properly finalize the Excel file. Sandwitching its lifetime in a `using` or `async using` statement is recommended. Moreover, an `XlsxWriter` is not designed to be used on multiple threads.
+The constructor allows you to create an XLSX writer. Please note that an `XlsxWriter` object **must be disposed**, either with `Dispose` or `DisposeAsync`, to properly finalize the Excel file. Sandwiching its lifetime in a `using` or `async using` statement is recommended. Moreover, an `XlsxWriter` is not designed to be used on multiple threads.
 
 ```csharp
 // class XlsxWriter
@@ -173,16 +173,16 @@ public XlsxWriter(
 The constructor accepts:
 * A writeable `Stream` to save the Excel file into
 * An optional desired compression level of the underlying zip stream. The default `XlsxCompressionLevel.Fastest` roughly matches file sizes produced by Excel while providing good performance. The alternative `XlsxCompressionLevel.Optimal` enum value provides higher compression but may result in lower speed
-* An optional flag indicating whether row numbers and cell references (such as "A1") are to be included in the XLSX file even when redundant. Row numbers and cell references are optional according to the specification, and omitting them provides a notable performance boost when writing XLSX files (as much as 40%). Unfortunately, some non-compliant readers (which apparently [include MS Access itself](https://github.com/salvois/LargeXlsx/issues/36)!) consider files without row and cell references as invalid, thus you can be consertative and set this flag to `true` if you want to make them happy. Spreadsheet applications such as Excel and LibreOffice can read XLSX files without references just fine, thus, if they are your target, you could use `false` for greater performance
+* An optional flag indicating whether row numbers and cell references (such as "A1") are to be included in the XLSX file even when redundant. Row numbers and cell references are optional according to the specification, and omitting them provides a notable performance boost when writing XLSX files (as much as 40%). Unfortunately, some non-compliant readers (which apparently [include MS Access itself](https://github.com/salvois/LargeXlsx/issues/36)!) consider files without row and cell references as invalid, thus you can be conservative and set this flag to `true` if you want to make them happy. Spreadsheet applications such as Excel and LibreOffice can read XLSX files without references just fine, thus, if they are your target, you could use `false` for greater performance
 * An optional flag indicating how to behave when trying to write characters that are invalid for the XML underlying the XLSX file format. When `false`, an XmlException is thrown if such invalid characters are found. When `true`, invalid characters are just skipped
-* A `commitThreshold` value representing the size in bytes the internal buffer of the `XlsxWriter` must exceed to trigger actual writes to the underlting stream by `TryCommit`, `BeginRow` and their `Async` overloads, to avoid micro-commits
+* A `commitThreshold` value representing the size in bytes the internal buffer of the `XlsxWriter` must exceed to trigger actual writes to the underlying stream by `TryCommit`, `BeginRow` and their `Async` overloads, to avoid micro-commits
 
 The recipe is adding a worksheet with `BeginWorksheet`, adding a row with `BeginRow`, writing cells to that row with `Write`, and repeating as required. Rows and worksheets are implicitly finalized as soon as new rows or worksheets are added, or the `XlsxWriter` is disposed.
 
 
 ### The insertion point
 
-To enable streamed write, the content of the Excel file must be written strictly from top to bottom and from left to right. Think of an insertion point always advancing when writing content.\
+To enable streamed writes, the content of the Excel file must be written strictly from top to bottom and from left to right. Think of an insertion point always advancing when writing content.\
 The `CurrentRowNumber` and `CurrentColumnNumber` read-only properties will return the location of the **next** cell that will be written. Both the row and column numbers are **one-based**.
 
 ```csharp
@@ -225,7 +225,7 @@ The `BufferCapacity` property returns the capacity, in bytes, currently allocate
 
 The `Commit` and `CommitAsync` methods write the content of the buffer to the underlying stream the XLSX file is being written to, and empty the buffer. You can use them if you want to force commit and you don't want to wait, for example, for the next `BeginRow`.
 
-The `TryCommit` and `TryCommitAsync` methods do commit only if the content of the buffer exceeds the `commitThreshold` argument passed to the `XlsxWriter` constructor. Thus, you can call them when you see fit, without warrying about micro-commits. `BeginRow` and `BeginRowAsync` also do the same, hence you don't need to commit explicitly in a typical use case.
+The `TryCommit` and `TryCommitAsync` methods do commit only if the content of the buffer exceeds the `commitThreshold` argument passed to the `XlsxWriter` constructor. Thus, you can call them when you see fit, without worrying about micro-commits. `BeginRow` and `BeginRowAsync` also do the same, hence you don't need to commit explicitly in a typical use case.
 
 
 ### Creating a new worksheet
@@ -238,7 +238,7 @@ Call `BeginWorksheet` or `BeginWorksheetAsync` passing the sheet name and one or
 - `columns`: pass a non-`null` list to specify optional column formatting (see below)
 - `showGridLines`: set to `false` to hide gridlines in the sheet
 - `showHeaders`: set to `false` to hide row and column headers in the sheet
-- `state`: whether the worksheet is `Visible`, `Hidden` (but spreadsheet applications let unhide it) or `VeryHidden` (spreadsheet applications are not supposed to let unhide it; Excel doesn't but LibreOffice does)
+- `state`: whether the worksheet is `Visible`, `Hidden` (but spreadsheet applications let you unhide it) or `VeryHidden` (spreadsheet applications are not supposed to let you unhide it; Excel doesn't but LibreOffice does)
 
 ```csharp
 // class XlsxWriter
@@ -254,7 +254,7 @@ public XlsxWriter BeginWorksheet(
 public Task<XlsxWriter> BeginWorksheetAsync(...);
 ```
 
-Note that, for compatibility with a restriction of the Excel application, names are restricted to a maximum of 31 character. An `ArgumentException` is thrown if a longer name is passed.
+Note that, for compatibility with a limitation of the Excel application, names are restricted to a maximum of 31 characters. An `ArgumentException` is thrown if a longer name is passed.
 An `ArgumentException` is also thrown when trying to add a worksheet with a name already used for another worksheet.
 
 A call to `BeginWorksheet` or `BeginWorksheetAsync` finalizes the last worksheet being written, if any, and sets up a new one, so that rows can be added.
@@ -276,14 +276,14 @@ public static XlsxColumn Formatted(double width, int count = 1, bool hidden = fa
 
 `Unformatted` creates a column description that is used basically to skip one or more unformatted columns.
 
-`Formatted` creates a column description to specify the mandatory witdh, optional hidden state, and optional style of one or more contiguous columns. The width is expressed (simplyfing) in approximate number of characters. The column style represents how to style all *empty* cells of a column. Cells that are explicitly written always use the cell style instead.
+`Formatted` creates a column description to specify the mandatory width, optional hidden state, and optional style of one or more contiguous columns. The width is expressed (simplifying) in approximate number of characters. The column style represents how to style all *empty* cells of a column. Cells that are explicitly written always use the cell style instead.
 
 
 #### Auto fit column width
 
-A frequenly asked question about column formatting is how to automatically set column width based on column content.
+A frequently asked question about column formatting is how to automatically set column width based on column content.
 
-Unfortunately, the XLSX file format does not provide any special feature for automatic/best fit column widths, so your best bet is to estimate your maximum or average content width and use it in column formatting as described above. Moreover, since the file format specifies that column formatting are written into the file before cell contents, you are required to estimate width before streaming any data, or iterating your dataset twice, or just guessing a sensible value (the latter usually works surprisingly well).
+Unfortunately, the XLSX file format does not provide any special feature for automatic/best fit column widths, so your best bet is to estimate your maximum or average content width and use it in column formatting as described above. Moreover, since the file format specifies that column formatting is written into the file before cell contents, you are required to estimate width before streaming any data, or iterating your dataset twice, or just guessing a sensible value (the latter usually works surprisingly well).
 
 To be fair, the XLSX specification provides a `bestFit` attribute for columns, but it has a totally different purpose (automatically enlarging a column when a user types digits in it).
 
@@ -298,11 +298,11 @@ public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle
 public Task<XlsxWriter> BeginRowAsync(...);
 ```
     
-You can specify optional row formatting when creating a new row. The height is expressed in points. The row style represent how to style all *empty* cells of a row. Cells that are explicitly written always use the cell style instead.
+You can specify optional row formatting when creating a new row. The height is expressed in points. The row style represents how to style all *empty* cells of a row. Cells that are explicitly written always use the cell style instead.
 
 Calling `BeginRow` or `BeginRowAsync` also acts as if you called `TryCommit` or `TryCommitAsync`, respectively, hence any buffered content is written to the underlying stream the XLSX file is being written to, if the buffered content exceeds the `commitThreshold` argument passed to the `XlsxWriter` constructor. This is to keep writing content practical and to avoid big breaking changes from major version 1, while being explicit with moments where actual writes may occur.
 
-Call `SkipRows` to move the insertion point down by the specified count of rows, that will be left empty and unstyled (unless column styles are in place). If a previous row was being written, it is finalized. Please note that `BeginRow` must be called anyways before starting to write a new row.
+Call `SkipRows` to move the insertion point down by the specified count of rows, that will be left empty and unstyled (unless column styles are in place). If a previous row was being written, it is finalized. Please note that `BeginRow` must be called anyway before starting to write a new row.
 
 ```csharp
 // class XlsxWriter
@@ -334,7 +334,7 @@ public XlsxWriter WriteSharedString(string value, XlsxStyle style = null, int co
   * **Date and time**: a `DateTime` value, that will be converted to its `double` representation (days since 1900-01-01). Note that you must style the cell using a date/time number format to have the value appear as a date.
   * **Boolean**: a `bool` value, that will appear either as `TRUE` or `FALSE`
   * **Formula**: a string that Excel or a compatible application will interpret as a formula to calculate. Note that, unless you provide a `result` calculated by yourself (either string or numeric), no result is saved into the XLSX file. However, a spreadsheet application will calculate the result as soon as the XLSX file is opened.
-  * **Shared string**: a shared literal string of text. Contrary to inline strings, shared strings are saved in a look-up table and deduplicated in constant time, and only a reference is written into the cell. This may help to produce smaller files, but, since the shared strings must be accumulated in RAM, **writing a large number of *different* shared strings may cause high memory consumption**. Keep this in mind when choosing between inline strings and shared strings.
+  * **Shared string**: a shared literal string of text. Unlike inline strings, shared strings are saved in a look-up table and deduplicated in constant time, and only a reference is written into the cell. This may help to produce smaller files, but, since the shared strings must be accumulated in RAM, **writing a large number of *different* shared strings may cause high memory consumption**. Keep this in mind when choosing between inline strings and shared strings.
 
 The `style` parameter specifies the style to use for the cell being written. If `null` (or omitted), the cell is styled using the current default style of the `XlsxWriter` (see Styling). Note that in no case the style of the column or the row, if any, is used for written cells.
 
@@ -344,7 +344,7 @@ The `columnSpan` parameter can be used to let the cell span multiple columns. Wh
 
 #### Writing hyperlinks
 
-The XLSX file format provides two ways to insert hyperlinks (either to a web site or cells perhaps in a differet workbook): using a specific "hyperlinks" section in the worksheet and using the `HYPERLINK` formula in a cell.
+The XLSX file format provides two ways to insert hyperlinks (either to a web site or cells perhaps in a different workbook): using a specific "hyperlinks" section in the worksheet and using the `HYPERLINK` formula in a cell.
 
 The former, which is the one used by the "Insert hyperlink" command in Excel, is not used by this library, because it would require to accumulate all hyperlinks in RAM until the worksheet is complete.
 
@@ -429,16 +429,16 @@ Using named arguments is recommended to improve readability. The parameters repr
 - `errorTitle`: an optional title to replace the default title of the spreadsheet application when invalid content is detected
 - `errorStyle`: whether to report detection of invalid content as a blocking error, a warning or a notice
 - `operatorType`: for validation involving comparison (see `validationType`), the comparison operator to apply
-- `prompt`: an optional message to be shown as tooltip when the cell receives focus
+- `prompt`: an optional message to be shown as a tooltip when the cell receives focus
 - `promptTitle`: an optional title to show in the prompt tooltip
 - `showDropDown`: whether to show a dropdown list when the validation type is set to `XlsxDataValidation.ValidationType.List`; **Note:** for some reason, this seems to work backwards, with both Excel and LibreOffice showing the dropdown when this property is **false**
 - `showErrorMessage`: whether the spreadsheet application will show an error when invalid content is detected
 - `showInputMessage`: whether the spreadsheet application will show the prompt tooltip when a validated cell is focused
 - `validationType`: specifies to do validation on numeric values, whole integer values, date values, text length (using the comparison operator specified by `operatorType`) or against a list of allowed values
-- `formula1`: the value to compare the cell content against; for lists, it can be a reference to a cell range containing the allowed values, or a list of comma separated case-sensitive string contants, enclosed by double quotes (e.g. `"\"item1,item2\"")`; for other validation types, it can be a reference to a cell containing the value or a constant
+- `formula1`: the value to compare the cell content against; for lists, it can be a reference to a cell range containing the allowed values, or a list of comma separated case-sensitive string constants, enclosed by double quotes (e.g. `"\"item1,item2\"")`; for other validation types, it can be a reference to a cell containing the value or a constant
 - `formula2`: for comparison involving two values (e.g. operator `Between`), the second value, specified as in `formula1`.
 
-To ease creation of an `XlsxDataValidation` specifying validation against a list of string contants, the following named constructor is provided. Note that it basically does a `string.Join` of choices into `formula1`, thus if a choice includes a comma, the spreadsheet application will split it in separate choices. There is no way to include real commas in choices specified as string constants (rather than as cell range).
+To ease creation of an `XlsxDataValidation` specifying validation against a list of string constants, the following named constructor is provided. Note that it basically does a `string.Join` of choices into `formula1`, thus if a choice includes a comma, the spreadsheet application will split it into separate choices. There is no way to include real commas in choices specified as string constants (rather than as cell range).
 
 ```csharp
 // class XlsxDataValidation
@@ -474,7 +474,7 @@ This means that you may call `AddDataValidation` at any moment while you are wri
 
 ### Password protection of sheets
 
-Password protection of worksheets helps preventing accidental modification of data. You can enable protection on the worksheet being written using:
+Password protection of worksheets helps prevent accidental modification of data. You can enable protection on the worksheet being written using:
 
 ```csharp
 // class XlsxWriter
@@ -509,7 +509,7 @@ You can call `SetSheetProtection` at any moment while writing a worksheet (that 
 
 ### Headers and footers
 
-Call `SetHeaderFooter` on an `XlsxWriter` when you want to add headers and footers to worksheet printout:
+Call `SetHeaderFooter` on an `XlsxWriter` when you want to add headers and footers to a worksheet printout:
 
 ```csharp
 //class XlsxWriter
@@ -532,8 +532,8 @@ You can call `SetHeaderFooter` at any moment while writing a worksheet (that is 
 The constructor of `XlsxHeaderFooter` takes several properties to control the content of headers or footers:
 - `oddHeader` sets the header text, if any, to use on every page, or only on odd pages if `evenHeader` is also set
 - `oddFooter` sets the footer text, if any, to use on every page, or only on odd pages if `evenFooter` is also set
-- `firstHeader` sets the header text, if any, to be used only on first page
-- `firstFooter` sets the footer text, if any, to be used only on first page
+- `firstHeader` sets the header text, if any, to be used only on the first page
+- `firstFooter` sets the footer text, if any, to be used only on the first page
 - `evenHeader` sets the header text, if any, to be used only on even pages
 - `evenFooter` sets the footer text, if any, to be used only on even pages
 - `alignWithMargins`: align header and footer margins with page margins. When true, as left/right margins grow and shrink, the header and footer edges stay aligned with the margins. When false, headers and footers are aligned on the paper edges, regardless of margins
@@ -543,9 +543,9 @@ The constructor of `XlsxHeaderFooter` takes several properties to control the co
 
 #### Left, center and right sections of header and footer
 
-Spreadsheet applications such as Excel and LibreOffice expect headers and footers to be formed of three different sections, for left-, center- and right-aligned texts.
+Spreadsheet applications such as Excel and LibreOffice expect headers and footers to comprise three different sections, for left-, center- and right-aligned texts.
 
-These sections are introduced by the `&L`, `&C` and `&R` formatting codes respectively. For maximum compatibility, you should always use at least one of them to specify at least one section, and you should not repeat the same sections multiple times (although supported, this could lead to unexpected results)-
+These sections are introduced by the `&L`, `&C` and `&R` formatting codes respectively. For maximum compatibility, you should always use at least one of them to specify at least one section, and you should not repeat the same sections multiple times (although supported, this could lead to unexpected results)
 
 Other libraries force you to follow the above recommendation by providing an object with three separate properties rather than a single string. This library does not enforce this by design, to facilitate localization in right-to-left cultures.
 
@@ -599,7 +599,7 @@ public XlsxWriter AddRowPageBreak();
 public XlsxWriter AddColumnPageBreak();
 ```
 
-The former two methods let you specify the row and column number where to place an horizontal or vertical page break before, respectively.
+The former two methods let you specify the row and column number before which a horizontal or vertical page break is placed, respectively.
 
 The latter two place a horizontal or vertical page break before the current row or column number, respectively (see [The insertion point](#the-insertion-point)), and make sense when writing content fluently.
 
@@ -614,7 +614,7 @@ Styling lets you apply colors or other formatting to cells being written. A styl
 - the **font**, including face, size and text color, represented by an `XlsxFont` object
 - the **fill**, specifying the background color, represented by an `XlsxFill` object
 - the **border** style and color, represented by an `XlsxBorder` object
-- the **number format** specifying how a number should appear, such as how many decimals or whether to show it as percentage or date and time, represented by an `XlsxNumberFormat` object
+- the **number format**, specifying how a number should appear, such as how many decimals or whether to show it as percentage or date and time, represented by an `XlsxNumberFormat` object
 - the **alignment**, specifying horizontal and vertical alignment of cell content or rotation, represented by an `XlsxAlignment` object.
 
 You can create a new style, combining the above five elements, using the constructor of the `XlsxStyle` class, or by cloning an existing style replacing one element with a `With` method:
@@ -638,7 +638,7 @@ The built-in `XlsxStyle.Default` object provides a ready-to-use style combining 
 
 #### The default style
 
-Each `XlsxWriter` has a default style that is used whenever you write a cell using `Write` without specifying an explicit style. To read the current default style, or set it while fluently write the XLSX file, use:
+Each `XlsxWriter` has a default style that is used whenever you write a cell using `Write` without specifying an explicit style. To read the current default style, or set it while fluently writing the XLSX file, use:
 
 ```csharp
 // class XlsxWriter
@@ -651,7 +651,7 @@ The default style of a new `XlsxWriter` is set to `XlsxStyle.Default`, but you c
 
 #### Fonts
 
-An `XlsxFont` object lets you define the font face, its size in points, the text color and emphasis such as bold, italic and strikeout. Create it via constructor, or clone an existing one replacing a property with a `With` method:
+An `XlsxFont` object lets you define the font face, its size in points, the text color and emphasis such as bold, italic and strikeout. Create it via the constructor, or clone an existing one replacing a property with a `With` method:
 
 ```csharp
 // class XlsxFont
@@ -728,14 +728,14 @@ The built-in `XlsxBorder.None` object provides a default empty border set.
 
 #### Number formats
 
-An `XlsxNumberFormat` object lets you define how the content of a cell should appear when it contains a numeric value. Create it via constructor:
+An `XlsxNumberFormat` object lets you define how the content of a cell should appear when it contains a numeric value. Create it via the constructor:
 
 ```csharp
 // class XlsxNumberFormat
 public XlsxNumberFormat(string formatCode);
 ```
 
-The format code has the same format you would normally use in Excel, such as `"0.0%"` for a percentage with exactly one decimal value. For example, to create a custom number format with thousand separator, at least two decimal digits and at most six, use:\
+The format code has the same format you would normally use in Excel, such as `"0.0%"` for a percentage with exactly one decimal value. For example, to create a custom number format with a thousand separator, at least two decimal digits and at most six, use:\
 `var customNumberFormat = new XlsxNumberFormat("#,##0.00####")`
 
 Excel defines and reserves many "magic" number formats, and this library exposes some of them as:
@@ -786,7 +786,7 @@ The built-in `XlsxAlignment.Default` object provides an alignment with default v
 
 Kudos to [Roberto Montinaro](https://github.com/montinaro), [Matteo Pierangeli](https://github.com/matpierangeli) and [Giovanni Improta](https://github.com/improtag) for their patience and their very valuable suggestions! <3
 
-Many thanks to all great people who contributed with [pull requests](https://github.com/salvois/LargeXlsx/pulls?q=), questions and reports!
+Many thanks to all the great people who contributed with [pull requests](https://github.com/salvois/LargeXlsx/pulls?q=), questions and reports!
 
 
 ## License
