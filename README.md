@@ -392,19 +392,32 @@ For example, if merging the 2 rows x 3 columns range `A7:C8` using `AddMergedCel
 
 ### Row grouping
 
-You can group rows to create collapsible outlines in your worksheet. This is done by specifying an `outlineLevel` when adding a row with `BeginRow`. Rows with the same `outlineLevel` will be grouped together. You can also specify that a group should be `collapsed` by default.
+You can group rows to create collapsible outlines in your worksheet. This is done by specifying an `outlineLevel` when adding a row with `BeginRow`. Rows with a higher `outlineLevel` are considered detail rows of the immediately preceding row with a lower level. You can also specify that a group should be **initially collapsed** by default, which requires setting both `collapsed` and **`hidden`** properties correctly.
+
+For a group to be collapsed when the file opens, you must follow these structural rules:
+
+1.  **Summary Row (The Parent):** Must have an `outlineLevel` of $\mathbf{1}$ or greater, and set **`collapsed: true`**. This row displays the $\small\mathbf{[+]}$ toggle button.
+2.  **Detail Rows (The Children):** Must have an `outlineLevel` exactly **one higher** than the summary row, and set **`hidden: true`**. These are the rows that are hidden on file open.
 
 ```csharp
 xlsxWriter
     .BeginWorksheet("Sheet 1")
-    .BeginRow().Write("Header 1").Write("Header 2").Write("Header 3")
-    .BeginRow(outlineLevel: 1).Write("Test 1").Write("Test 2").Write("Test 3")
-    .BeginRow(outlineLevel: 1).Write("Test 4").Write("Test 5").Write("Test 6")
-    .BeginRow(collapsed: true, outlineLevel: 1).Write("Test 7").Write("Test 8").Write("Test 9");
+    .BeginRow().Write("Header 1").Write("Header 2").Write("Header 3") // Row 1 (Level 0)
+
+    // --- Summary Row (The [+] button appears here) ---
+    // Row 2: outlineLevel: 1, collapsed: true. This signals the start of the collapsed group.
+    .BeginRow(outlineLevel: 1, collapsed: true).Write("GROUP A Summary").Write("Total: 3").Write("Total: 15")
+
+    // --- Detail Rows (The hidden children) ---
+    // Rows 3 & 4: outlineLevel: 2, hidden: true. These rows are initially hidden.
+    .BeginRow(outlineLevel: 2, hidden: true).Write("Test 1").Write("Test 2").Write("Test 3")
+    .BeginRow(outlineLevel: 2, hidden: true).Write("Test 4").Write("Test 5").Write("Test 6")
+    
+    // --- End of Group A / Start of Next Group ---
+    // Row 5: outlineLevel: 1. This level change signals the end of the Level 2 group.
+    .BeginRow(outlineLevel: 1).Write("GROUP B Summary").Write("Total: 1").Write("Total: 9")
+    // Row 6: outlineLevel: 2 (detail row for Group B, if needed)
 ```
-
-In this example, rows 2, 3, and 4 will be part of a collapsible group at outline level 1. The group will be initially collapsed because the last row of the group is marked as `collapsed`.
-
 
 ### Auto filter
 
