@@ -96,6 +96,7 @@ The output is like:
       - [Writing hyperlinks](#writing-hyperlinks)
       - [Skipping columns](#skipping-columns)
     - [Merged cells](#merged-cells)
+    - [Row grouping](#row-grouping)
     - [Auto filter](#auto-filter)
     - [Data validation](#data-validation)
     - [Password protection of sheets](#password-protection-of-sheets)
@@ -294,7 +295,7 @@ Call `BeginRow` or `BeginRowAsync` to advance the insertion point to the beginni
 
 ```csharp
 // class XlsxWriter
-public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null);
+public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null, bool collapsed = false, int? outlineLevel = null);
 public Task<XlsxWriter> BeginRowAsync(...);
 ```
     
@@ -387,6 +388,22 @@ Content for the merged cells must be written in the top-left cell of the rectang
 For example, if merging the 2 rows x 3 columns range `A7:C8` using `AddMergedCells(7, 1, 2, 3)`, you must write content for the merged cell in `A7`, then explicitly jump by further 2 columns using `SkipColumns(2)` to continue writing content from `D7`, and the same applies on row 8, where after a `BeginRow()` you must skip 3 columns with `SkipColumns(3)` and continue writing from `D8`.
 
 **Note**: due to the structure of the XLSX file format, the ranges for all merged cells of a worksheet must be accumulated in RAM, because they must be written to the file after the content of the whole worksheet. **Using a large number of merged cells may cause high memory consumption**. This also means that you may call `AddMergedCell` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or cells you won't write content to.
+
+
+### Row grouping
+
+You can group rows to create collapsible outlines in your worksheet. This is done by specifying an `outlineLevel` when adding a row with `BeginRow`. Rows with the same `outlineLevel` will be grouped together. You can also specify that a group should be `collapsed` by default.
+
+```csharp
+xlsxWriter
+    .BeginWorksheet("Sheet 1")
+    .BeginRow().Write("Header 1").Write("Header 2").Write("Header 3")
+    .BeginRow(outlineLevel: 1).Write("Test 1").Write("Test 2").Write("Test 3")
+    .BeginRow(outlineLevel: 1).Write("Test 4").Write("Test 5").Write("Test 6")
+    .BeginRow(collapsed: true, outlineLevel: 1).Write("Test 7").Write("Test 8").Write("Test 9");
+```
+
+In this example, rows 2, 3, and 4 will be part of a collapsible group at outline level 1. The group will be initially collapsed because the last row of the group is marked as `collapsed`.
 
 
 ### Auto filter
