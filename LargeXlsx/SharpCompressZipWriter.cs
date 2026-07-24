@@ -46,9 +46,9 @@ public class SharpCompressZipWriter : IZipWriter
             XlsxCompressionLevel.Optimal => CompressionLevel.Default,
             _ => throw new ArgumentOutOfRangeException(nameof(compressionLevel), compressionLevel, null)
         };
-        _zipWriter = (ZipWriter)WriterFactory.Open(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate)
+        _zipWriter = (ZipWriter)WriterFactory.OpenWriter(stream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate)
         {
-            DeflateCompressionLevel = deflateCompressionLevel,
+            CompressionLevel = (int)deflateCompressionLevel,
             UseZip64 = useZip64
         });
     }
