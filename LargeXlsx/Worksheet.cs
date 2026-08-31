@@ -145,7 +145,7 @@ namespace LargeXlsx
 #endif
         }
 
-        public void BeginRow(double? height, bool hidden, XlsxStyle style)
+        public void BeginRow(double? height, bool hidden, XlsxStyle style, bool collapsed, int? outlineLevel)
         {
             CloseLastRow();
             if (CurrentRowNumber == Limits.MaxRowCount)
@@ -161,6 +161,10 @@ namespace LargeXlsx
                 _customWriter.Append("\""u8);
                 _needsRef = false;
             }
+            if (collapsed)
+                _customWriter.Append(" collapsed=\"1\""u8);
+            if (outlineLevel != null && outlineLevel.Value > 0)
+                _customWriter.Append(" outlineLevel=\""u8).Append(outlineLevel.Value).Append("\""u8);
             if (height.HasValue)
                 _customWriter.Append(" ht=\""u8).Append(height.Value).Append("\" customHeight=\"1\""u8);
             if (hidden)

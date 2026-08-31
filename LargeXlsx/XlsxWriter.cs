@@ -325,19 +325,19 @@ namespace LargeXlsx
             return this;
         }
 
-        public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null)
+        public XlsxWriter BeginRow(double? height = null, bool hidden = false, XlsxStyle style = null, bool collapsed = false, int? outlineLevel = null)
         {
             CheckInWorksheet();
             TryCommit();
-            _currentWorksheet.BeginRow(height, hidden, style);
+            _currentWorksheet.BeginRow(height, hidden, style, collapsed, outlineLevel);
             return this;
         }
 
-        public async Task<XlsxWriter> BeginRowAsync(double? height = null, bool hidden = false, XlsxStyle style = null)
+        public async Task<XlsxWriter> BeginRowAsync(double? height = null, bool hidden = false, XlsxStyle style = null, bool collapsed = false, int? outlineLevel = null)
         {
             CheckInWorksheet();
             await TryCommitAsync().ConfigureAwait(false);
-            _currentWorksheet.BeginRow(height, hidden, style);
+            _currentWorksheet.BeginRow(height, hidden, style, collapsed, outlineLevel);
             return this;
         }
 

@@ -57,6 +57,7 @@ public static class Program
         Run(StyledLarge.Run);
         Run(StyledLargeCreateStyles.Run);
         Run(Zip64Huge.Run);
+        Grouping.Run();
     }
 
     private static void Run(Action example)
