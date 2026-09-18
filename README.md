@@ -19,6 +19,7 @@ Currently the library supports:
 * column and row formatting (custom width, height, hidden columns/rows)
 * auto filter
 * cell validation, such as dropdown list of allowed values
+* suppression of selected worksheet error indicators for cell ranges
 * right-to-left worksheets, to support languages such as Arabic and Hebrew
 * password protection of sheets against accidental modification
 * headers, footers and page breaks for worksheet printout
@@ -98,6 +99,7 @@ The output is like:
     - [Merged cells](#merged-cells)
     - [Auto filter](#auto-filter)
     - [Data validation](#data-validation)
+    - [Ignored errors](#ignored-errors)
     - [Password protection of sheets](#password-protection-of-sheets)
     - [Headers and footers](#headers-and-footers)
       - [Left, center and right sections of header and footer](#left-center-and-right-sections-of-header-and-footer)
@@ -470,6 +472,47 @@ The first overload applies the validation rules to all cells in the specified re
 Note that, due to the internals of the XLSX file format, all validation objects and their cell references must be kept in RAM until a worksheet is finalized, but this library **deduplicates** validation objects in **constant time** as needed. Thus, you should usually not worry about performance or memory consumption when you use multiple validation objects, unless you are using a large number of different ones, or specify a lot of separate cell references.
 
 This means that you may call `AddDataValidation` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or cells you won't write content to.
+
+
+### Ignored errors
+
+Spreadsheet applications may flag cells whose contents look suspicious, even when the values are intentionally stored that way. For example, identifiers containing only digits may need to remain text to preserve leading zeroes or precision.
+
+Use `AddIgnoredErrors` to suppress selected error indicators for a rectangular range:
+
+```csharp
+// class XlsxWriter
+public XlsxWriter AddIgnoredErrors(
+    int fromRow,
+    int fromColumn,
+    int rowCount,
+    int columnCount,
+    params XlsxIgnoredError[] errors);
+
+public XlsxWriter AddIgnoredErrors(
+    int rowCount,
+    int columnCount,
+    params XlsxIgnoredError[] errors);
+
+public XlsxWriter AddIgnoredErrors(params XlsxIgnoredError[] errors);
+```
+
+For example, the following suppresses the "number stored as text" indicator in column E starting from row 2:
+
+```csharp
+xlsxWriter.AddIgnoredErrors(
+    fromRow: 2,
+    fromColumn: 5,
+    rowCount: Limits.MaxRowCount - 1,
+    columnCount: 1,
+    XlsxIgnoredError.NumberStoredAsText);
+```
+
+`XlsxIgnoredError` supports `CalculatedColumn`, `EmptyCellReference`, `EvaluationError`, `Formula`, `FormulaRange`, `ListDataValidation`, `NumberStoredAsText`, `TwoDigitTextYear` and `UnlockedFormula`. Multiple error types may be passed as separate arguments to the same call.
+
+`XlsxIgnoredError` is a flags enum: combinations such as `XlsxIgnoredError.NumberStoredAsText | XlsxIgnoredError.TwoDigitTextYear` may also be passed. Separate arguments and combined flags are equivalent. An empty argument array or a combined value of zero is rejected.
+
+Ranges with the same set of ignored error types are grouped into one worksheet entry. The order of error types and repeated types do not affect grouping. Duplicate range references within a group are written only once. Memory consumption is proportional to the number of registered ranges rather than the number of cells covered by them.
 
 
 ### Password protection of sheets

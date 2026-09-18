@@ -506,6 +506,28 @@ namespace LargeXlsx
             return AddDataValidation(CurrentRowNumber, CurrentColumnNumber, 1, 1, dataValidation);
         }
 
+        public XlsxWriter AddIgnoredErrors(
+            int fromRow,
+            int fromColumn,
+            int rowCount,
+            int columnCount,
+            params XlsxIgnoredError[] errors)
+        {
+            CheckInWorksheet();
+            _currentWorksheet.AddIgnoredErrors(fromRow, fromColumn, rowCount, columnCount, errors);
+            return this;
+        }
+
+        public XlsxWriter AddIgnoredErrors(int rowCount, int columnCount, params XlsxIgnoredError[] errors)
+        {
+            return AddIgnoredErrors(CurrentRowNumber, CurrentColumnNumber, rowCount, columnCount, errors);
+        }
+
+        public XlsxWriter AddIgnoredErrors(params XlsxIgnoredError[] errors)
+        {
+            return AddIgnoredErrors(CurrentRowNumber, CurrentColumnNumber, 1, 1, errors);
+        }
+
         public XlsxWriter SetDefaultStyle(XlsxStyle style)
         {
             DefaultStyle = style;

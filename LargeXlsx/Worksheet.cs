@@ -43,6 +43,7 @@ namespace LargeXlsx
         private readonly bool _skipInvalidCharacters;
         private readonly List<string> _mergedCellRefs;
         private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
+        private readonly Dictionary<XlsxIgnoredError, List<string>> _cellRefsByIgnoredErrors;
         private readonly HashSet<int> _pageBreakRowNumbers;
         private readonly HashSet<int> _pageBreakColumnNumbers;
         private string _autoFilterRef;
@@ -90,6 +91,7 @@ namespace LargeXlsx
             _pageBreakRowNumbers = new HashSet<int>();
             _pageBreakColumnNumbers = new HashSet<int>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
+            _cellRefsByIgnoredErrors = new Dictionary<XlsxIgnoredError, List<string>>();
             _stringedCurrentRowNumber = new byte[10];
             _stringedCurrentRowNumberLength = 0;
             _stream = zipWriter.CreateEntry($"xl/worksheets/sheet{id}.xml");
@@ -136,6 +138,7 @@ namespace LargeXlsx
             await WriteDataValidations().ConfigureAwait(false);
             await WriteHeaderFooter().ConfigureAwait(false);
             WritePageBreaks();
+            await WriteIgnoredErrors().ConfigureAwait(false);
             _customWriter.Append("</worksheet>\n"u8);
             await _customWriter.FlushToAsync(_stream).ConfigureAwait(false);
 #if NETCOREAPP2_1_OR_GREATER
@@ -352,6 +355,44 @@ namespace LargeXlsx
             {
                 cellRefs = new List<string>();
                 _cellRefsByDataValidation.Add(dataValidation, cellRefs);
+            }
+            cellRefs.Add(cellRef);
+        }
+
+        public void AddIgnoredErrors(int fromRow, int fromColumn, int rowCount, int columnCount, XlsxIgnoredError[] errors)
+        {
+            if (fromRow < 1 || fromColumn < 1 || rowCount < 1 || columnCount < 1
+                || (long)fromRow + rowCount - 1 > Limits.MaxRowCount
+                || (long)fromColumn + columnCount - 1 > Limits.MaxColumnCount)
+                throw new ArgumentOutOfRangeException();
+            if (errors == null)
+                throw new ArgumentNullException(nameof(errors));
+            if (errors.Length == 0)
+                throw new ArgumentException("At least one ignored error must be specified", nameof(errors));
+
+            var toRow = fromRow + rowCount - 1;
+            var toColumn = fromColumn + columnCount - 1;
+            var cellRef = rowCount > 1 || columnCount > 1
+                ? $"{Util.GetColumnName(fromColumn)}{fromRow}:{Util.GetColumnName(toColumn)}{toRow}"
+                : $"{Util.GetColumnName(fromColumn)}{fromRow}";
+            var errorMask = default(XlsxIgnoredError);
+            foreach (var error in errors)
+                errorMask |= error;
+
+            const XlsxIgnoredError allErrors =
+                XlsxIgnoredError.CalculatedColumn | XlsxIgnoredError.EmptyCellReference |
+                XlsxIgnoredError.EvaluationError | XlsxIgnoredError.Formula |
+                XlsxIgnoredError.FormulaRange | XlsxIgnoredError.ListDataValidation |
+                XlsxIgnoredError.NumberStoredAsText | XlsxIgnoredError.TwoDigitTextYear |
+                XlsxIgnoredError.UnlockedFormula;
+            if ((errorMask & ~allErrors) != 0)
+                throw new ArgumentOutOfRangeException(nameof(errors), errorMask, "Unknown ignored error flags");
+            if (errorMask == 0)
+                throw new ArgumentException("At least one ignored error must be specified", nameof(errors));
+            if (!_cellRefsByIgnoredErrors.TryGetValue(errorMask, out var cellRefs))
+            {
+                cellRefs = new List<string>();
+                _cellRefsByIgnoredErrors.Add(errorMask, cellRefs);
             }
             cellRefs.Add(cellRef);
         }
@@ -625,5 +666,43 @@ namespace LargeXlsx
                 _customWriter.Append("</colBreaks>\n"u8);
             }
         }
+
+        private async Task WriteIgnoredErrors()
+        {
+            if (!_cellRefsByIgnoredErrors.Any())
+                return;
+            _customWriter.Append("<ignoredErrors>\n"u8);
+            foreach (var ignoredError in _cellRefsByIgnoredErrors)
+            {
+                _customWriter.Append("<ignoredError sqref=\""u8)
+                    .AppendEscapedXmlString(string.Join(" ", ignoredError.Value.Distinct()), false)
+                    .Append("\""u8);
+                foreach (XlsxIgnoredError error in Enum.GetValues(typeof(XlsxIgnoredError)))
+                {
+                    if ((ignoredError.Key & error) != 0)
+                    {
+                        var attributeName = error switch
+                        {
+                            XlsxIgnoredError.CalculatedColumn => "calculatedColumn",
+                            XlsxIgnoredError.EmptyCellReference => "emptyCellReference",
+                            XlsxIgnoredError.EvaluationError => "evalError",
+                            XlsxIgnoredError.Formula => "formula",
+                            XlsxIgnoredError.FormulaRange => "formulaRange",
+                            XlsxIgnoredError.ListDataValidation => "listDataValidation",
+                            XlsxIgnoredError.NumberStoredAsText => "numberStoredAsText",
+                            XlsxIgnoredError.TwoDigitTextYear => "twoDigitTextYear",
+                            XlsxIgnoredError.UnlockedFormula => "unlockedFormula",
+                            _ => throw new ArgumentOutOfRangeException(nameof(error), error, "Unknown ignored error type")
+                        };
+                        _customWriter.Append(" "u8)
+                            .AppendEscapedXmlString(attributeName, false)
+                            .Append("=\"1\""u8);
+                    }
+                }
+                await _customWriter.Append("/>\n"u8).TryFlushToAsync(_stream).ConfigureAwait(false);
+            }
+            _customWriter.Append("</ignoredErrors>\n"u8);
+        }
+
     }
 }
