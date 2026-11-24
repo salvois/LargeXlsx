@@ -79,6 +79,12 @@ internal sealed class WorksheetComments
         _commentedCells.TrimExcess();
     }
 
+    /// <summary>
+    /// Computes the value of the x:Anchor element of a VML note, which is what Excel actually uses to place and size
+    /// the comment box. It is made of 8 zero-based values: left column, left offset, top row, top offset,
+    /// right column, right offset, bottom row, bottom offset, where offsets are in pixels from the top-left
+    /// corner of the respective cell. Offsets are fixed to Excel's defaults.
+    /// </summary>
     internal static string ComputeAnchor(int row0, int column0, int widthInColumns, int heightInRows)
     {
         // Same default placement as Excel: one column to the right and one row above the commented cell
@@ -100,6 +106,10 @@ internal sealed class WorksheetComments
         await write(stream).ConfigureAwait(false);
     }
 
+    /*
+     * Writes the comments part: the list of distinct authors, then one comment per cell, referencing its author
+     * by zero-based index in that list. A null author is written as an empty author, as authorId is mandatory.
+     */
     private static async Task WriteCommentsAsync(CustomWriter customWriter, Stream stream, List<(int Row, int Column, XlsxComment Comment)> comments, bool skipInvalidCharacters)
     {
         var authorIds = new Dictionary<string, int>();
@@ -128,34 +138,74 @@ internal sealed class WorksheetComments
         await customWriter.Append("</commentList></comments>\n"u8).FlushToAsync(stream).ConfigureAwait(false);
     }
 
+    /*
+     * Writes the legacy VML drawing part, containing one text box shape per comment.
+     * The comments part only holds text and authors: Excel needs a VML shape for each comment to display it,
+     * and silently drops comments without one. Most of the markup below mirrors what Excel itself writes for
+     * a new note, and is required boilerplate rather than something this library makes configurable.
+     *
+     * Overall structure:
+     *   <xml>                    the root of a VML drawing part is literally named "xml"
+     *     <o:shapelayout>        layout information for the whole drawing, here only the shape id blocks (o:idmap)
+     *     <v:shapetype>          a reusable shape template, here the standard text box, referenced by each shape
+     *     <v:shape>*             one shape per comment: look of the box, plus Excel-specific data (x:ClientData)
+     *   </xml>
+     */
     private static async Task WriteVmlDrawingAsync(CustomWriter customWriter, Stream stream, List<(int Row, int Column, XlsxComment Comment)> comments, int firstVmlBlock)
     {
+        // Namespaces: v = VML core (shapes), o = Office extensions (shape layout, shape type ids), x = Excel extensions (client data)
         customWriter.Append("<xml xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\">\n"u8
                             + "<o:shapelayout v:ext=\"edit\"><o:idmap v:ext=\"edit\" data=\""u8);
+
+        // Shape ids must be unique across the whole workbook, and are handed out in blocks of 1024 ids:
+        // block n owns ids n * 1024 to n * 1024 + 1023, of which Excel uses the last 1023 (n * 1024 itself is never used).
+        // o:idmap must list, comma separated, every block this drawing takes its shape ids from.
+        // blockCount is the number of blocks needed for all comments of this worksheet, that is
+        // Count / ShapesPerBlock rounded up, using integer arithmetic: 1 to 1023 comments need 1 block,
+        // 1024 to 2046 comments need 2 blocks, 2500 comments need 3 blocks.
+        // It must match the number of blocks reserved for this worksheet by VmlShapeIdAllocator.AllocateBlocks,
+        // which uses the same formula and returned firstVmlBlock, so that the blocks of different worksheets never overlap.
         var blockCount = (comments.Count + VmlShapeIdAllocator.ShapesPerBlock - 1) / VmlShapeIdAllocator.ShapesPerBlock;
         for (var i = 0; i < blockCount; i++)
         {
             if (i > 0) customWriter.Append(","u8);
             customWriter.Append(firstVmlBlock + i);
         }
+
+        // Shape type 202 is the predefined Office text box. The "_x0000_" prefix of ids is a convention of Office VML,
+        // with "t" for shape types and "s" for shapes. coordsize is the usual VML coordinate space of 21600 units,
+        // in which path draws the rectangular outline of the box (move, lines, close, end).
         customWriter.Append("\"/></o:shapelayout>\n"u8
                             + "<v:shapetype id=\"_x0000_t202\" coordsize=\"21600,21600\" o:spt=\"202\" path=\"m,l,21600r21600,l21600,xe\">"u8
                             + "<v:stroke joinstyle=\"miter\"/><v:path gradientshapeok=\"t\" o:connecttype=\"rect\"/></v:shapetype>\n"u8);
+
         for (var i = 0; i < comments.Count; i++)
         {
             var c = comments[i];
+            // The i-th comment takes the (i % 1023)-th usable id of the (i / 1023)-th block reserved for this worksheet,
+            // e.g. with firstVmlBlock = 1: comment 0 gets id 1025 (as in Excel), comment 1022 gets 2047, comment 1023 gets 2049.
             var shapeId = (firstVmlBlock + i / VmlShapeIdAllocator.ShapesPerBlock) * 1024 + 1 + i % VmlShapeIdAllocator.ShapesPerBlock;
             customWriter
+                // style: the absolute position and size are Excel's defaults, as Excel actually places and sizes the box
+                // from x:Anchor below; z-index stacks boxes in comment order; visibility tells whether the box is always
+                // shown or only when hovering the commented cell.
                 .Append("<v:shape id=\"_x0000_s"u8).Append(shapeId)
                 .Append("\" type=\"#_x0000_t202\" style=\"position:absolute;margin-left:59.25pt;margin-top:1.5pt;width:108pt;height:59.25pt;z-index:"u8).Append(i + 1)
                 .Append(c.Comment.Visible ? ";visibility:visible"u8 : ";visibility:hidden"u8)
+                // The classic look of notes: light yellow plain fill (same color2, thus no gradient) and a black shadow.
+                // The text box is left empty, as Excel takes the text from the comments part.
                 .Append("\" fillcolor=\"#ffffe1\" o:insetmode=\"auto\"><v:fill color2=\"#ffffe1\"/><v:shadow on=\"t\" color=\"black\" obscured=\"t\"/>"u8
                         + "<v:path o:connecttype=\"none\"/><v:textbox style=\"mso-direction-alt:auto\"><div style=\"text-align:left\"></div></v:textbox>"u8
+                        // Excel-specific data turning the shape into a cell note. MoveWithCells and SizeWithCells are
+                        // written as Excel does for a new note.
                         + "<x:ClientData ObjectType=\"Note\"><x:MoveWithCells/><x:SizeWithCells/><x:Anchor>"u8)
                 .AppendEscapedXmlString(ComputeAnchor(c.Row - 1, c.Column - 1, c.Comment.WidthInColumns, c.Comment.HeightInRows), false)
+                // x:Row and x:Column are the zero-based commented cell, linking the shape to the comment with the same ref
+                // in the comments part.
                 .Append("</x:Anchor><x:AutoFill>False</x:AutoFill><x:Row>"u8).Append(c.Row - 1)
                 .Append("</x:Row><x:Column>"u8).Append(c.Column - 1)
                 .Append("</x:Column>"u8);
+            // An empty x:Visible element marks a note that is always shown
             if (c.Comment.Visible)
                 customWriter.Append("<x:Visible/>"u8);
             await customWriter.Append("</x:ClientData></v:shape>\n"u8).TryFlushToAsync(stream).ConfigureAwait(false);
@@ -163,6 +213,11 @@ internal sealed class WorksheetComments
         await customWriter.Append("</xml>\n"u8).FlushToAsync(stream).ConfigureAwait(false);
     }
 
+    /*
+     * Writes the relationships of the worksheet, linking it to its comments and VML drawing parts.
+     * The worksheet references the VML drawing with <legacyDrawing r:id="RidVml1"/>, while the comments part
+     * is found by relationship type only.
+     */
     private static Task WriteRelationshipsAsync(CustomWriter customWriter, Stream stream, int sheetId) =>
         customWriter
             .Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"u8
