@@ -45,6 +45,7 @@ namespace LargeXlsx
         private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
         private readonly HashSet<int> _pageBreakRowNumbers;
         private readonly HashSet<int> _pageBreakColumnNumbers;
+        private readonly WorksheetComments _comments;
         private string _autoFilterRef;
         private string _autoFilterAbsoluteRef;
         private XlsxSheetProtection _sheetProtection;
@@ -59,6 +60,7 @@ namespace LargeXlsx
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
+        internal bool HasComments => _comments.Count > 0;
 
         public Worksheet(
             IZipWriter zipWriter,
@@ -90,6 +92,7 @@ namespace LargeXlsx
             _pageBreakRowNumbers = new HashSet<int>();
             _pageBreakColumnNumbers = new HashSet<int>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
+            _comments = new WorksheetComments();
             _stringedCurrentRowNumber = new byte[10];
             _stringedCurrentRowNumberLength = 0;
             _stream = zipWriter.CreateEntry($"xl/worksheets/sheet{id}.xml");
@@ -355,6 +358,9 @@ namespace LargeXlsx
             }
             cellRefs.Add(cellRef);
         }
+
+        public void AddComment(int row, int column, XlsxComment comment) =>
+            _comments.Add(row, column, comment);
 
         public void SetSheetProtection(XlsxSheetProtection sheetProtection)
         {

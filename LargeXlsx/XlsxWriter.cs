@@ -506,6 +506,18 @@ namespace LargeXlsx
             return AddDataValidation(CurrentRowNumber, CurrentColumnNumber, 1, 1, dataValidation);
         }
 
+        public XlsxWriter AddComment(int row, int column, XlsxComment comment)
+        {
+            CheckInWorksheet();
+            _currentWorksheet.AddComment(row, column, comment);
+            return this;
+        }
+
+        public XlsxWriter AddComment(XlsxComment comment)
+        {
+            return AddComment(CurrentRowNumber, CurrentColumnNumber, comment);
+        }
+
         public XlsxWriter SetDefaultStyle(XlsxStyle style)
         {
             DefaultStyle = style;
