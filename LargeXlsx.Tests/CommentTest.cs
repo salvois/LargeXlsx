@@ -27,6 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -217,6 +218,94 @@ public static class CommentTest
         comment.Text.ShouldBe("Hello");
         comment.Author.ShouldBe("Alice");
     }
+
+    [Test]
+    public static void AllocatorReservesConsecutiveBlocks()
+    {
+        var allocator = new VmlShapeIdAllocator();
+        allocator.AllocateBlocks(1).ShouldBe(1);
+        allocator.AllocateBlocks(1023).ShouldBe(2);
+        allocator.AllocateBlocks(1024).ShouldBe(3);
+        allocator.AllocateBlocks(1).ShouldBe(5);
+    }
+
+    [Test]
+    public static void AnchorStaysInsideGrid()
+    {
+        WorksheetComments.ComputeAnchor(0, 0, 2, 4).ShouldBe("1, 15, 0, 10, 3, 15, 4, 4");
+        WorksheetComments.ComputeAnchor(Limits.MaxRowCount - 1, Limits.MaxColumnCount - 1, 2, 4)
+            .ShouldBe($"{Limits.MaxColumnCount - 3}, 15, {Limits.MaxRowCount - 5}, 10, {Limits.MaxColumnCount - 1}, 15, {Limits.MaxRowCount - 1}, 4");
+    }
+
+    [Test]
+    public static void CommentsOnSeveralSheets()
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = CreateOpenXmlCompatibleWriter(stream))
+        {
+            // More than one VML block of shape ids on the first sheet, to catch overlaps with the next sheets
+            xlsxWriter.BeginWorksheet("Sheet1");
+            for (var i = 1; i <= 1100; i++)
+                xlsxWriter.BeginRow().AddComment(new XlsxComment($"1A{i}")).Write();
+            xlsxWriter.BeginWorksheet("Sheet2").BeginRow().AddComment(new XlsxComment("2A1")).Write().AddComment(new XlsxComment("2B1")).Write();
+            xlsxWriter.BeginWorksheet("Sheet3").BeginRow().Write();
+        }
+
+        using (var package = EPPlusWrapper.Create(stream))
+        {
+            package.Workbook.Worksheets[0].Comments.Count.ShouldBe(1100);
+            package.Workbook.Worksheets[1].Comments.Count.ShouldBe(2);
+            package.Workbook.Worksheets[1].Cells["B1"].Comment.Text.ShouldBe("2B1");
+            package.Workbook.Worksheets[2].Comments.Count.ShouldBe(0);
+        }
+        GetVmlIdMaps(stream).ShouldBe(["1,2", "3"]);
+        var shapeIds = GetVmlShapeIds(stream);
+        shapeIds.Length.ShouldBe(1102);
+        shapeIds.Distinct().Count().ShouldBe(1102);
+    }
+
+    [Test]
+    public static void ManyCommentsOnOneSheet()
+    {
+        const int commentCount = 2500;
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = CreateOpenXmlCompatibleWriter(stream))
+        {
+            xlsxWriter.BeginWorksheet("Sheet1");
+            for (var i = 1; i <= commentCount; i++)
+                xlsxWriter.BeginRow().AddComment(new XlsxComment($"Comment {i}")).Write(i);
+        }
+
+        using (var package = EPPlusWrapper.Create(stream))
+        {
+            var sheet = package.Workbook.Worksheets[0];
+            sheet.Comments.Count.ShouldBe(commentCount);
+            sheet.Cells[$"A{commentCount}"].Comment.Text.ShouldBe($"Comment {commentCount}");
+        }
+        GetVmlIdMaps(stream).ShouldBe(["1,2,3"]);
+        var shapeIds = GetVmlShapeIds(stream);
+        shapeIds.Length.ShouldBe(commentCount);
+        shapeIds.Distinct().Count().ShouldBe(commentCount);
+    }
+
+    private static string[] GetVmlContents(Stream stream)
+    {
+        using var document = SpreadsheetDocument.Open(stream, false);
+        return document.WorkbookPart!.WorksheetParts
+            .SelectMany(wp => wp.VmlDrawingParts)
+            .Select(vp =>
+            {
+                using var reader = new StreamReader(vp.GetStream());
+                return reader.ReadToEnd();
+            })
+            .ToArray();
+    }
+
+    private static string[] GetVmlShapeIds(Stream stream) =>
+        GetVmlContents(stream).SelectMany(vml => Regex.Matches(vml, "<v:shape id=\"(_x0000_s\\d+)\"").Cast<Match>().Select(m => m.Groups[1].Value)).ToArray();
+
+    private static string[] GetVmlIdMaps(Stream stream) =>
+        GetVmlContents(stream).SelectMany(vml => Regex.Matches(vml, "<o:idmap v:ext=\"edit\" data=\"([^\"]*)\"").Cast<Match>().Select(m => m.Groups[1].Value)).ToArray();
 
     private static XlsxWriter CreateOpenXmlCompatibleWriter(Stream stream, bool skipInvalidCharacters = false) =>
 #if NETCOREAPP2_1_OR_GREATER

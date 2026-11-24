@@ -44,6 +44,7 @@ namespace LargeXlsx
         private readonly bool _requireCellReferences;
         private readonly bool _skipInvalidCharacters;
         private readonly CustomWriter _customWriter;
+        private readonly VmlShapeIdAllocator _vmlShapeIdAllocator;
         private Worksheet _currentWorksheet;
         private bool _hasFormulasWithoutResult;
         private bool _disposed;
@@ -81,6 +82,7 @@ namespace LargeXlsx
             _requireCellReferences = requireCellReferences;
             _skipInvalidCharacters = skipInvalidCharacters;
             _customWriter = new CustomWriter(commitThreshold);
+            _vmlShapeIdAllocator = new VmlShapeIdAllocator();
             DefaultStyle = XlsxStyle.Default;
             _zipWriter = zipWriter;
         }
@@ -315,6 +317,7 @@ namespace LargeXlsx
                 state: state,
                 stylesheet: _stylesheet,
                 sharedStringTable: _sharedStringTable,
+                vmlShapeIdAllocator: _vmlShapeIdAllocator,
                 columns: columns ?? [],
                 showGridLines: showGridLines,
                 showHeaders: showHeaders,

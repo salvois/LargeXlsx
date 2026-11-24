@@ -40,7 +40,6 @@ namespace LargeXlsx;
  */
 internal sealed class WorksheetComments
 {
-    private const int VmlShapesPerBlock = 1023;
     private readonly List<(int Row, int Column, XlsxComment Comment)> _comments = new();
     private readonly HashSet<(int Row, int Column)> _commentedCells = new();
 
@@ -77,9 +76,12 @@ internal sealed class WorksheetComments
     internal static string ComputeAnchor(int row0, int column0, int widthInColumns, int heightInRows)
     {
         // Same default placement as Excel: one column to the right and one row above the commented cell
-        var left = column0 + 1;
-        var top = Math.Max(row0 - 1, 0);
-        return $"{left}, 15, {top}, 10, {left + widthInColumns}, 15, {top + heightInRows}, 4";
+        // and shifted back when it would go past the last column or row
+        var left = Math.Min(column0 + 1, Math.Max(Limits.MaxColumnCount - 1 - widthInColumns, 0));
+        var top = Math.Min(Math.Max(row0 - 1, 0), Math.Max(Limits.MaxRowCount - 1 - heightInRows, 0));
+        var right = Math.Min(left + widthInColumns, Limits.MaxColumnCount - 1);
+        var bottom = Math.Min(top + heightInRows, Limits.MaxRowCount - 1);
+        return $"{left}, 15, {top}, 10, {right}, 15, {bottom}, 4";
     }
 
     private static async Task WriteEntryAsync(IZipWriter zipWriter, string path, Func<Stream, Task> write)
@@ -124,7 +126,7 @@ internal sealed class WorksheetComments
     {
         customWriter.Append("<xml xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\">\n"u8
                             + "<o:shapelayout v:ext=\"edit\"><o:idmap v:ext=\"edit\" data=\""u8);
-        var blockCount = (comments.Count + VmlShapesPerBlock - 1) / VmlShapesPerBlock;
+        var blockCount = (comments.Count + VmlShapeIdAllocator.ShapesPerBlock - 1) / VmlShapeIdAllocator.ShapesPerBlock;
         for (var i = 0; i < blockCount; i++)
         {
             if (i > 0) customWriter.Append(","u8);
@@ -136,7 +138,7 @@ internal sealed class WorksheetComments
         for (var i = 0; i < comments.Count; i++)
         {
             var c = comments[i];
-            var shapeId = (firstVmlBlock + i / VmlShapesPerBlock) * 1024 + 1 + i % VmlShapesPerBlock;
+            var shapeId = (firstVmlBlock + i / VmlShapeIdAllocator.ShapesPerBlock) * 1024 + 1 + i % VmlShapeIdAllocator.ShapesPerBlock;
             customWriter
                 .Append("<v:shape id=\"_x0000_s"u8).Append(shapeId)
                 .Append("\" type=\"#_x0000_t202\" style=\"position:absolute;margin-left:59.25pt;margin-top:1.5pt;width:108pt;height:59.25pt;z-index:"u8).Append(i + 1)

@@ -47,6 +47,7 @@ namespace LargeXlsx
         private readonly HashSet<int> _pageBreakRowNumbers;
         private readonly HashSet<int> _pageBreakColumnNumbers;
         private readonly WorksheetComments _comments;
+        private readonly VmlShapeIdAllocator _vmlShapeIdAllocator;
         private string _autoFilterRef;
         private string _autoFilterAbsoluteRef;
         private XlsxSheetProtection _sheetProtection;
@@ -73,6 +74,7 @@ namespace LargeXlsx
             bool rightToLeft,
             Stylesheet stylesheet,
             SharedStringTable sharedStringTable,
+            VmlShapeIdAllocator vmlShapeIdAllocator,
             IEnumerable<XlsxColumn> columns,
             bool showGridLines,
             bool showHeaders,
@@ -94,6 +96,7 @@ namespace LargeXlsx
             _pageBreakColumnNumbers = new HashSet<int>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
             _comments = new WorksheetComments();
+            _vmlShapeIdAllocator = vmlShapeIdAllocator;
             _stringedCurrentRowNumber = new byte[10];
             _stringedCurrentRowNumberLength = 0;
             _zipWriter = zipWriter;
@@ -150,7 +153,7 @@ namespace LargeXlsx
             _stream.Dispose();
 #endif
             if (HasComments)
-                await _comments.WritePartsAsync(_zipWriter, _customWriter, Id, Id, _skipInvalidCharacters).ConfigureAwait(false);
+                await _comments.WritePartsAsync(_zipWriter, _customWriter, Id, _vmlShapeIdAllocator.AllocateBlocks(_comments.Count), _skipInvalidCharacters).ConfigureAwait(false);
         }
 
         public void BeginRow(double? height, bool hidden, XlsxStyle style)
