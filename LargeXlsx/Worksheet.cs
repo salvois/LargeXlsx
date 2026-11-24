@@ -106,7 +106,7 @@ namespace LargeXlsx
 
             _customWriter
                 .Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"u8
-                        + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"u8
+                        + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"u8
                         + "<sheetViews>"u8
                         + "<sheetView showGridLines=\""u8)
                 .Append(Util.BoolToInt(showGridLines))
@@ -628,9 +628,11 @@ namespace LargeXlsx
 
         private void WriteLegacyDrawing()
         {
-            // Must come after page breaks (and ignoredErrors) according to the OOXML schema
+            // Must come after page breaks (and ignoredErrors) according to the OOXML schema.
+            // The relationships namespace is declared locally because the worksheet root has already been
+            // streamed when we know whether comments exist, and worksheets without comments must not change.
             if (HasComments)
-                _customWriter.Append("<legacyDrawing r:id=\"RidVml1\"/>\n"u8);
+                _customWriter.Append("<legacyDrawing xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" r:id=\"RidVml1\"/>\n"u8);
         }
 
         private void WritePageBreaks()

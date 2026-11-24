@@ -320,6 +320,33 @@ public static class CommentTest
         }
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public static void RelationshipNamespaceDeclaredOnlyWhereUsed(bool withComments)
+    {
+        // Worksheets without comments must stay byte-identical to what the library produced before comments existed
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = CreateOpenXmlCompatibleWriter(stream))
+        {
+            xlsxWriter.BeginWorksheet("Sheet1").BeginRow();
+            if (withComments)
+                xlsxWriter.AddComment(new XlsxComment("Hello"));
+            xlsxWriter.Write("A1");
+        }
+
+        using var document = SpreadsheetDocument.Open(stream, false);
+        using var reader = new StreamReader(document.WorkbookPart!.WorksheetParts.Single().GetStream());
+        var worksheetXml = reader.ReadToEnd();
+        worksheetXml.ShouldContain("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
+        if (withComments)
+        {
+            worksheetXml.ShouldContain("<legacyDrawing xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" r:id=\"RidVml1\"/>");
+            Regex.Matches(worksheetXml, "xmlns:r=").Count.ShouldBe(1);
+        }
+        else
+            worksheetXml.ShouldNotContain("xmlns:r=");
+    }
+
     [Test]
     public static async Task CommentsAreReleasedOnceWritten()
     {
