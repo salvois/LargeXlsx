@@ -29,7 +29,9 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Validation;
 using DocumentFormat.OpenXml.Spreadsheet;
 using NUnit.Framework;
 using Shouldly;
@@ -286,6 +288,36 @@ public static class CommentTest
         var shapeIds = GetVmlShapeIds(stream);
         shapeIds.Length.ShouldBe(commentCount);
         shapeIds.Distinct().Count().ShouldBe(commentCount);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public static void PartsAreSchemaValid(bool withComments)
+    {
+        using var stream = new MemoryStream();
+        using (var xlsxWriter = CreateOpenXmlCompatibleWriter(stream))
+        {
+            // Other post-sheetData elements, so that <legacyDrawing> is checked to follow them
+            xlsxWriter.BeginWorksheet("Sheet1")
+                .SetHeaderFooter(new XlsxHeaderFooter(oddHeader: "&CHeader"))
+                .BeginRow().AddMergedCell(1, 2).Write("A1").Write()
+                .AddDataValidation(XlsxDataValidation.List(["Lorem", "Ipsum"])).Write()
+                .BeginRow().AddRowPageBreak().Write("A2");
+            if (withComments)
+                xlsxWriter.AddComment(1, 1, new XlsxComment("one", author: "Alice")).AddComment(2, 1, new XlsxComment(" two ", visible: true));
+        }
+
+        using var document = SpreadsheetDocument.Open(stream, false);
+        var worksheetPart = document.WorkbookPart!.WorksheetParts.Single();
+        var validator = new OpenXmlValidator(FileFormatVersions.Office2010);
+        validator.Validate(worksheetPart.Worksheet!).Select(e => e.Description).ShouldBeEmpty();
+        if (withComments)
+        {
+            worksheetPart.WorksheetCommentsPart.ShouldNotBeNull();
+            worksheetPart.VmlDrawingParts.Count().ShouldBe(1);
+            worksheetPart.Worksheet!.Elements<LegacyDrawing>().Count().ShouldBe(1);
+            validator.Validate(worksheetPart.WorksheetCommentsPart!.Comments!).Select(e => e.Description).ShouldBeEmpty();
+        }
     }
 
     private static string[] GetVmlContents(Stream stream)
