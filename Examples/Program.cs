@@ -46,6 +46,7 @@ public static class Program
         Run(Alignment.Run);
         Run(Border.Run);
         Run(DataValidation.Run);
+        Run(Comments.Run);
         Run(RightToLeft.Run);
         Run(SheetProtection.Run);
         Run(HeaderFooterPageBreaks.Run);

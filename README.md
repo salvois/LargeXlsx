@@ -19,6 +19,7 @@ Currently the library supports:
 * column and row formatting (custom width, height, hidden columns/rows)
 * auto filter
 * cell validation, such as dropdown list of allowed values
+* cell comments (a.k.a. notes)
 * right-to-left worksheets, to support languages such as Arabic and Hebrew
 * password protection of sheets against accidental modification
 * headers, footers and page breaks for worksheet printout
@@ -98,6 +99,7 @@ The output is like:
     - [Merged cells](#merged-cells)
     - [Auto filter](#auto-filter)
     - [Data validation](#data-validation)
+    - [Comments](#comments)
     - [Password protection of sheets](#password-protection-of-sheets)
     - [Headers and footers](#headers-and-footers)
       - [Left, center and right sections of header and footer](#left-center-and-right-sections-of-header-and-footer)
@@ -116,6 +118,7 @@ The output is like:
 
 ## Changelog
 
+* 2.1: Cell comments (a.k.a. notes), requested by [ThomasKiljanczykDev](https://github.com/ThomasKiljanczykDev)
 * 2.0: No external dependencies on .NET Core 3.1 or greater, significant performance improvements, async API
 * 1.12: Page breaks for printing, inspired by [Nael Al Abbasi](https://github.com/thedude61636)
 * 1.11: Validation and optional skipping of invalid XML characters, inspired by [Anton Mihai](https://github.com/mike101200)
@@ -470,6 +473,41 @@ The first overload applies the validation rules to all cells in the specified re
 Note that, due to the internals of the XLSX file format, all validation objects and their cell references must be kept in RAM until a worksheet is finalized, but this library **deduplicates** validation objects in **constant time** as needed. Thus, you should usually not worry about performance or memory consumption when you use multiple validation objects, unless you are using a large number of different ones, or specify a lot of separate cell references.
 
 This means that you may call `AddDataValidation` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or cells you won't write content to.
+
+
+### Comments
+
+Comments (called notes in recent versions of Excel) are small text boxes attached to cells, shown when hovering the cell, or always shown if desired. They are represented by `XlsxComment` objects, created with:
+
+```csharp
+// class XlsxComment
+public XlsxComment(
+        string text,
+        string author = null,
+        bool visible = false,
+        int widthInColumns = 2,
+        int heightInRows = 4);
+```
+
+The parameters represent:
+- `text`: the plain text of the comment, which may contain line breaks (`\n`)
+- `author`: an optional author of the comment
+- `visible`: whether the comment box is always shown, rather than only when hovering the commented cell
+- `widthInColumns` and `heightInRows`: the size of the comment box, expressed as a number of columns and rows; the defaults roughly match the size used by Excel
+
+To add comments to a worksheet, use one of the following while writing content:
+
+```csharp
+// class XlsxWriter
+public XlsxWriter AddComment(int row, int column, XlsxComment comment);
+public XlsxWriter AddComment(XlsxComment comment);
+```
+
+The first overload attaches the comment to the cell at the specified one-based row and column numbers. The second overload attaches the comment to the cell at the insertion point, that is the **next** cell that will be written, thus you should call it right before writing that cell. Each cell can have at most one comment, and attempting to add a second comment to the same cell throws an `InvalidOperationException`.
+
+Note that, due to the internals of the XLSX file format, comments are not "stream friendly": they must be kept in RAM until a worksheet is finalized, as they are saved in separate parts of the XLSX file. Thus memory consumption grows with the number of comments (not with the number of cells), and you should consider this trade-off if you plan to add a huge number of comments.
+
+This means that you may call `AddComment` at any moment while you are writing a worksheet (that is between a `BeginWorksheet` and the next one, or disposal of the `XlsxWriter` object), even for cells already written or well before writing them, or cells you won't write content to.
 
 
 ### Password protection of sheets
