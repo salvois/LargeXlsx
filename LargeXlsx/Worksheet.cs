@@ -35,6 +35,7 @@ namespace LargeXlsx
 {
     internal sealed class Worksheet : IAsyncDisposable
     {
+        private readonly IZipWriter _zipWriter;
         private readonly Stream _stream;
         private readonly CustomWriter _customWriter;
         private readonly Stylesheet _stylesheet;
@@ -95,12 +96,13 @@ namespace LargeXlsx
             _comments = new WorksheetComments();
             _stringedCurrentRowNumber = new byte[10];
             _stringedCurrentRowNumberLength = 0;
+            _zipWriter = zipWriter;
             _stream = zipWriter.CreateEntry($"xl/worksheets/sheet{id}.xml");
             _customWriter = customWriter;
 
             _customWriter
                 .Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"u8
-                        + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"u8
+                        + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"u8
                         + "<sheetViews>"u8
                         + "<sheetView showGridLines=\""u8)
                 .Append(Util.BoolToInt(showGridLines))
@@ -139,6 +141,7 @@ namespace LargeXlsx
             await WriteDataValidations().ConfigureAwait(false);
             await WriteHeaderFooter().ConfigureAwait(false);
             WritePageBreaks();
+            WriteLegacyDrawing();
             _customWriter.Append("</worksheet>\n"u8);
             await _customWriter.FlushToAsync(_stream).ConfigureAwait(false);
 #if NETCOREAPP2_1_OR_GREATER
@@ -146,6 +149,8 @@ namespace LargeXlsx
 #else
             _stream.Dispose();
 #endif
+            if (HasComments)
+                await _comments.WritePartsAsync(_zipWriter, _customWriter, Id, Id, _skipInvalidCharacters).ConfigureAwait(false);
         }
 
         public void BeginRow(double? height, bool hidden, XlsxStyle style)
@@ -612,6 +617,13 @@ namespace LargeXlsx
             if (_headerFooter.FirstFooter != null)
                 _customWriter.Append("<firstFooter>"u8).AppendEscapedXmlString(_headerFooter.FirstFooter, _skipInvalidCharacters).Append("</firstFooter>\n"u8);
             await _customWriter.Append("</headerFooter>\n"u8).TryFlushToAsync(_stream).ConfigureAwait(false);
+        }
+
+        private void WriteLegacyDrawing()
+        {
+            // Must come after page breaks (and ignoredErrors) according to the OOXML schema
+            if (HasComments)
+                _customWriter.Append("<legacyDrawing r:id=\"RidVml1\"/>\n"u8);
         }
 
         private void WritePageBreaks()

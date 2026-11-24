@@ -159,7 +159,13 @@ namespace LargeXlsx
             {
                 var worksheetTags = new StringBuilder();
                 foreach (var worksheet in _worksheets)
+                {
                     worksheetTags.Append($"<Override PartName=\"/xl/worksheets/sheet{worksheet.Id}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>");
+                    if (worksheet.HasComments)
+                        worksheetTags.Append($"<Override PartName=\"/xl/comments{worksheet.Id}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml\"/>");
+                }
+                if (_worksheets.Any(ws => ws.HasComments))
+                    worksheetTags.Append("<Default Extension=\"vml\" ContentType=\"application/vnd.openxmlformats-officedocument.vmlDrawing\"/>");
                 streamWriter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                                    + "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
                                    + "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
