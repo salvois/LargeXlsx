@@ -71,6 +71,12 @@ internal sealed class WorksheetComments
         await WriteEntryAsync(zipWriter, $"xl/comments{sheetId}.xml", stream => WriteCommentsAsync(customWriter, stream, sortedComments, skipInvalidCharacters)).ConfigureAwait(false);
         await WriteEntryAsync(zipWriter, $"xl/drawings/vmlDrawing{sheetId}.vml", stream => WriteVmlDrawingAsync(customWriter, stream, sortedComments, firstVmlBlock)).ConfigureAwait(false);
         await WriteEntryAsync(zipWriter, $"xl/worksheets/_rels/sheet{sheetId}.xml.rels", stream => WriteRelationshipsAsync(customWriter, stream, sheetId)).ConfigureAwait(false);
+        // Closed worksheets are kept alive by XlsxWriter until the workbook is disposed,
+        // thus release comments as soon as they are written to keep memory bounded to a single worksheet
+        _comments.Clear();
+        _comments.TrimExcess();
+        _commentedCells.Clear();
+        _commentedCells.TrimExcess();
     }
 
     internal static string ComputeAnchor(int row0, int column0, int widthInColumns, int heightInRows)

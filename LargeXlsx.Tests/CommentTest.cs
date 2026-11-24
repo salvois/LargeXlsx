@@ -320,6 +320,25 @@ public static class CommentTest
         }
     }
 
+    [Test]
+    public static async Task CommentsAreReleasedOnceWritten()
+    {
+        // Comments of a closed worksheet must not stay in RAM until the whole workbook is disposed
+        var comments = new WorksheetComments();
+        comments.Add(1, 1, new XlsxComment("a"));
+        comments.Add(2, 1, new XlsxComment("b"));
+
+        await comments.WritePartsAsync(new MemoryZipWriter(), new CustomWriter(65536), sheetId: 1, firstVmlBlock: 1, skipInvalidCharacters: false);
+
+        comments.Count.ShouldBe(0);
+    }
+
+    private sealed class MemoryZipWriter : IZipWriter
+    {
+        public Stream CreateEntry(string path) => new MemoryStream();
+        public void Dispose() { }
+    }
+
     private static string[] GetVmlContents(Stream stream)
     {
         using var document = SpreadsheetDocument.Open(stream, false);

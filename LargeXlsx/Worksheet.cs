@@ -62,7 +62,8 @@ namespace LargeXlsx
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
-        internal bool HasComments => _comments.Count > 0;
+        // Still needed after comments have been written and released, to declare their parts in [Content_Types].xml
+        internal bool HasComments { get; private set; }
 
         public Worksheet(
             IZipWriter zipWriter,
@@ -367,8 +368,11 @@ namespace LargeXlsx
             cellRefs.Add(cellRef);
         }
 
-        public void AddComment(int row, int column, XlsxComment comment) =>
+        public void AddComment(int row, int column, XlsxComment comment)
+        {
             _comments.Add(row, column, comment);
+            HasComments = true;
+        }
 
         public void SetSheetProtection(XlsxSheetProtection sheetProtection)
         {
