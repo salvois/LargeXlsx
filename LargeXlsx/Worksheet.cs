@@ -35,6 +35,7 @@ namespace LargeXlsx
 {
     internal sealed class Worksheet : IAsyncDisposable
     {
+        private readonly IZipWriter _zipWriter;
         private readonly Stream _stream;
         private readonly CustomWriter _customWriter;
         private readonly Stylesheet _stylesheet;
@@ -45,6 +46,8 @@ namespace LargeXlsx
         private readonly Dictionary<XlsxDataValidation, List<string>> _cellRefsByDataValidation;
         private readonly HashSet<int> _pageBreakRowNumbers;
         private readonly HashSet<int> _pageBreakColumnNumbers;
+        private readonly WorksheetComments _comments;
+        private readonly VmlShapeIdAllocator _vmlShapeIdAllocator;
         private string _autoFilterRef;
         private string _autoFilterAbsoluteRef;
         private XlsxSheetProtection _sheetProtection;
@@ -59,6 +62,8 @@ namespace LargeXlsx
         public int CurrentRowNumber { get; private set; }
         public int CurrentColumnNumber { get; private set; }
         internal string AutoFilterAbsoluteRef => _autoFilterAbsoluteRef;
+        // Still needed after comments have been written and released, to declare their parts in [Content_Types].xml
+        internal bool HasComments { get; private set; }
 
         public Worksheet(
             IZipWriter zipWriter,
@@ -70,6 +75,7 @@ namespace LargeXlsx
             bool rightToLeft,
             Stylesheet stylesheet,
             SharedStringTable sharedStringTable,
+            VmlShapeIdAllocator vmlShapeIdAllocator,
             IEnumerable<XlsxColumn> columns,
             bool showGridLines,
             bool showHeaders,
@@ -90,8 +96,11 @@ namespace LargeXlsx
             _pageBreakRowNumbers = new HashSet<int>();
             _pageBreakColumnNumbers = new HashSet<int>();
             _cellRefsByDataValidation = new Dictionary<XlsxDataValidation, List<string>>();
+            _comments = new WorksheetComments();
+            _vmlShapeIdAllocator = vmlShapeIdAllocator;
             _stringedCurrentRowNumber = new byte[10];
             _stringedCurrentRowNumberLength = 0;
+            _zipWriter = zipWriter;
             _stream = zipWriter.CreateEntry($"xl/worksheets/sheet{id}.xml");
             _customWriter = customWriter;
 
@@ -136,6 +145,7 @@ namespace LargeXlsx
             await WriteDataValidations().ConfigureAwait(false);
             await WriteHeaderFooter().ConfigureAwait(false);
             WritePageBreaks();
+            WriteLegacyDrawing();
             _customWriter.Append("</worksheet>\n"u8);
             await _customWriter.FlushToAsync(_stream).ConfigureAwait(false);
 #if NETCOREAPP2_1_OR_GREATER
@@ -143,6 +153,8 @@ namespace LargeXlsx
 #else
             _stream.Dispose();
 #endif
+            if (HasComments)
+                await _comments.WritePartsAsync(_zipWriter, _customWriter, Id, _vmlShapeIdAllocator.AllocateBlocks(_comments.Count), _skipInvalidCharacters).ConfigureAwait(false);
         }
 
         public void BeginRow(double? height, bool hidden, XlsxStyle style)
@@ -354,6 +366,12 @@ namespace LargeXlsx
                 _cellRefsByDataValidation.Add(dataValidation, cellRefs);
             }
             cellRefs.Add(cellRef);
+        }
+
+        public void AddComment(int row, int column, XlsxComment comment)
+        {
+            _comments.Add(row, column, comment);
+            HasComments = true;
         }
 
         public void SetSheetProtection(XlsxSheetProtection sheetProtection)
@@ -606,6 +624,15 @@ namespace LargeXlsx
             if (_headerFooter.FirstFooter != null)
                 _customWriter.Append("<firstFooter>"u8).AppendEscapedXmlString(_headerFooter.FirstFooter, _skipInvalidCharacters).Append("</firstFooter>\n"u8);
             await _customWriter.Append("</headerFooter>\n"u8).TryFlushToAsync(_stream).ConfigureAwait(false);
+        }
+
+        private void WriteLegacyDrawing()
+        {
+            // Must come after page breaks (and ignoredErrors) according to the OOXML schema.
+            // The relationships namespace is declared locally because the worksheet root has already been
+            // streamed when we know whether comments exist, and worksheets without comments must not change.
+            if (HasComments)
+                _customWriter.Append("<legacyDrawing xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" r:id=\"RidVml1\"/>\n"u8);
         }
 
         private void WritePageBreaks()
