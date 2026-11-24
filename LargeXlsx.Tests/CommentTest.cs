@@ -231,6 +231,16 @@ public static class CommentTest
         allocator.AllocateBlocks(1).ShouldBe(5);
     }
 
+    [TestCase(0, 0)]
+    [TestCase(1, 1)]
+    [TestCase(1023, 1)]
+    [TestCase(1024, 2)]
+    [TestCase(2046, 2)]
+    [TestCase(2047, 3)]
+    [TestCase(2500, 3)]
+    public static void BlockCountIsShapeCountDividedByShapesPerBlockRoundedUp(int shapeCount, int expectedBlockCount) =>
+        VmlShapeIdAllocator.GetBlockCount(shapeCount).ShouldBe(expectedBlockCount);
+
     [Test]
     public static void AnchorStaysInsideGrid()
     {

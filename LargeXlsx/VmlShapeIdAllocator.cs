@@ -36,12 +36,24 @@ internal sealed class VmlShapeIdAllocator
     public const int ShapesPerBlock = 1023;
     private int _nextBlock = 1;
 
+    /// <summary>
+    /// Returns the number of blocks needed for the specified number of shapes, that is
+    /// <paramref name="shapeCount"/> / <see cref="ShapesPerBlock"/> rounded up, using integer arithmetic:
+    /// 1 to 1023 shapes need 1 block, 1024 to 2046 shapes need 2 blocks, and so on.
+    /// </summary>
+    /// <remarks>
+    /// Both the allocation and the &lt;o:idmap&gt; of a VML drawing use this, so that a drawing never declares
+    /// blocks it was not given, which would overlap with the blocks of another worksheet.
+    /// </remarks>
+    public static int GetBlockCount(int shapeCount) =>
+        (shapeCount + ShapesPerBlock - 1) / ShapesPerBlock;
+
     /// <summary>Reserves enough consecutive blocks for the specified number of shapes.</summary>
     /// <returns>The first reserved block.</returns>
     public int AllocateBlocks(int shapeCount)
     {
         var firstBlock = _nextBlock;
-        _nextBlock += (shapeCount + ShapesPerBlock - 1) / ShapesPerBlock;
+        _nextBlock += GetBlockCount(shapeCount);
         return firstBlock;
     }
 }

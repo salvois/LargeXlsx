@@ -160,12 +160,10 @@ internal sealed class WorksheetComments
         // Shape ids must be unique across the whole workbook, and are handed out in blocks of 1024 ids:
         // block n owns ids n * 1024 to n * 1024 + 1023, of which Excel uses the last 1023 (n * 1024 itself is never used).
         // o:idmap must list, comma separated, every block this drawing takes its shape ids from.
-        // blockCount is the number of blocks needed for all comments of this worksheet, that is
-        // Count / ShapesPerBlock rounded up, using integer arithmetic: 1 to 1023 comments need 1 block,
-        // 1024 to 2046 comments need 2 blocks, 2500 comments need 3 blocks.
-        // It must match the number of blocks reserved for this worksheet by VmlShapeIdAllocator.AllocateBlocks,
-        // which uses the same formula and returned firstVmlBlock, so that the blocks of different worksheets never overlap.
-        var blockCount = (comments.Count + VmlShapeIdAllocator.ShapesPerBlock - 1) / VmlShapeIdAllocator.ShapesPerBlock;
+        // These are the blocks reserved for this worksheet by VmlShapeIdAllocator.AllocateBlocks, which returned
+        // firstVmlBlock and computed their number with the same GetBlockCount, so that the blocks of different
+        // worksheets never overlap.
+        var blockCount = VmlShapeIdAllocator.GetBlockCount(comments.Count);
         for (var i = 0; i < blockCount; i++)
         {
             if (i > 0) customWriter.Append(","u8);
